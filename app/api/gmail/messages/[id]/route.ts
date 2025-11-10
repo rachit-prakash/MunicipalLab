@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { refreshGoogleAccessToken } from "@/lib/auth"
+import { demoMessages } from "@/lib/demo"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const urlObj = req.nextUrl
@@ -173,50 +174,6 @@ function tryParse(text: string) {
     return null
   }
 }
-
-// Demo data used in conjunction with inbox route
-const demoMessages = [
-  {
-    id: "demo-1",
-    threadId: "demo-t-1",
-    subject: "Healthcare Reform Bill - Constituent Support",
-    from: "John Smith <john@example.com>",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 12).toUTCString(),
-    snippet: "Constituent expressing strong support for the proposed healthcare reform bill...",
-  },
-  {
-    id: "demo-2",
-    threadId: "demo-t-2",
-    subject: "Immigration Policy Concerns",
-    from: "Maria Garcia <maria@example.com>",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toUTCString(),
-    snippet: "Local business owner expressing concerns about new immigration guidelines...",
-  },
-  {
-    id: "demo-3",
-    threadId: "demo-t-3",
-    subject: "Infrastructure Investment Support",
-    from: "Robert Johnson <robert@example.com>",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 48).toUTCString(),
-    snippet: "Requesting funding for local infrastructure projects...",
-  },
-  {
-    id: "demo-4",
-    threadId: "demo-t-4",
-    subject: "Education Funding Request",
-    from: "Susan Williams <susan@example.com>",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 72).toUTCString(),
-    snippet: "Advocating for increased education funding...",
-  },
-  {
-    id: "demo-5",
-    threadId: "demo-t-5",
-    subject: "Environmental Protection Concerns",
-    from: "David Chen <david@example.com>",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 96).toUTCString(),
-    snippet: "Opposing proposed industrial development near protected areas...",
-  },
-]
 
 function toGmailMessage(item: {
   id: string
