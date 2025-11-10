@@ -74,6 +74,7 @@ const sampleThreads: ThreadRow[] = [
 
 function ThreadsPageInner() {
   const [selectedThread, setSelectedThread] = useState<ThreadRow | null>(null)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [filters, setFilters] = useState({
     type: "both",
     topics: [] as string[],
@@ -93,18 +94,18 @@ function ThreadsPageInner() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 flex flex-col" style={{ marginLeft: "var(--app-sidebar-width, 256px)" }}>
+      <Sidebar mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
+      <div className="flex-1 flex flex-col ml-0 md:ml-[var(--app-sidebar-width,256px)]">
         <Suspense fallback={null}>
-          <Header />
+          <Header onMenuClick={() => setMobileNavOpen(true)} />
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
-          <div className="px-6 pt-6">
+          <div className="px-4 sm:px-6 pt-6">
             <h1 className="text-xl font-semibold text-ink-900">Threads</h1>
             <p className="text-sm text-ink-500">Browse and triage conversations</p>
           </div>
           <FiltersToolbar onFiltersChange={setFilters} />
-          <div className="px-6 py-6">
+          <div className="px-4 sm:px-6 py-6">
             <ThreadsTable threads={filteredThreads} onThreadClick={setSelectedThread} />
           </div>
         </main>

@@ -4,7 +4,7 @@ import type { ThreadRow } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
 
 interface ThreadsTableProps {
   threads: ThreadRow[]
@@ -17,50 +17,54 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow hoverable={false}>
-          <TableHead>Type</TableHead>
-          <TableHead>Topic</TableHead>
-          <TableHead className="max-w-xs">Summary</TableHead>
-          <TableHead>Received</TableHead>
-          <TableHead className="w-36 text-right">Action</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {threads.map((thread) => (
-          <TableRow
-            key={thread.id}
-            onClick={() => onThreadClick(thread)}
-            className="cursor-pointer group border-l-2 border-transparent transition-colors hover:border-secondary"
-          >
-            <TableCell>
-              <Badge variant="solid" className="bg-ink-100 text-ink-900">
-                {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
-              </Badge>
-            </TableCell>
-            <TableCell>{thread.topic}</TableCell>
-            <TableCell className="max-w-xs truncate text-ink-600" title={thread.summary}>
-              {thread.summary}
-            </TableCell>
-            <TableCell className="text-xs text-ink-500">{formatDate(thread.receivedAt)}</TableCell>
-            <TableCell className="w-36">
-              <div className="flex justify-end opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onThreadClick(thread)
-                  }}
-                >
-                  Suggest Reply
-                </Button>
-              </div>
-            </TableCell>
+    <div className="overflow-x-auto -mx-4 md:mx-0">
+      <Table className="min-w-[720px] md:min-w-0">
+        <TableHeader>
+          <TableRow hoverable={false}>
+            <TableHead>Type</TableHead>
+            <TableHead>Topic</TableHead>
+            <TableHead className="max-w-xs">Summary</TableHead>
+            <TableHead>Received</TableHead>
+            <TableHead className="w-36 text-right">Action</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {threads.map((thread) => (
+            <TableRow
+              key={thread.id}
+              onClick={() => onThreadClick(thread)}
+              className="cursor-pointer group border-l-2 border-transparent transition-colors hover:border-secondary"
+            >
+              <TableCell>
+                <Badge variant="solid" className="bg-ink-100 text-ink-900">
+                  {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
+              </TableCell>
+              <TableCell className="max-w-xs truncate text-ink-600" title={thread.summary}>
+                {thread.summary}
+              </TableCell>
+              <TableCell className="text-xs text-ink-500">{formatDate(thread.receivedAt)}</TableCell>
+              <TableCell className="w-36">
+                <div className="flex justify-end opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onThreadClick(thread)
+                    }}
+                  >
+                    Suggest Reply
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }
