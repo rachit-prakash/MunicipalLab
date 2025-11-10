@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { LogIn, Sparkles } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { Spinner } from "@/components/ui/spinner"
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [checking, setChecking] = useState(true)
@@ -135,6 +135,20 @@ export default function SignInPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Spinner className="size-6 text-ink-600" />
+        </div>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   )
 }
 
