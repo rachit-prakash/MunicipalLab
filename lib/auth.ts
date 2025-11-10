@@ -43,6 +43,9 @@ export async function refreshGoogleAccessToken(token: any) {
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
+  pages: {
+    signIn: "/auth/signin",
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

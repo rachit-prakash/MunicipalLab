@@ -35,6 +35,7 @@ export function Sidebar() {
 
   const menuItems = [
     { href: "/threads", label: "Threads", icon: Mail, description: "Browse and triage conversations" },
+    { href: "/gmail", label: "Inbox", icon: Mail, description: "View your Gmail inbox" },
     { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, description: "KPIs and trends at a glance" },
   ]
 

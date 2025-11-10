@@ -53,7 +53,7 @@ export function ChatbotButton({ onClick, className }: ChatbotButtonProps) {
 						</span>
 					</button>
 				</TooltipTrigger>
-				<TooltipContent side="left">Chat with us</TooltipContent>
+				<TooltipContent side="left">Chat with our Legaside AI Assistant</TooltipContent>
 			</Tooltip>
 		</div>
 	)

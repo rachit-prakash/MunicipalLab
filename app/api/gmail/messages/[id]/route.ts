@@ -3,11 +3,26 @@ import { getToken } from "next-auth/jwt"
 import { refreshGoogleAccessToken } from "@/lib/auth"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const urlObj = req.nextUrl
+  const debug = urlObj.searchParams.get("debug") === "1"
+  const isDemo =
+    urlObj.searchParams.get("demo") === "1" ||
+    req.cookies.get("demo")?.value === "1" ||
+    process.env.DEMO_MODE === "1"
+
+  if (isDemo) {
+    const awaitedParams = await params
+    const id = (awaitedParams?.id ?? "").trim()
+    const item = demoMessages.find((m) => m.id === id)
+    if (!item) return new Response(JSON.stringify({ error: "Not found" }, null, 2), { status: 404 })
+    const message = toGmailMessage(item)
+    return new Response(JSON.stringify(message, null, 2), {
+      headers: { "content-type": "application/json", "x-demo": "1" },
+    })
+  }
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   if (!token) return new Response("Unauthorized", { status: 401 })
   // uses /api/gmail/messages/{id} to get the message by id. same shit as threads but different story 🤣
-  const urlObj = req.nextUrl
-  const debug = urlObj.searchParams.get("debug") === "1"
   // checks if the access token is expired and if it is, refreshes it.
   let accessToken = (token as any).accessToken as string | undefined
   const accessTokenExpires = (token as any).accessTokenExpires as number | undefined
@@ -158,3 +173,71 @@ function tryParse(text: string) {
     return null
   }
 }
+
+// Demo data used in conjunction with inbox route
+const demoMessages = [
+  {
+    id: "demo-1",
+    threadId: "demo-t-1",
+    subject: "Healthcare Reform Bill - Constituent Support",
+    from: "John Smith <john@example.com>",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 12).toUTCString(),
+    snippet: "Constituent expressing strong support for the proposed healthcare reform bill...",
+  },
+  {
+    id: "demo-2",
+    threadId: "demo-t-2",
+    subject: "Immigration Policy Concerns",
+    from: "Maria Garcia <maria@example.com>",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toUTCString(),
+    snippet: "Local business owner expressing concerns about new immigration guidelines...",
+  },
+  {
+    id: "demo-3",
+    threadId: "demo-t-3",
+    subject: "Infrastructure Investment Support",
+    from: "Robert Johnson <robert@example.com>",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 48).toUTCString(),
+    snippet: "Requesting funding for local infrastructure projects...",
+  },
+  {
+    id: "demo-4",
+    threadId: "demo-t-4",
+    subject: "Education Funding Request",
+    from: "Susan Williams <susan@example.com>",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 72).toUTCString(),
+    snippet: "Advocating for increased education funding...",
+  },
+  {
+    id: "demo-5",
+    threadId: "demo-t-5",
+    subject: "Environmental Protection Concerns",
+    from: "David Chen <david@example.com>",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 96).toUTCString(),
+    snippet: "Opposing proposed industrial development near protected areas...",
+  },
+]
+
+function toGmailMessage(item: {
+  id: string
+  threadId: string
+  subject: string
+  from: string
+  date: string
+  snippet: string
+}) {
+  return {
+    id: item.id,
+    threadId: item.threadId,
+    snippet: item.snippet,
+    internalDate: String(Date.parse(item.date)),
+    payload: {
+      headers: [
+        { name: "Subject", value: item.subject },
+        { name: "From", value: item.from },
+        { name: "Date", value: item.date },
+      ],
+    },
+  }
+}
+
