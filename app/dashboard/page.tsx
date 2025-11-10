@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header"
 import { DashboardKPIs } from "@/components/dashboard/kpis"
 import { TopicsChart } from "@/components/dashboard/topics-chart"
 import { StanceTrendChart } from "@/components/dashboard/stance-trend-chart"
+import { Spinner } from "@/components/ui/spinner"
 
 type InboxListResponse = {
   messages?: Array<{ id: string; threadId: string }>
@@ -258,6 +259,13 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-semibold text-ink-900">Dashboard</h1>
               <p className="text-sm text-ink-500">KPIs and trends at a glance</p>
             </div>
+
+            {loading ? (
+              <div className="flex items-center gap-2 text-ink-600">
+                <Spinner className="size-4" />
+                <span>Loading dashboard…</span>
+              </div>
+            ) : null}
 
             {/* KPI Tiles */}
             {data ? <DashboardKPIs total={data.total} caseworkPct={data.caseworkPct} /> : null}

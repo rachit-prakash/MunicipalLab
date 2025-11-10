@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { TopicRow } from "@/lib/types"
 
 // Sample data
@@ -31,6 +37,38 @@ export default function AdminTopicsPage() {
     setEditingId(null)
   }
 
+  const addTopic = () => {
+    const newId = `t-${Date.now()}`
+    const newTopic: TopicRow = { id: newId, name: "New topic", usageCount: 0, status: "active" }
+    setTopics([newTopic, ...topics])
+    setEditingId(newId)
+    setEditName(newTopic.name)
+  }
+
+  const toggleStatus = (id: string) => {
+    setTopics(
+      topics.map((t) =>
+        t.id === id ? { ...t, status: t.status === "active" ? "archived" : "active" } : t,
+      ),
+    )
+  }
+
+  const mergeTopics = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return
+    const source = topics.find((t) => t.id === sourceId)
+    const target = topics.find((t) => t.id === targetId)
+    if (!source || !target) return
+    const updated = topics
+      .map((t) => {
+        if (t.id === targetId) {
+          return { ...t, usageCount: t.usageCount + source.usageCount }
+        }
+        return t
+      })
+      .filter((t) => t.id !== sourceId)
+    setTopics(updated)
+  }
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
@@ -45,7 +83,7 @@ export default function AdminTopicsPage() {
                 <h1 className="text-2xl font-semibold text-ink-900">Topics</h1>
                 <p className="text-sm text-ink-500">Define and organize topics</p>
               </div>
-              <Button variant="primary" size="md">
+              <Button variant="primary" size="md" onClick={addTopic}>
                 Add topic
               </Button>
             </div>
@@ -103,9 +141,33 @@ export default function AdminTopicsPage() {
                           Rename
                         </button>
                         <span className="mx-2 text-ink-300">•</span>
-                        <button className="text-xs font-medium text-ink-600 hover:text-ink-900">Merge</button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="text-xs font-medium text-ink-600 hover:text-ink-900">
+                              Merge
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-64">
+                            {topics
+                              .filter((t) => t.id !== topic.id)
+                              .map((t) => (
+                                <DropdownMenuItem key={t.id} onClick={() => mergeTopics(topic.id, t.id)}>
+                                  Merge into "{t.name}"
+                                </DropdownMenuItem>
+                              ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <span className="mx-2 text-ink-300">•</span>
-                        <button className="text-xs font-medium text-danger hover:text-danger">Retire</button>
+                        <button
+                          onClick={() => toggleStatus(topic.id)}
+                          className={
+                            topic.status === "active"
+                              ? "text-xs font-medium text-danger hover:text-danger"
+                              : "text-xs font-medium text-ink-600 hover:text-ink-900"
+                          }
+                        >
+                          {topic.status === "active" ? "Retire" : "Activate"}
+                        </button>
                       </TableCell>
                     </TableRow>
                   ))}
