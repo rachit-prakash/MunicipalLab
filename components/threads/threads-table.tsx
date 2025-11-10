@@ -18,14 +18,14 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
 
   return (
     <div className="overflow-x-auto -mx-4 md:mx-0">
-      <Table className="min-w-[720px] md:min-w-0">
+      <Table className="min-w-0">
         <TableHeader>
           <TableRow hoverable={false}>
             <TableHead>Type</TableHead>
             <TableHead>Topic</TableHead>
-            <TableHead className="max-w-xs">Summary</TableHead>
-            <TableHead>Received</TableHead>
-            <TableHead className="w-36 text-right">Action</TableHead>
+            <TableHead className="max-w-xs hidden sm:table-cell">Summary</TableHead>
+            <TableHead className="hidden sm:table-cell">Received</TableHead>
+            <TableHead className="w-36 text-right hidden sm:table-cell">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -43,11 +43,11 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
               <TableCell>
                 <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
               </TableCell>
-              <TableCell className="max-w-xs truncate text-ink-600" title={thread.summary}>
+              <TableCell className="max-w-xs truncate text-ink-600 hidden sm:table-cell" title={thread.summary}>
                 {thread.summary}
               </TableCell>
-              <TableCell className="text-xs text-ink-500">{formatDate(thread.receivedAt)}</TableCell>
-              <TableCell className="w-36">
+              <TableCell className="text-xs text-ink-500 hidden sm:table-cell">{formatDate(thread.receivedAt)}</TableCell>
+              <TableCell className="w-36 hidden sm:table-cell">
                 <div className="flex justify-end opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto">
                   <Button
                     variant="ghost"

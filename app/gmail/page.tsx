@@ -199,13 +199,13 @@ function InboxTable({ emails }: { emails: EmailRow[] }) {
 	return (
 		<>
 		<div className="overflow-x-auto -mx-4 md:mx-0">
-		<Table className="table-fixed min-w-[760px] md:min-w-0">
+		<Table className="table-fixed min-w-0">
 			<TableHeader>
 				<TableRow hoverable={false}>
 					<TableHead className="w-[28%]">Subject</TableHead>
 					<TableHead className="w-[18%]">From</TableHead>
-					<TableHead className="w-[12%]">Date</TableHead>
-					<TableHead className="w-[42%]">Summary</TableHead>
+					<TableHead className="w-[12%] hidden sm:table-cell">Date</TableHead>
+					<TableHead className="w-[42%] hidden sm:table-cell">Summary</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -217,8 +217,8 @@ function InboxTable({ emails }: { emails: EmailRow[] }) {
 						<TableCell className="w-[18%] truncate text-ink-600" title={e.from}>
 							{e.from}
 						</TableCell>
-						<TableCell className="w-[12%] text-xs text-ink-500" title={e.rawDate || ""}>{e.date}</TableCell>
-						<TableCell className="w-[42%] whitespace-pre-wrap break-words text-ink-600">
+						<TableCell className="w-[12%] text-xs text-ink-500 hidden sm:table-cell" title={e.rawDate || ""}>{e.date}</TableCell>
+						<TableCell className="w-[42%] whitespace-pre-wrap break-words text-ink-600 hidden sm:table-cell">
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
 									{summaries[e.id] ? summaries[e.id] : e.snippet || <span className="text-ink-400">—</span>}

@@ -28,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${publicSans.className} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning className={`${publicSans.className} antialiased`} data-gramm="false">
         {children}
         <ChatbotDrawer />
         <ChatbotButton />
