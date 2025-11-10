@@ -24,6 +24,7 @@ export default function AdminTopicsPage() {
   const [topics, setTopics] = useState(sampleTopics)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const handleRename = (id: string, newName: string) => {
     setTopics(topics.map((t) => (t.id === id ? { ...t, name: newName } : t)))
@@ -32,13 +33,13 @@ export default function AdminTopicsPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 flex flex-col" style={{ marginLeft: "var(--app-sidebar-width, 256px)" }}>
+      <Sidebar mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
+      <div className="flex-1 flex flex-col ml-0 md:ml-[var(--app-sidebar-width,256px)]">
         <Suspense fallback={null}>
-          <Header />
+          <Header onMenuClick={() => setMobileNavOpen(true)} />
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
-          <div className="px-6 py-6">
+          <div className="px-4 sm:px-6 py-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-semibold text-ink-900">Topics</h1>
@@ -54,9 +55,9 @@ export default function AdminTopicsPage() {
                 <TableHeader>
                   <TableRow hoverable={false}>
                     <TableHead>Topic</TableHead>
-                    <TableHead>Usage count</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="hidden sm:table-cell">Usage count</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -78,8 +79,8 @@ export default function AdminTopicsPage() {
                           topic.name
                         )}
                       </TableCell>
-                      <TableCell className="text-ink-600">{topic.usageCount}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-ink-600 hidden sm:table-cell">{topic.usageCount}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge
                           variant="solid"
                           className={
@@ -91,7 +92,7 @@ export default function AdminTopicsPage() {
                           {topic.status === "active" ? "Active" : "Archived"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <button
                           onClick={() => {
                             setEditingId(topic.id)

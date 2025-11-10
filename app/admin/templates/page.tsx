@@ -50,6 +50,7 @@ export default function AdminTemplatesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState("")
   const [editNotes, setEditNotes] = useState("")
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const handleSave = (id: string) => {
     setTemplates(
@@ -62,13 +63,13 @@ export default function AdminTemplatesPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 flex flex-col" style={{ marginLeft: "var(--app-sidebar-width, 256px)" }}>
+      <Sidebar mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
+      <div className="flex-1 flex flex-col ml-0 md:ml-[var(--app-sidebar-width,256px)]">
         <Suspense fallback={null}>
-          <Header />
+          <Header onMenuClick={() => setMobileNavOpen(true)} />
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
-          <div className="px-6 py-6">
+          <div className="px-4 sm:px-6 py-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-semibold text-ink-900">Templates</h1>
@@ -79,16 +80,16 @@ export default function AdminTemplatesPage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left: Templates table */}
-              <div className="col-span-2 border border-border rounded-lg bg-surface overflow-hidden shadow-sm">
+              <div className="col-span-1 md:col-span-2 border border-border rounded-lg bg-surface overflow-hidden shadow-sm">
                 <Table>
                   <TableHeader>
                     <TableRow hoverable={false}>
                       <TableHead>Topic</TableHead>
-                      <TableHead>Version</TableHead>
-                      <TableHead>Updated</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="hidden sm:table-cell">Version</TableHead>
+                      <TableHead className="hidden sm:table-cell">Updated</TableHead>
+                      <TableHead className="hidden sm:table-cell">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -103,9 +104,9 @@ export default function AdminTemplatesPage() {
                         className="cursor-pointer"
                       >
                         <TableCell className="font-medium">{template.topic}</TableCell>
-                        <TableCell className="text-ink-600">v{template.version}</TableCell>
-                        <TableCell className="text-xs text-ink-500">{formatDate(template.updatedAt)}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-ink-600 hidden sm:table-cell">v{template.version}</TableCell>
+                        <TableCell className="text-xs text-ink-500 hidden sm:table-cell">{formatDate(template.updatedAt)}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
