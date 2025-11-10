@@ -6,6 +6,9 @@ import { Header } from "@/components/layout/header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
+import { format as formatDateFn } from "date-fns"
+import type { ThreadRow } from "@/lib/types"
+import { ReplyDrawer } from "@/components/threads/reply-drawer"
 
 type InboxListResponse = {
 	messages?: Array<{ id: string; threadId: string }>
@@ -30,6 +33,7 @@ type EmailRow = {
 	subject: string
 	from: string
 	date: string
+	rawDate?: string
 	snippet: string
 }
 
@@ -122,13 +126,15 @@ function useInboxEmails() {
 						const subject = getHeader(headers, "Subject") || "(No subject)"
 						const from = getHeader(headers, "From") || ""
 						const dateHeader = getHeader(headers, "Date")
-						const date = dateHeader || (msg.internalDate ? new Date(Number(msg.internalDate)).toUTCString() : "")
+						const dateObj = dateHeader ? new Date(dateHeader) : msg.internalDate ? new Date(Number(msg.internalDate)) : null
+						const date = dateObj ? formatDateFn(dateObj, "EEE, dd MMM yyyy HH:mm") : ""
 						return {
 							id: (msg.id ?? "") as string,
 							threadId: (msg.threadId ?? "") as string,
 							subject,
 							from,
 							date,
+							rawDate: dateHeader || (msg.internalDate ? new Date(Number(msg.internalDate)).toUTCString() : ""),
 							snippet: (msg.snippet ?? "").trim(),
 						}
 					})
@@ -156,6 +162,7 @@ function useInboxEmails() {
 
 function InboxTable({ emails }: { emails: EmailRow[] }) {
 	const [summaries, setSummaries] = useState<Record<string, string>>({})
+	const [selectedThread, setSelectedThread] = useState<ThreadRow | null>(null)
 
 	// Summarize first 10 emails lazily after mount
 	useEffect(() => {
@@ -190,7 +197,9 @@ function InboxTable({ emails }: { emails: EmailRow[] }) {
 		return <div className="flex items-center justify-center h-64 text-ink-500">Inbox is empty.</div>
 	}
 	return (
-		<Table className="table-fixed">
+		<>
+		<div className="overflow-x-auto -mx-4 md:mx-0">
+		<Table className="table-fixed min-w-[760px] md:min-w-0">
 			<TableHeader>
 				<TableRow hoverable={false}>
 					<TableHead className="w-[28%]">Subject</TableHead>
@@ -208,19 +217,51 @@ function InboxTable({ emails }: { emails: EmailRow[] }) {
 						<TableCell className="w-[18%] truncate text-ink-600" title={e.from}>
 							{e.from}
 						</TableCell>
-						<TableCell className="w-[12%] text-xs text-ink-500">{e.date}</TableCell>
+						<TableCell className="w-[12%] text-xs text-ink-500" title={e.rawDate || ""}>{e.date}</TableCell>
 						<TableCell className="w-[42%] whitespace-pre-wrap break-words text-ink-600">
-							{summaries[e.id] ? summaries[e.id] : e.snippet || <span className="text-ink-400">—</span>}
+							<div className="flex items-start justify-between gap-3">
+								<div className="min-w-0">
+									{summaries[e.id] ? summaries[e.id] : e.snippet || <span className="text-ink-400">—</span>}
+								</div>
+								<button
+									onClick={() => {
+										const receivedAt =
+											(e.rawDate ? new Date(e.rawDate) : new Date()).toISOString()
+										const thread: ThreadRow = {
+											id: e.threadId || e.id,
+											subject: e.subject || "(No subject)",
+											sender: e.from || "",
+											receivedAt,
+											type: "CORRESPONDENCE",
+											topic: "General",
+											summary: summaries[e.id] || e.snippet || "",
+											confidence: 0.7,
+											unread: false,
+										}
+										setSelectedThread(thread)
+									}}
+									className="relative shrink-0 hidden h-7 px-3 items-center justify-center rounded-full text-xs font-medium text-blue-700 group-hover:inline-flex focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+								>
+									<span className="absolute inset-0 rounded-full bg-gradient-to-r from-sky-400 to-indigo-600" />
+									<span className="absolute inset-[1px] rounded-full bg-white" />
+									<span className="relative">View in Threads</span>
+								</button>
+							</div>
 						</TableCell>
 					</TableRow>
 				))}
 			</TableBody>
 		</Table>
+		</div>
+		{/* Reply drawer modal */}
+		{selectedThread && <ReplyDrawer thread={selectedThread} onClose={() => setSelectedThread(null)} />}
+		</>
 	)
 }
 
 function GmailInboxInner() {
 	const { emails, loading, error } = useInboxEmails()
+	const [mobileNavOpen, setMobileNavOpen] = useState(false)
 	const title = useMemo(() => {
 		if (loading) return "Inbox (loading…)"
 		if (emails) return `Inbox (${emails.length})`
@@ -229,17 +270,17 @@ function GmailInboxInner() {
 
 	return (
 		<div className="flex min-h-screen bg-background">
-			<Sidebar />
-			<div className="flex-1 flex flex-col" style={{ marginLeft: "var(--app-sidebar-width, 256px)" }}>
+			<Sidebar mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
+			<div className="flex-1 flex flex-col ml-0 md:ml-[var(--app-sidebar-width,256px)]">
 				<Suspense fallback={null}>
-					<Header />
+					<Header onMenuClick={() => setMobileNavOpen(true)} />
 				</Suspense>
 				<main className="mt-16 flex-1 overflow-auto">
-					<div className="px-6 pt-6">
+					<div className="px-4 sm:px-6 pt-6">
 						<h1 className="text-xl font-semibold text-ink-900">{title}</h1>
 						<p className="text-sm text-ink-500">Latest messages from your Gmail inbox</p>
 					</div>
-					<div className="px-6 py-6">
+					<div className="px-4 sm:px-6 py-6">
 						{loading ? (
 							<div className="flex items-center gap-2 text-ink-600">
 								<Spinner className="size-4" />

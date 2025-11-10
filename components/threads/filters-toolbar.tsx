@@ -45,7 +45,7 @@ export function FiltersToolbar({ onFiltersChange }: FiltersToolbarProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Type filter */}
         <div className="space-y-2">
           <label className="text-xs font-medium text-ink-600">Type</label>

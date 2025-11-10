@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Public_Sans } from "next/font/google"
 import "./globals.css"
 import ChatbotButton from "@/components/chatbot/chatbot-button"
@@ -14,6 +14,12 @@ export const metadata: Metadata = {
   },
   description: "Legislative inbox copilot",
   generator: "v0.app",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
 }
 
 export default function RootLayout({

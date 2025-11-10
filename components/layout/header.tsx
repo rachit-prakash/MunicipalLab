@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Search } from "lucide-react"
+import { Search, PanelLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { signOut } from "next-auth/react"
 
-export function Header() {
+export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -86,9 +86,17 @@ export function Header() {
   }
 
   return (
-    <header className="fixed right-0 top-0 z-30 border-b border-border bg-background" style={{ left: "var(--app-sidebar-width, 256px)" }}>
-      <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex-1">
+    <header className="fixed right-0 top-0 z-30 border-b border-border bg-background left-0 md:left-[var(--app-sidebar-width,256px)]">
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-3 flex-1">
+          <button
+            type="button"
+            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-border"
+            aria-label="Open menu"
+            onClick={onMenuClick}
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input

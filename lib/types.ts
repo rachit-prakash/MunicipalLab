@@ -49,7 +49,6 @@ export interface TemplateRow {
 export interface DashboardSummary {
   total: number
   caseworkPct: number
-  avgTimeToFirstReply: number
   topTopics: Array<{ topic: string; count: number }>
-  stanceTrend: Array<{ date: string; support: number; oppose: number; neutral: number }>
+  trendsByTopic: Record<string, Array<{ date: string; support: number; oppose: number; neutral: number }>>
 }

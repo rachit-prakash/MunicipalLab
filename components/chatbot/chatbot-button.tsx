@@ -24,7 +24,14 @@ export function ChatbotButton({ onClick, className }: ChatbotButtonProps) {
 	}, [onClick])
 
 	return (
-		<div className={cn('fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100]', className)}>
+		<div
+			className={cn(
+				'fixed z-[100]',
+				'bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]',
+				'right-[calc(1rem+env(safe-area-inset-right))] sm:right-[calc(1.5rem+env(safe-area-inset-right))]',
+				className,
+			)}
+		>
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<button
