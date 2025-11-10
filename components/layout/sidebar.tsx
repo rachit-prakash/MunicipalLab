@@ -53,7 +53,7 @@ export function Sidebar() {
       >
         <div className="flex h-full flex-col">
           {/* Logo and toggle */}
-          <div className="border-b border-border px-6 py-5 flex items-center justify-between flex-shrink-0">
+          <div className="px-6 py-5 flex items-center justify-between flex-shrink-0">
             {!isCollapsed && <h1 className="text-lg font-semibold text-ink-900">Legaside</h1>}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}

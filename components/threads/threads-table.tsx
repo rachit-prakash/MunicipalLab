@@ -4,7 +4,7 @@ import type { ThreadRow } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
 
 interface ThreadsTableProps {
   threads: ThreadRow[]
@@ -39,7 +39,9 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
                 {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
               </Badge>
             </TableCell>
-            <TableCell>{thread.topic}</TableCell>
+            <TableCell>
+              <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
+            </TableCell>
             <TableCell className="max-w-xs truncate text-ink-600" title={thread.summary}>
               {thread.summary}
             </TableCell>

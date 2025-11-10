@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
 import { X, Copy, Check } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -106,9 +106,7 @@ export function ReplyDrawer({ thread, onClose }: ReplyDrawerProps) {
             <Badge variant="solid" className="bg-ink-100 text-ink-900">
               {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
             </Badge>
-            <Badge variant="solid" className="bg-brand-100 text-brand-600">
-              {thread.topic}
-            </Badge>
+            <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
           </div>
         </DrawerHeader>
 
