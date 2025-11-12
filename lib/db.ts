@@ -1,27 +1,27 @@
 import { Pool, PoolClient, QueryResult } from "pg";
 
-// Singleton pool instance
+// this code creates a single shared pool so that it is reusable.
+// then it has a safety wrapper withTenant that handles transactions and sets the tenant ID in order to prevent fucking boilerplate lmao.
+
+// i'm creating a pool because it's wayyyy faster lol. i dont want nextjs to create a new connection for every request.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  max: 10, // basically the maximum number of connections that can be open at the same time.
+  idleTimeoutMillis: 30000, // basically if the connection is idle for 30 seconds, it will be terminated.
+  connectionTimeoutMillis: 2000, // basically if the conenction takes longer than 2 seconds, it will be terminated.
 });
 
-// Handle graceful shutdown in development
+// i'm doing this because i want to make sure that the pool is closed when the server is shutting down. module is cached though, so it doesn't matter much in production.
 const cleanup = async () => {
   await pool.end();
 };
-
+// this is for local development purposes. since the hosting provider will handle this for us in production.
 if (process.env.NODE_ENV !== "production") {
   process.on("SIGTERM", cleanup);
   process.on("SIGINT", cleanup);
 }
 
-/**
- * Execute a query within a tenant context.
- * Automatically handles transaction begin/commit/rollback and sets tenant ID.
- */
+
 export async function withTenant<T>(
   tenantId: string,
   fn: (client: PoolClient) => Promise<T>
@@ -29,22 +29,19 @@ export async function withTenant<T>(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SET LOCAL app.tenant_id = $1", [tenantId]);
-    const result = await fn(client);
+    await client.query("SET LOCAL app.tenant_id = $1", [tenantId]); // we use $1 to avoid SQL injection.
+    const result = await fn(client); // we execute the query.
     await client.query("COMMIT");
     return result;
   } catch (error) {
-    await client.query("ROLLBACK");
+    await client.query("ROLLBACK"); // ACID principles. i want to make sure that the transaction is rolled back if an error occurs.
     throw error;
   } finally {
     client.release();
   }
 }
 
-/**
- * Execute a query without tenant context.
- * Convenience method for non-tenant-specific queries.
- */
+// this is for non-tenant-specific queries.
 export async function query(
   sql: string,
   params?: any[]
