@@ -152,7 +152,7 @@ export default function AdminTopicsPage() {
                               .filter((t) => t.id !== topic.id)
                               .map((t) => (
                                 <DropdownMenuItem key={t.id} onClick={() => mergeTopics(topic.id, t.id)}>
-                                  Merge into "{t.name}"
+                                  Merge into &ldquo;{t.name}&rdquo;
                                 </DropdownMenuItem>
                               ))}
                           </DropdownMenuContent>
