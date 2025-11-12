@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { randomUUID } from 'crypto';
 
 // this middleware is used to set the x-request-id header on the request and response. mostly for debugging purposes.
 
@@ -9,7 +8,7 @@ export function middleware(request: NextRequest) {
   const existingRequestId = request.headers.get('x-request-id');
   
   // generate a new UUID v4 if not present
-  const requestId = existingRequestId || randomUUID();
+  const requestId = existingRequestId || crypto.randomUUID();
   
   // clone the request headers and set the x-request-id
   const requestHeaders = new Headers(request.headers);
