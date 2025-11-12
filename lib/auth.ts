@@ -1,5 +1,8 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import { withTenant } from "@/lib/db"
+import { seal } from "@/lib/tokenVault"
+import { query } from "@/lib/db"
 // Writing comments for people who are not familiar with my code lmao.
 
 
@@ -64,6 +67,52 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account) {
+        // Store encrypted refresh token when account is connected
+        if (account.refresh_token) {
+          try {
+            const userId = token.sub!
+            const email = (profile as any)?.email || (account as any).email
+            
+            // Get or create default tenant for user
+            const tenantResult = await query(
+              `INSERT INTO tenants (name) 
+               VALUES ($1) 
+               ON CONFLICT DO NOTHING 
+               RETURNING id`,
+              ['default']
+            )
+            
+            let tenantId: string
+            if (tenantResult.rows.length > 0) {
+              tenantId = tenantResult.rows[0].id
+            } else {
+              const existingTenant = await query(
+                `SELECT id FROM tenants WHERE name = $1 LIMIT 1`,
+                ['default']
+              )
+              tenantId = existingTenant.rows[0].id
+            }
+            
+            // Encrypt the refresh token
+            const encryptedToken = seal(account.refresh_token)
+            
+            // Upsert the encrypted token
+            await withTenant(tenantId, async (client) => {
+              await client.query(
+                `INSERT INTO gmail_accounts (user_id, tenant_id, email, encrypted_refresh_token)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (user_id)
+                 DO UPDATE SET 
+                   encrypted_refresh_token = excluded.encrypted_refresh_token, 
+                   updated_at = now()`,
+                [userId, tenantId, email, encryptedToken]
+              )
+            })
+          } catch (error) {
+            console.error('Failed to store encrypted refresh token:', error)
+          }
+        }
+        
         return {
           ...token,
           accessToken: (account as any).access_token,
@@ -89,5 +138,3 @@ export const authOptions: NextAuthOptions = {
     },
   },
 }
-
-

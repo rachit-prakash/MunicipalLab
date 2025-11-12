@@ -21,7 +21,6 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   useEffect(() => {
     const current = searchParams.get("q") ?? ""
     setQuery((prev) => (prev !== current ? current : prev))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
   // Debounced URL update when on the threads page
@@ -38,8 +37,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
       router.replace(newUrl, { scroll: false })
     }, 300)
     return () => clearTimeout(timeout)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, pathname])
+  }, [query, pathname, searchParams, router])
 
   // Fetch auth session to determine profile name
   useEffect(() => {
