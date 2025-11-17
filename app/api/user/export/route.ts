@@ -69,6 +69,11 @@ export async function GET(req: NextRequest) {
 				)
 				const user = userRes.rows[0] ?? null
 
+				// If user doesn't exist (e.g., was deleted), return early
+				if (!user) {
+					return null
+				}
+
 				const gaRes = await client.query(
 					`SELECT user_id, tenant_id, email, encrypted_refresh_token, history_id, last_sync_at, created_at, updated_at
          FROM gmail_accounts
@@ -111,6 +116,14 @@ export async function GET(req: NextRequest) {
 			return NextResponse.json(
 				{ error: "Database query failed", detail: dbError?.message },
 				{ status: 500 }
+			)
+		}
+
+		// Check if user was found (could be deleted after token was issued)
+		if (!result || !result.user) {
+			return NextResponse.json(
+				{ error: "Unauthorized", detail: "User not found or has been deleted" },
+				{ status: 401 }
 			)
 		}
 
