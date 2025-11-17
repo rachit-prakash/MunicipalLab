@@ -57,7 +57,16 @@ function SignInContent() {
   const handleDemo = async () => {
     try {
       setEnablingDemo(true)
-      await fetch("/api/demo/enable", { method: "POST" })
+      const res = await fetch("/api/demo/enable", { method: "POST" })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        if (res.status === 403) {
+          setError("Cookie consent is required to enable demo mode. Please accept cookies and try again.")
+        } else {
+          setError("Unable to enable demo mode.")
+        }
+        return
+      }
       // Navigate straight to the inbox; API routes will read the demo cookie
       router.push("/gmail")
     } catch {

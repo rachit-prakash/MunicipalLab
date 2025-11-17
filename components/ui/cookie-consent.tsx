@@ -41,12 +41,43 @@ function getExistingConsent(): ConsentState {
 
 export default function CookieConsent(): React.JSX.Element | null {
 	const [consent, setConsent] = React.useState<ConsentState>(null)
+	const [hasSession, setHasSession] = React.useState<boolean | null>(null)
 
 	React.useEffect(() => {
 		setConsent(getExistingConsent())
 	}, [])
 
-	if (consent) return null
+	React.useEffect(() => {
+		let cancelled = false
+		async function checkSession() {
+			try {
+				const res = await fetch("/api/auth/session", { cache: "no-store" })
+				const data = await res.json().catch(() => null)
+				if (!cancelled) {
+					setHasSession(!!data?.user)
+				}
+			} catch {
+				if (!cancelled) {
+					setHasSession(false)
+				}
+			}
+		}
+		void checkSession()
+		return () => {
+			cancelled = true
+		}
+	}, [])
+
+	// Show banner if:
+	// 1. User has a session (NextAuth sets cookies after login), OR
+	// 2. User is on sign-in page (demo mode requires cookies)
+	const isSignInPage =
+		typeof window !== "undefined" && window.location.pathname === "/auth/signin"
+
+	// Only show banner if user has a session or is on sign-in page
+	// Unauthenticated users on other pages don't need consent until they log in
+	if (hasSession === null) return null // Wait for session check
+	if ((hasSession === false && !isSignInPage) || consent) return null
 
 	const handleChoice = (value: Exclude<ConsentState, null>) => {
 		try {
