@@ -4,6 +4,7 @@ import { Public_Sans } from "next/font/google"
 import "./globals.css"
 import ChatbotButton from "@/components/chatbot/chatbot-button"
 import ChatbotDrawer from "@/components/chatbot/chat-drawer"
+import CookieConsent from "@/components/ui/cookie-consent"
 
 const publicSans = Public_Sans({ subsets: ["latin"] })
 
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className={`${publicSans.className} antialiased`} data-gramm="false">
         {children}
+        <CookieConsent />
         <ChatbotDrawer />
         <ChatbotButton />
       </body>
