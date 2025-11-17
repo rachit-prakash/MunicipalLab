@@ -134,7 +134,17 @@ function useThreadsData() {
             unread: false,
           }
         })
-        if (!cancelled) setThreads(rows)
+        // Deduplicate threads - keep only the most recent message per thread
+        const uniqueThreads = Array.from(
+          rows.reduce((map, row) => {
+            const existing = map.get(row.id)
+            if (!existing || new Date(row.receivedAt) > new Date(existing.receivedAt)) {
+              map.set(row.id, row)
+            }
+            return map
+          }, new Map<string, ThreadRow>()).values()
+        )
+        if (!cancelled) setThreads(uniqueThreads)
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "Failed to load threads")
       } finally {

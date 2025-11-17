@@ -1,10 +1,8 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import { withTenant } from "@/lib/db"
+import { withTenant, query } from "@/lib/db"
 import { seal } from "@/lib/tokenVault"
-import { query } from "@/lib/db"
 // Writing comments for people who are not familiar with my code lmao.
-
 
 const scopes = [
   "openid",
@@ -37,7 +35,12 @@ export async function refreshGoogleAccessToken(token: any) {
       refreshToken: data.refresh_token ?? token.refreshToken,
     }
   } catch {
-    return { ...token, accessToken: null, accessTokenExpires: 0, error: "RefreshAccessTokenError" }
+    return {
+      ...token,
+      accessToken: null,
+      accessTokenExpires: 0,
+      error: "RefreshAccessTokenError",
+    }
   }
 }
 // basically requests the access token by using the refresh token. if you don't know what a refresh token is, you should probably not be reading this code..
@@ -66,74 +69,122 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, account, profile }) {
+      // When the user signs in or re-connects their Google account
       if (account) {
-        // Store encrypted refresh token when account is connected
-        if (account.refresh_token) {
-          try {
-            const userId = token.sub!
-            const email = (profile as any)?.email || (account as any).email
-            
-            // Get or create default tenant for user
-            const tenantResult = await query(
-              `INSERT INTO tenants (name) 
-               VALUES ($1) 
-               ON CONFLICT DO NOTHING 
-               RETURNING id`,
-              ['default']
+        const email =
+          (profile as any)?.email ||
+          (account as any).email ||
+          (token as any).email
+        const displayName = (profile as any)?.name ?? null
+
+        // 1) Ensure there is a default tenant (shared for now)
+        const tenantResult = await query(
+          `INSERT INTO tenants (name)
+           VALUES ($1)
+           ON CONFLICT (name) DO NOTHING
+           RETURNING id`,
+          ["default"],
+        )
+
+        let tenantId: string
+        if (tenantResult.rows.length > 0) {
+          tenantId = tenantResult.rows[0].id
+        } else {
+          const existingTenant = await query(
+            `SELECT id FROM tenants WHERE name = $1 LIMIT 1`,
+            ["default"],
+          )
+          tenantId = existingTenant.rows[0].id
+        }
+
+        let appUserId: string | undefined
+
+        try {
+          // 2) Within the tenant, create or fetch the internal app user (UUID)
+          await withTenant(tenantId, async (client) => {
+            const existingUser = await client.query(
+              `SELECT id FROM users WHERE tenant_id = $1 AND email = $2 LIMIT 1`,
+              [tenantId, email],
             )
-            
-            let tenantId: string
-            if (tenantResult.rows.length > 0) {
-              tenantId = tenantResult.rows[0].id
+
+            if (existingUser.rows.length > 0) {
+              appUserId = existingUser.rows[0].id
+              console.log(`✅ Found existing user: ${appUserId} for ${email}`)
             } else {
-              const existingTenant = await query(
-                `SELECT id FROM tenants WHERE name = $1 LIMIT 1`,
-                ['default']
+              const insertedUser = await client.query(
+                `INSERT INTO users (tenant_id, email, display_name)
+                 VALUES ($1, $2, $3)
+                 RETURNING id`,
+                [tenantId, email, displayName],
               )
-              tenantId = existingTenant.rows[0].id
+              appUserId = insertedUser.rows[0].id
+              console.log(`✅ Created new user: ${appUserId} for ${email}`)
             }
-            
-            // Encrypt the refresh token
-            const encryptedToken = seal(account.refresh_token)
-            
-            // Upsert the encrypted token
-            await withTenant(tenantId, async (client) => {
+
+            // 3) If we receive a refresh token, upsert it into gmail_accounts
+            if (account.refresh_token) {
+              const encryptedToken = seal(account.refresh_token)
               await client.query(
                 `INSERT INTO gmail_accounts (user_id, tenant_id, email, encrypted_refresh_token)
                  VALUES ($1, $2, $3, $4)
                  ON CONFLICT (user_id)
-                 DO UPDATE SET 
-                   encrypted_refresh_token = excluded.encrypted_refresh_token, 
+                 DO UPDATE SET
+                   encrypted_refresh_token = EXCLUDED.encrypted_refresh_token,
                    updated_at = now()`,
-                [userId, tenantId, email, encryptedToken]
+                [appUserId, tenantId, email, encryptedToken],
               )
-            })
-          } catch (error) {
-            console.error('Failed to store encrypted refresh token:', error)
-          }
+              console.log(`✅ Stored Gmail refresh token for user: ${appUserId}`)
+            }
+          })
+        } catch (error) {
+          console.error("❌ Failed to store user/gmail account:", error)
         }
-        
+
+        // 4) Store internal IDs on the JWT for later API calls
+        ;(token as any).appUserId = appUserId
+        ;(token as any).tenantId = tenantId
+        ;(token as any).email = email
+
         return {
           ...token,
           accessToken: (account as any).access_token,
-          refreshToken: (account as any).refresh_token,
-          accessTokenExpires: account.expires_at ? account.expires_at * 1000 : Date.now() + 3600 * 1000,
+          refreshToken:
+            (account as any).refresh_token ?? (token as any).refreshToken,
+          accessTokenExpires: account.expires_at
+            ? account.expires_at * 1000
+            : Date.now() + 3600 * 1000,
           picture: (profile as any)?.picture,
         }
       }
 
-      if (token.accessToken && typeof (token as any).accessTokenExpires === "number" && Date.now() < (token as any).accessTokenExpires) {
+      // Reuse existing access token while it is still valid
+      if (
+        (token as any).accessToken &&
+        typeof (token as any).accessTokenExpires === "number" &&
+        Date.now() < (token as any).accessTokenExpires
+      ) {
         return token
       }
 
+      // Try to refresh using the stored refresh token
       if ((token as any).refreshToken) {
         return await refreshGoogleAccessToken(token)
       }
 
-      return { ...token, accessToken: null, accessTokenExpires: 0, error: "NoRefreshToken" }
+      // No way to refresh – clear access token
+      return {
+        ...token,
+        accessToken: null,
+        accessTokenExpires: 0,
+        error: "NoRefreshToken",
+      }
     },
     async session({ session, token }) {
-      ;(session.user as any).picture = (token as any).picture ?? session.user?.image ?? null
+      ;(session.user as any).picture =
+        (token as any).picture ?? session.user?.image ?? null
+      // expose our internal app user ID to the client if needed
+      ;(session.user as any).id =
+        (token as any).appUserId ?? (token as any).sub ?? null
       return session
     },
   },

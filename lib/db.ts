@@ -9,9 +9,9 @@ const pool = new Pool({
   max: 10, // basically the maximum number of connections that can be open at the same time.
   idleTimeoutMillis: 30000, // basically if the connection is idle for 30 seconds, it will be terminated.
   connectionTimeoutMillis: 2000, // basically if the conenction takes longer than 2 seconds, it will be terminated.
-  ssl: process.env.DATABASE_URL?.includes('supabase.com') 
-    ? { rejectUnauthorized: false } // Accept self-signed certs for Supabase pooler
-    : undefined,
+  ssl: process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: true } // Strict SSL in production
+    : { rejectUnauthorized: false } // Relaxed for local dev (corporate proxies, etc.)
 });
 
 // i'm doing this because i want to make sure that the pool is closed when the server is shutting down. module is cached though, so it doesn't matter much in production.
@@ -32,7 +32,10 @@ export async function withTenant<T>(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SET LOCAL app.tenant_id = $1", [tenantId]); // we use $1 to avoid SQL injection.
+    // NOTE: Postgres does not allow parameter placeholders in SET statements in the same way
+    // it does for normal queries, so we inline the UUID here. tenantId comes from the database
+    // and is a UUID, so this is safe.
+    await client.query(`SET LOCAL app.tenant_id = '${tenantId}'`);
     const result = await fn(client); // we execute the query.
     await client.query("COMMIT");
     return result;

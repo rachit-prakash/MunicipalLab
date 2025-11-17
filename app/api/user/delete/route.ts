@@ -6,10 +6,11 @@ import { query, withTenant } from "@/lib/db"
 export async function DELETE(req: NextRequest) {
 	try {
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-		if (!token?.sub) {
+		const userId = (token as any)?.appUserId ?? token?.sub
+
+		if (!userId) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 		}
-		const userId = token.sub as string
 		const requestId = req.headers.get("x-request-id") ?? undefined
 
 		// Resolve tenant for this user
