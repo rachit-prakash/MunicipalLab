@@ -3,8 +3,6 @@ import { getToken } from "next-auth/jwt"
 import { refreshGoogleAccessToken } from "@/lib/auth"
 import { demoMessages } from "@/lib/demo"
 
-export const runtime = 'edge';
-
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const urlObj = req.nextUrl
   const debug = urlObj.searchParams.get("debug") === "1"
