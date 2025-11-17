@@ -9,6 +9,9 @@ const pool = new Pool({
   max: 10, // basically the maximum number of connections that can be open at the same time.
   idleTimeoutMillis: 30000, // basically if the connection is idle for 30 seconds, it will be terminated.
   connectionTimeoutMillis: 2000, // basically if the conenction takes longer than 2 seconds, it will be terminated.
+  ssl: process.env.DATABASE_URL?.includes('supabase.com') 
+    ? { rejectUnauthorized: false } // Accept self-signed certs for Supabase pooler
+    : undefined,
 });
 
 // i'm doing this because i want to make sure that the pool is closed when the server is shutting down. module is cached though, so it doesn't matter much in production.
