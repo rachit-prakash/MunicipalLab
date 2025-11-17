@@ -9,7 +9,7 @@
     "start": "next start",
     "pages:build": "npx @cloudflare/next-on-pages",
   "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-date=2024-11-12",
-  "pages:deploy": "npm run pages:build && npx wrangler pages deploy",
+  "pages:deploy": "pnpm run pages:build && pnpm exec wrangler pages deploy",
   "validate:db": "node scripts/validate-db-url.js"
   },
   "dependencies": {
