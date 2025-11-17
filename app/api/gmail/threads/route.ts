@@ -3,8 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { withTenant, query } from '@/lib/db';
 
-export const runtime = 'edge';
-
 export async function GET(request: NextRequest) {
   try {
     // Authentication check
