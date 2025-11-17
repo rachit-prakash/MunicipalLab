@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server"
 
+export const runtime = 'edge';
+
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string }
 
 export async function POST(req: NextRequest) {

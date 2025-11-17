@@ -5,6 +5,8 @@ import { withTenant, query } from '@/lib/db';
 import { getAccessToken } from '@/lib/googleTokens';
 import { redactPII } from '@/lib/sanitizer';
 
+export const runtime = 'edge';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
