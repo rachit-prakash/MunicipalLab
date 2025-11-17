@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { withTenant, query } from '@/lib/db';
 import { getAccessToken } from '@/lib/googleTokens';
 import { redactPII } from '@/lib/sanitizer';
+import { audit } from '@/lib/audit';
 
 export async function GET(
   request: NextRequest,
@@ -65,6 +66,16 @@ export async function GET(
 
     // if the thread exists in the database, we return it. otherwise, we fetch it from Gmail.
     if (existingThread) {
+      // best-effort audit
+      try {
+        await audit({
+          tenantId,
+          actorUserId: userId,
+          action: 'gmail.thread.read',
+          requestId: request.headers.get('x-request-id') ?? undefined,
+          payload: { source: 'db', id: threadId },
+        })
+      } catch {}
       return NextResponse.json({
         thread: {
           id: existingThread.id,
@@ -204,6 +215,16 @@ export async function GET(
     });
 
     // we return the thread and messages from the database.
+    // best-effort audit
+    try {
+      await audit({
+        tenantId,
+        actorUserId: userId,
+        action: 'gmail.thread.read',
+        requestId: request.headers.get('x-request-id') ?? undefined,
+        payload: { source: 'gmail', id: threadId, messages: result.messages.length },
+      })
+    } catch {}
     return NextResponse.json({
       thread: {
         id: result.thread.id,

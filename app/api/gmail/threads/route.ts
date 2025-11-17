@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { withTenant, query } from '@/lib/db';
+import { audit } from '@/lib/audit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -133,6 +134,16 @@ export async function GET(request: NextRequest) {
     });
 
     // we return the threads from the database.
+    // best-effort audit
+    try {
+      await audit({
+        tenantId,
+        actorUserId: userId,
+        action: 'gmail.threads.list',
+        requestId: request.headers.get('x-request-id') ?? undefined,
+        payload: { q, status, topicId, assigneeId, limit },
+      })
+    } catch {}
     return NextResponse.json(result);
   } catch (error) {
     // if we fail to fetch the threads, we return a 500 error.
