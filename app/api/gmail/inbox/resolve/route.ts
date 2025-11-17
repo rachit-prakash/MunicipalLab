@@ -2,6 +2,8 @@
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { refreshGoogleAccessToken } from "@/lib/auth"
+import { audit } from "@/lib/audit"
+import { query } from "@/lib/db"
 
 export async function GET(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
@@ -106,6 +108,28 @@ export async function GET(req: NextRequest) {
       }
     })
   )
+
+  // best-effort audit
+  ;(async () => {
+    try {
+      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+      const userId = token?.sub as string | undefined
+      let tenantId: string | undefined
+      if (userId) {
+        const t = await query(`SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`, [userId])
+        if (t.rows.length > 0) tenantId = t.rows[0].tenant_id
+      }
+      if (tenantId) {
+        await audit({
+          tenantId,
+          actorUserId: userId,
+          action: "gmail.inbox.resolve",
+          requestId: req.headers.get("x-request-id") ?? undefined,
+          payload: { tested: results.length },
+        })
+      }
+    } catch {}
+  })()
 
   return new Response(JSON.stringify({ profile, results }, null, 2), {
     headers: { "content-type": "application/json" },

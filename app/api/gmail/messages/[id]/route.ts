@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { refreshGoogleAccessToken } from "@/lib/auth"
 import { demoMessages } from "@/lib/demo"
+import { audit } from "@/lib/audit"
+import { query } from "@/lib/db"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const urlObj = req.nextUrl
@@ -17,6 +19,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const item = demoMessages.find((m) => m.id === id)
     if (!item) return new Response(JSON.stringify({ error: "Not found" }, null, 2), { status: 404 })
     const message = toGmailMessage(item)
+    // best-effort audit
+    ;(async () => {
+      try {
+        const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+        const userId = token?.sub as string | undefined
+        let tenantId: string | undefined
+        if (userId) {
+          const t = await query(`SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`, [userId])
+          if (t.rows.length > 0) tenantId = t.rows[0].tenant_id
+        }
+        if (tenantId) {
+          await audit({
+            tenantId,
+            actorUserId: userId,
+            action: "gmail.message.read",
+            requestId: req.headers.get("x-request-id") ?? undefined,
+            payload: { source: "demo", id },
+          })
+        }
+      } catch {}
+    })()
     return new Response(JSON.stringify(message, null, 2), {
       headers: { "content-type": "application/json", "x-demo": "1" },
     })
@@ -67,6 +90,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   // checks if the message is valid.
   if (res.ok) {
     const bodyText = await res.text()
+    // best-effort audit
+    ;(async () => {
+      try {
+        const t = await query(`SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`, [(token as any).sub])
+        const tenantId = t.rows?.[0]?.tenant_id as string | undefined
+        if (tenantId) {
+          await audit({
+            tenantId,
+            actorUserId: (token as any).sub,
+            action: "gmail.message.read",
+            requestId: req.headers.get("x-request-id") ?? undefined,
+            payload: { source: "message", id: sanitizedId },
+          })
+        }
+      } catch {}
+    })()
     if (debug) {
       // if the debug flag is set, return a response with the message body.
       return new Response(
@@ -107,6 +146,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       // checks if the message is valid.
       if (msgRes.ok) {
         const text = await msgRes.text()
+        // best-effort audit
+        ;(async () => {
+          try {
+            const t = await query(`SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`, [(token as any).sub])
+            const tenantId = t.rows?.[0]?.tenant_id as string | undefined
+            if (tenantId) {
+              await audit({
+                tenantId,
+                actorUserId: (token as any).sub,
+                action: "gmail.message.read",
+                requestId: req.headers.get("x-request-id") ?? undefined,
+                payload: { source: "thread->message", id: firstMessageId },
+              })
+            }
+          } catch {}
+        })()
         if (debug) {
           return new Response(
             JSON.stringify(

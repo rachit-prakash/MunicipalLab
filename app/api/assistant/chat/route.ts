@@ -1,4 +1,7 @@
 import type { NextRequest } from "next/server"
+import { getToken } from "next-auth/jwt"
+import { audit } from "@/lib/audit"
+import { query } from "@/lib/db"
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string }
 
@@ -77,6 +80,29 @@ export async function POST(req: NextRequest) {
 			data?.choices?.[0]?.message?.content ??
 			data?.choices?.[0]?.delta?.content ??
 			"Sorry, I couldn't generate a response."
+
+		// best-effort audit (non-blocking)
+		try {
+			const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+			const userId = token?.sub as string | undefined
+			let tenantId: string | undefined
+			if (userId) {
+				const t = await query(
+					`SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
+					[userId]
+				)
+				if (t.rows.length > 0) tenantId = t.rows[0].tenant_id
+			}
+			if (tenantId) {
+				await audit({
+					tenantId,
+					actorUserId: userId,
+					action: "assistant.chat",
+					requestId: req.headers.get("x-request-id") ?? undefined,
+					payload: { model, messageCount: finalMessages.length },
+				})
+			}
+		} catch {}
 
 		return new Response(JSON.stringify({ role: "assistant", content }), {
 			headers: { "content-type": "application/json" },
