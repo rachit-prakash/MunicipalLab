@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header"
 import { DashboardKPIs } from "@/components/dashboard/kpis"
 import { TopicsChart } from "@/components/dashboard/topics-chart"
 import { StanceTrendChart } from "@/components/dashboard/stance-trend-chart"
+import { PolicyIntelligenceHeader } from "@/components/dashboard/policy-intelligence-header"
 import { Spinner } from "@/components/ui/spinner"
 
 type InboxListResponse = {
@@ -259,6 +260,8 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-semibold text-ink-900">Dashboard</h1>
               <p className="text-sm text-ink-500">KPIs and trends at a glance</p>
             </div>
+
+            <PolicyIntelligenceHeader />
 
             {loading ? (
               <div className="flex items-center gap-2 text-ink-600">
