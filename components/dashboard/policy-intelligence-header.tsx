@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useEffect, useMemo, useState } from "react"
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { InsightCard } from "@/components/dashboard/insight-card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -97,16 +97,15 @@ export function PolicyIntelligenceHeader() {
   const [syncing, setSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    async function load() {
+  const loadInsights = useCallback(
+    async (signal?: AbortSignal) => {
       setLoading(true)
       setError(null)
       try {
         const res = await fetch("/api/policy-intelligence", {
           method: "GET",
           cache: "no-store",
-          signal: controller.signal,
+          signal,
         })
         if (!res.ok) {
           const message = await res.text().catch(() => res.statusText)
@@ -121,47 +120,65 @@ export function PolicyIntelligenceHeader() {
       } finally {
         setLoading(false)
       }
-    }
+    },
+    [],
+  )
 
-    void load()
+  const handleSync = useCallback(
+    async (options?: { silent?: boolean; signal?: AbortSignal }) => {
+      const silent = options?.silent ?? false
+      if (!silent) {
+        setSyncing(true)
+        setSyncMessage(null)
+      }
+      try {
+        const res = await fetch("/api/sync", {
+          method: "POST",
+          cache: "no-store",
+        })
+
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({ error: "Sync failed" }))
+          throw new Error(error.message || error.error || "Failed to sync")
+        }
+
+        if (!silent) {
+          setSyncMessage("✓ Synced successfully!")
+          setTimeout(() => setSyncMessage(null), 3000)
+        }
+
+        await loadInsights(options?.signal)
+        return true
+      } catch (err: any) {
+        if (err?.name === "AbortError") {
+          return false
+        }
+        if (!silent) {
+          setSyncMessage(`✗ ${err?.message ?? "Sync failed"}`)
+          setTimeout(() => setSyncMessage(null), 5000)
+        } else {
+          console.error("Automatic sync failed", err)
+        }
+        return false
+      } finally {
+        if (!silent) {
+          setSyncing(false)
+        }
+      }
+    },
+    [loadInsights],
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void (async () => {
+      const success = await handleSync({ silent: true, signal: controller.signal })
+      if (!success) {
+        await loadInsights(controller.signal)
+      }
+    })()
     return () => controller.abort()
-  }, [])
-
-  const handleSync = async () => {
-    setSyncing(true)
-    setSyncMessage(null)
-    try {
-      const res = await fetch("/api/sync", {
-        method: "POST",
-        cache: "no-store",
-      })
-      
-      if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: "Sync failed" }))
-        throw new Error(error.message || error.error || "Failed to sync")
-      }
-
-      setSyncMessage("✓ Synced successfully!")
-      
-      // Reload the insights after sync
-      const insightsRes = await fetch("/api/policy-intelligence", {
-        method: "GET",
-        cache: "no-store",
-      })
-      if (insightsRes.ok) {
-        const payload = (await insightsRes.json()) as PolicyInsightsResponse
-        setData(payload)
-      }
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSyncMessage(null), 3000)
-    } catch (err: any) {
-      setSyncMessage(`✗ ${err?.message ?? "Sync failed"}`)
-      setTimeout(() => setSyncMessage(null), 5000)
-    } finally {
-      setSyncing(false)
-    }
-  }
+  }, [handleSync, loadInsights])
 
   const cards = useMemo<InsightCardSpec[]>(() => {
     if (!data) return placeholderCards
@@ -232,7 +249,9 @@ export function PolicyIntelligenceHeader() {
           <p className="text-base text-gray-600">Decision-grade signals updated live from constituent inboxes</p>
         </div>
         <button
-          onClick={handleSync}
+          onClick={() => {
+            void handleSync()
+          }}
           disabled={syncing}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg transition-colors"
         >
