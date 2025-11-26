@@ -132,9 +132,21 @@ async function incrementalSync(
       url.searchParams.set("pageToken", nextPageToken);
     }
 
-    const response = await fetchWithRetry(url.toString(), {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    let response: Response;
+    try {
+      response = await fetchWithRetry(url.toString(), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "");
+      if (message.includes("status 410") || message.includes("historyId")) {
+        // History ID is too old/invalid – bootstrap to reset the sync state.
+        await bootstrapSync(tenantId, userId, accessToken, userEmail);
+        return;
+      }
+      throw error;
+    }
 
     const data = (await response.json()) as {
       history?: Array<{
@@ -214,9 +226,21 @@ async function fetchAndUpsertMessage(
 
   // Fetch message details from Gmail
   const msgUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`;
-  const msgResponse = await fetchWithRetry(msgUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  let msgResponse: Response;
+  try {
+    msgResponse = await fetchWithRetry(msgUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error ?? "");
+    if (message.includes("status 404")) {
+      console.warn(
+        `Gmail message ${messageId} (thread ${threadId}) not found; skipping.`,
+      );
+      return;
+    }
+    throw error;
+  }
 
   const msgData = (await msgResponse.json()) as {
     id: string;

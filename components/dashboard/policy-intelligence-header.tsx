@@ -1,9 +1,52 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react"
+import { ReactNode, useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { InsightCard } from "@/components/dashboard/insight-card"
 import { Skeleton } from "@/components/ui/skeleton"
+
+type TrendTone = "up" | "down" | "neutral"
+type InsightTone = TrendTone | "default"
+
+type InsightCardSpec = {
+  key: string
+  title: string
+  value: string | number
+  insight: string
+  insightTone?: InsightTone
+  extra?: ReactNode
+}
+
+const placeholderCards: InsightCardSpec[] = [
+  {
+    key: "messages-placeholder",
+    title: "New Messages Today",
+    value: "87",
+    insight: "↑ 12% vs last week",
+    insightTone: "up",
+  },
+  {
+    key: "issue-placeholder",
+    title: "Top Rising Issue",
+    value: "Transit complaints",
+    insight: "↑ 34% this week",
+    insightTone: "up",
+  },
+  {
+    key: "sentiment-placeholder",
+    title: "Sentiment Shift",
+    value: "-12% net sentiment",
+    insight: "Drop driven by public safety emails",
+    insightTone: "down",
+  },
+  {
+    key: "urgent-placeholder",
+    title: "Urgent Cases",
+    value: "14 urgent",
+    insight: "Mostly angry + emergency keywords",
+    insightTone: "neutral",
+  },
+]
 
 type PolicyInsightsResponse = {
   newMessagesToday: {
@@ -27,15 +70,16 @@ type PolicyInsightsResponse = {
   }
 }
 
-function formatDeltaLabel(value: number | null | undefined, suffix: string) {
+function formatDeltaLabel(value: number | null | undefined, suffix: string): { label: string; tone: TrendTone } {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return `No change ${suffix}`
+    return { label: `No change ${suffix}`, tone: "neutral" }
   }
   if (Math.abs(value) < 0.5) {
-    return `No change ${suffix}`
+    return { label: `No change ${suffix}`, tone: "neutral" }
   }
-  const arrow = value > 0 ? "↑" : "↓"
-  return `${arrow} ${Math.abs(Math.round(value))}% ${suffix}`
+  const tone: TrendTone = value > 0 ? "up" : "down"
+  const arrow = tone === "up" ? "↑" : "↓"
+  return { label: `${arrow} ${Math.abs(Math.round(value))}% ${suffix}`, tone }
 }
 
 function formatSignedPercent(value: number | null | undefined) {
@@ -50,36 +94,8 @@ export function PolicyIntelligenceHeader() {
   const [data, setData] = useState<PolicyInsightsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const placeholderCards = useMemo(
-    () => [
-      {
-        key: "messages-placeholder",
-        title: "New Messages Today",
-        value: "87",
-        insight: "↑ 12% vs last week",
-      },
-      {
-        key: "issue-placeholder",
-        title: "Top Rising Issue",
-        value: "Transit complaints",
-        insight: "↑ 34% this week",
-      },
-      {
-        key: "sentiment-placeholder",
-        title: "Sentiment Shift",
-        value: "-12% net sentiment",
-        insight: "Drop driven by public safety emails",
-      },
-      {
-        key: "urgent-placeholder",
-        title: "Urgent Cases",
-        value: "14 urgent",
-        insight: "Mostly angry + emergency keywords",
-      },
-    ],
-    [],
-  )
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -111,34 +127,74 @@ export function PolicyIntelligenceHeader() {
     return () => controller.abort()
   }, [])
 
-  const cards = useMemo(() => {
+  const handleSync = async () => {
+    setSyncing(true)
+    setSyncMessage(null)
+    try {
+      const res = await fetch("/api/sync", {
+        method: "POST",
+        cache: "no-store",
+      })
+      
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: "Sync failed" }))
+        throw new Error(error.message || error.error || "Failed to sync")
+      }
+
+      setSyncMessage("✓ Synced successfully!")
+      
+      // Reload the insights after sync
+      const insightsRes = await fetch("/api/policy-intelligence", {
+        method: "GET",
+        cache: "no-store",
+      })
+      if (insightsRes.ok) {
+        const payload = (await insightsRes.json()) as PolicyInsightsResponse
+        setData(payload)
+      }
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSyncMessage(null), 3000)
+    } catch (err: any) {
+      setSyncMessage(`✗ ${err?.message ?? "Sync failed"}`)
+      setTimeout(() => setSyncMessage(null), 5000)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const cards = useMemo<InsightCardSpec[]>(() => {
     if (!data) return placeholderCards
     const deltaVsAvg = formatDeltaLabel(data.newMessagesToday.deltaPercent, "vs 7-day avg")
     const risingIssue = data.topRisingIssue
-    const risingInsight = risingIssue
+    const risingInsight: { label: string; tone: TrendTone } = risingIssue
       ? formatDeltaLabel(risingIssue.deltaPercent, "week-over-week")
-      : "Monitoring all topics"
+      : { label: "Monitoring all topics", tone: "neutral" }
     const sentimentValue = `${formatSignedPercent(data.sentimentShift.deltaPercent)} net sentiment`
-    const sentimentInsight = data.sentimentShift.thisWeekAvg !== null
-      ? `This week avg ${Number(data.sentimentShift.thisWeekAvg).toFixed(2)}`
-      : "Not enough signal yet"
+    const sentimentDelta = formatDeltaLabel(data.sentimentShift.deltaPercent, "vs last week")
+    const sentimentAvg =
+      data.sentimentShift.thisWeekAvg !== null
+        ? `This week avg ${Number(data.sentimentShift.thisWeekAvg).toFixed(2)}`
+        : "Not enough signal yet"
     const urgentReasons =
       data.urgentCases.topReasons.length > 0
         ? `Mostly ${data.urgentCases.topReasons.slice(0, 2).join(" + ")}`
         : "No critical triggers"
 
-    return [
+    const cardList: InsightCardSpec[] = [
       {
         key: "messages",
         title: "New Messages Today",
         value: data.newMessagesToday.count,
-        insight: deltaVsAvg,
+        insight: deltaVsAvg.label,
+        insightTone: deltaVsAvg.tone,
       },
       {
         key: "issue",
         title: "Top Rising Issue",
         value: risingIssue?.topic ?? "No spike detected",
-        insight: risingInsight,
+        insight: risingInsight.label,
+        insightTone: risingInsight.tone,
         extra: risingIssue?.exampleSubjectLine ? (
           <p className="text-xs text-gray-400">
             e.g. "
@@ -153,25 +209,58 @@ export function PolicyIntelligenceHeader() {
         key: "sentiment",
         title: "Sentiment Shift",
         value: sentimentValue,
-        insight: sentimentInsight,
+        insight: sentimentDelta.label,
+        insightTone: sentimentDelta.tone,
+        extra: <p className="text-xs text-gray-400">{sentimentAvg}</p>,
       },
       {
         key: "urgent",
         title: "Urgent Cases",
         value: `${data.urgentCases.count} urgent`,
         insight: urgentReasons,
+        insightTone: "neutral",
       },
     ]
+    return cardList
   }, [data, placeholderCards])
 
   return (
     <section className="space-y-4">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Policy Intelligence</p>
-        <p className="text-base text-gray-600">Decision-grade signals updated live from constituent inboxes</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Policy Intelligence</p>
+          <p className="text-base text-gray-600">Decision-grade signals updated live from constituent inboxes</p>
+        </div>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg transition-colors"
+        >
+          {syncing ? (
+            <>
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Syncing...
+            </>
+          ) : (
+            <>
+              <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Sync Now
+            </>
+          )}
+        </button>
       </div>
 
       {error ? <div className="text-sm text-red-600 border border-red-100 bg-red-50 rounded-lg px-3 py-2">{error}</div> : null}
+      {syncMessage ? (
+        <div className={`text-sm border rounded-lg px-3 py-2 ${syncMessage.includes('✓') ? 'text-green-600 border-green-100 bg-green-50' : 'text-amber-600 border-amber-100 bg-amber-50'}`}>
+          {syncMessage}
+        </div>
+      ) : null}
 
       <motion.div
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
@@ -193,6 +282,7 @@ export function PolicyIntelligenceHeader() {
                 title={card.title}
                 value={card.value}
                 insight={card.insight}
+                insightTone={card.insightTone ?? "default"}
                 delay={0.05 * idx}
               >
                 {card.extra}

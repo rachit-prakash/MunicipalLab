@@ -47,7 +47,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "Missing session user" }, { status: 401 })
     }
 
-    const tenantResult = await query<{ tenant_id: string }>(
+    const tenantResult = await query(
       `SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
       [userId],
     )
@@ -75,8 +75,8 @@ export async function GET(_request: NextRequest) {
           CROSS JOIN bounds
           WHERE m.is_outbound = false
             AND m.tenant_id = $2
-            AND m.internal_date >= (bounds.today_local AT TIME ZONE $1)
-            AND m.internal_date < ((bounds.today_local + interval '1 day') AT TIME ZONE $1);
+            AND timezone($1, m.internal_date) >= bounds.today_local
+            AND timezone($1, m.internal_date) < bounds.today_local + interval '1 day';
         `,
         [timezone, tenantId],
       )
@@ -98,8 +98,8 @@ export async function GET(_request: NextRequest) {
             LEFT JOIN messages m
               ON m.is_outbound = false
              AND m.tenant_id = $2
-             AND m.internal_date >= ((bounds.today_local - series.offset * interval '1 day') AT TIME ZONE $1)
-             AND m.internal_date < ((bounds.today_local - (series.offset - 1) * interval '1 day') AT TIME ZONE $1)
+            AND timezone($1, m.internal_date) >= bounds.today_local - series.offset * interval '1 day'
+            AND timezone($1, m.internal_date) < bounds.today_local - (series.offset - 1) * interval '1 day'
             GROUP BY series.offset
           )
           SELECT COALESCE(AVG(day_count)::float, 0) AS avg_count FROM daily;
@@ -126,16 +126,16 @@ export async function GET(_request: NextRequest) {
             SELECT
               COALESCE(tp.name, 'Uncategorized') AS topic_name,
               COUNT(*) FILTER (
-                WHERE m.internal_date >= bounds.this_week_start
-                  AND m.internal_date < bounds.this_week_end
+                WHERE timezone($1, m.internal_date) >= bounds.this_week_start
+                  AND timezone($1, m.internal_date) < bounds.this_week_end
               ) AS current_count,
               COUNT(*) FILTER (
-                WHERE m.internal_date >= bounds.last_week_start
-                  AND m.internal_date < bounds.last_week_end
+                WHERE timezone($1, m.internal_date) >= bounds.last_week_start
+                  AND timezone($1, m.internal_date) < bounds.last_week_end
               ) AS prev_count,
               MAX(t.subject) FILTER (
-                WHERE m.internal_date >= bounds.this_week_start
-                  AND m.internal_date < bounds.this_week_end
+            WHERE timezone($1, m.internal_date) >= bounds.this_week_start
+                AND timezone($1, m.internal_date) < bounds.this_week_end
               ) AS example_subject
             FROM bounds
             JOIN messages m ON m.tenant_id = $2 AND m.is_outbound = false
@@ -173,8 +173,8 @@ export async function GET(_request: NextRequest) {
                 AND m.internal_date < bounds.this_week_end
             ) AS current_avg,
             AVG(m.sentiment_score) FILTER (
-              WHERE m.internal_date >= bounds.last_week_start
-                AND m.internal_date < bounds.last_week_end
+            WHERE timezone($1, m.internal_date) >= bounds.last_week_start
+                AND timezone($1, m.internal_date) < bounds.last_week_end
             ) AS prev_avg
           FROM bounds
           JOIN messages m ON m.tenant_id = $2
@@ -201,8 +201,8 @@ export async function GET(_request: NextRequest) {
               ON m.tenant_id = $2
              AND m.is_outbound = false
              AND m.urgency_level IN ('high', 'critical')
-             AND m.internal_date >= bounds.this_week_start
-             AND m.internal_date < bounds.this_week_end
+             AND timezone($1, m.internal_date) >= bounds.this_week_start
+             AND timezone($1, m.internal_date) < bounds.this_week_end
           )
           SELECT
             (SELECT COUNT(*) FROM urgent_messages)::int AS count,

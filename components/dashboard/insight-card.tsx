@@ -11,9 +11,18 @@ export interface InsightCardProps {
   delay?: number
   className?: string
   children?: ReactNode
+  insightTone?: "up" | "down" | "neutral" | "default"
 }
 
-export function InsightCard({ title, value, insight, delay = 0, className, children }: InsightCardProps) {
+export function InsightCard({
+  title,
+  value,
+  insight,
+  delay = 0,
+  className,
+  children,
+  insightTone = "default",
+}: InsightCardProps) {
   const prefersReducedMotion = useReducedMotion()
 
   const animationProps = prefersReducedMotion
@@ -26,6 +35,12 @@ export function InsightCard({ title, value, insight, delay = 0, className, child
 
   const hoverAnimation = prefersReducedMotion ? undefined : { y: -4 }
   const tapAnimation = prefersReducedMotion ? undefined : { scale: 0.98 }
+  const insightColor =
+    insightTone === "up"
+      ? "text-emerald-700"
+      : insightTone === "down"
+        ? "text-rose-700"
+        : "text-gray-500"
 
   return (
     <motion.article
@@ -43,7 +58,7 @@ export function InsightCard({ title, value, insight, delay = 0, className, child
       <div className="text-3xl font-semibold text-gray-900 leading-tight">
         {typeof value === "number" ? value.toLocaleString() : value}
       </div>
-      {insight ? <div className="text-sm text-gray-500">{insight}</div> : null}
+      {insight ? <div className={cn("text-sm font-medium", insightColor)}>{insight}</div> : null}
       {children}
     </motion.article>
   )
