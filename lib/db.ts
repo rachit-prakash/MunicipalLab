@@ -8,9 +8,9 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 10, // basically the maximum number of connections that can be open at the same time.
   idleTimeoutMillis: 30000, // basically if the connection is idle for 30 seconds, it will be terminated.
-  connectionTimeoutMillis: 10000, // basically if the conenction takes longer than 10 seconds, it will be terminated.
+  connectionTimeoutMillis: 10000, // basically if the connection takes longer than 10 seconds, it will be terminated.
   ssl: process.env.NODE_ENV === "production"
-    ? { rejectUnauthorized: false } // Accept Supabase pooler certificate (still encrypted)
+    ? { rejectUnauthorized: false } // Accept Supabase certificate (connection still encrypted)
     : false // No SSL for local dev
 });
 
