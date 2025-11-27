@@ -18,14 +18,18 @@ export function Sidebar({
   onMobileOpenChange?: (open: boolean) => void
 }) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
     try {
-      return window.localStorage.getItem("sidebar_collapsed") === "true"
+      const stored = window.localStorage.getItem("sidebar_collapsed") === "true"
+      setIsCollapsed(stored)
     } catch {
-      return false
+      // ignore
     }
-  })
+  }, [])
 
   useEffect(() => {
     try {
@@ -60,7 +64,11 @@ export function Sidebar({
             </SheetHeader>
             <div className="flex h-full flex-col">
               <div className="px-6 py-5 flex items-center justify-between flex-shrink-0">
-                <h1 className={cn("text-lg font-semibold text-ink-900", playfair.className)}>Legaside.</h1>
+                <img
+                  src="/logo.png"
+                  alt="Logo"
+                  className="h-8 w-auto object-contain"
+                />
               </div>
               <nav className="flex-1 overflow-y-auto px-3 py-6">
                 <div className="space-y-1">
@@ -99,7 +107,7 @@ export function Sidebar({
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen border-r border-border bg-background transition-all duration-300 overflow-y-auto overflow-x-hidden hidden md:block",
+          "fixed left-0 top-0 z-40 h-screen border-r border-border bg-background overflow-y-auto overflow-x-hidden hidden md:block",
           isCollapsed ? "w-20" : "w-64",
         )}
       >
@@ -107,7 +115,11 @@ export function Sidebar({
           {/* Logo and toggle */}
           <div className="px-6 py-5 flex items-center justify-between flex-shrink-0">
             {!isCollapsed && (
-              <h1 className={cn("text-lg font-semibold text-ink-900", playfair.className)}>Legaside.</h1>
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="h-12 object-contain"
+              />
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
