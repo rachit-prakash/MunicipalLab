@@ -4,14 +4,30 @@ import { Pool, PoolClient, QueryResult } from "pg";
 // then it has a safety wrapper withTenant that handles transactions and sets the tenant ID in order to prevent fucking boilerplate lmao.
 
 // i'm creating a pool because it's wayyyy faster lol. i dont want nextjs to create a new connection for every request.
+//
+// IMPORTANT (SSL behaviour):
+// - Local databases (localhost / 127.0.0.1) use *no SSL*.
+// - Any remote database (Supabase / Neon / Railway / cloud Postgres) uses SSL but
+//   we turn off certificate validation with `rejectUnauthorized: false`.
+//   This avoids "self-signed certificate in certificate chain" errors while
+//   still keeping the connection encrypted in transit.
+const connectionString = process.env.DATABASE_URL;
+
+const isLocalDb =
+  !connectionString ||
+  connectionString.includes("localhost") ||
+  connectionString.includes("127.0.0.1");
+
+const ssl = isLocalDb
+  ? false
+  : { rejectUnauthorized: false }; // Accept provider's certificate (connection still encrypted)
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   max: 10, // basically the maximum number of connections that can be open at the same time.
   idleTimeoutMillis: 30000, // basically if the connection is idle for 30 seconds, it will be terminated.
   connectionTimeoutMillis: 10000, // basically if the connection takes longer than 10 seconds, it will be terminated.
-  ssl: process.env.NODE_ENV === "production"
-    ? { rejectUnauthorized: false } // Accept Supabase certificate (connection still encrypted)
-    : false // No SSL for local dev
+  ssl,
 });
 
 // i'm doing this because i want to make sure that the pool is closed when the server is shutting down. module is cached though, so it doesn't matter much in production.
