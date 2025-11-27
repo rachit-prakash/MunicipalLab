@@ -44,9 +44,8 @@ export function Sidebar({
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/")
 
   const menuItems = [
-    { href: "/threads", label: "Threads", icon: Mail, description: "Browse and triage conversations" },
-    { href: "/gmail", label: "Inbox", icon: Mail, description: "View your Gmail inbox" },
     { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, description: "KPIs and trends at a glance" },
+    { href: "/threads", label: "Inbox", icon: Mail, description: "Browse and triage conversations" },
   ]
 
 
