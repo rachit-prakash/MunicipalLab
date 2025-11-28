@@ -3,11 +3,11 @@
 import { Suspense, useEffect, useMemo, useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
-import { DashboardKPIs } from "@/components/dashboard/kpis"
-import { TopicsChart } from "@/components/dashboard/topics-chart"
 import { StanceTrendChart } from "@/components/dashboard/stance-trend-chart"
 import { PolicyIntelligenceHeader } from "@/components/dashboard/policy-intelligence-header"
+import { TopicInsightsPanel } from "@/components/dashboard/topic-insights-panel"
 import { Spinner } from "@/components/ui/spinner"
+import { DistrictPulseSection } from "@/components/dashboard/district-pulse-section"
 
 type InboxListResponse = {
   messages?: Array<{ id: string; threadId: string }>
@@ -29,8 +29,6 @@ type GmailMessage = {
 type TrendPoint = { date: string; support: number; oppose: number; neutral: number }
 
 type DashboardData = {
-  total: number
-  caseworkPct: number
   topTopics: Array<{ topic: string; count: number }>
   trendsByTopic: Record<string, TrendPoint[]>
 }
@@ -175,18 +173,6 @@ export default function DashboardPage() {
           dayLabels.push(normalizeDateLabel(d))
         }
 
-        let total = inbox?.resultSizeEstimate ?? messages.length
-        if (typeof total !== "number" || total <= 0) total = messages.length
-
-        const caseworkCount = messages.reduce((acc, msg) => {
-          const headers = msg?.payload?.headers ?? []
-          const subject = getHeader(headers, "Subject") || ""
-          const snippet = (msg?.snippet ?? "").trim()
-          const text = `${subject}\n${snippet}`
-          return acc + (detectCasework(text) ? 1 : 0)
-        }, 0)
-        const caseworkPct = total ? Math.round((caseworkCount / Math.max(messages.length, 1)) * 100) : 0
-
         const topicCounts: Record<string, number> = {}
         for (const msg of messages) {
           const headers = msg?.payload?.headers ?? []
@@ -229,8 +215,6 @@ export default function DashboardPage() {
         }
 
         const result: DashboardData = {
-          total,
-          caseworkPct,
           topTopics,
           trendsByTopic,
         }
@@ -270,14 +254,12 @@ export default function DashboardPage() {
               </div>
             ) : null}
 
-            {/* KPI Tiles */}
-            {data ? <DashboardKPIs total={data.total} caseworkPct={data.caseworkPct} /> : null}
+            <TopicInsightsPanel />
+
+            <DistrictPulseSection />
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {data ? <TopicsChart topics={data.topTopics} /> : null}
-              {data ? <StanceTrendChart trendsByTopic={data.trendsByTopic} defaultTopic="Israel–Palestine War" /> : null}
-            </div>
+            {data ? <StanceTrendChart trendsByTopic={data.trendsByTopic} defaultTopic="Israel–Palestine War" /> : null}
 
             {!data && !loading && error ? (
               <div className="text-sm text-red-600">Failed to load analytics: {error}</div>
