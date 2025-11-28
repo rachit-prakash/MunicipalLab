@@ -193,13 +193,13 @@ function ThreadsPageInner() {
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
           <div className="px-4 sm:px-6 pt-6">
-            <h1 className="text-xl font-semibold text-ink-900">Threads</h1>
-            <p className="text-sm text-ink-500">Browse and triage conversations</p>
+            <h1 className="text-xl font-semibold text-gray-900">Threads</h1>
+            <p className="text-sm text-gray-500">Browse and triage conversations</p>
           </div>
           <FiltersToolbar onFiltersChange={setFilters} />
           <div className="px-4 sm:px-6 py-6">
             {loading ? (
-              <div className="flex items-center gap-2 text-ink-600">
+              <div className="flex items-center gap-2 text-gray-600">
                 <Spinner className="size-4" />
                 <span>Loading threads…</span>
               </div>

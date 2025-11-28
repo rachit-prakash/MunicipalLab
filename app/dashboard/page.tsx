@@ -257,14 +257,14 @@ export default function DashboardPage() {
         <main className="mt-16 flex-1 overflow-auto">
           <div className="px-4 sm:px-6 py-6 space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold text-ink-900">Dashboard</h1>
-              <p className="text-sm text-ink-500">KPIs and trends at a glance</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+              <p className="text-sm text-gray-600">KPIs and trends at a glance</p>
             </div>
 
             <PolicyIntelligenceHeader />
 
             {loading ? (
-              <div className="flex items-center gap-2 text-ink-600">
+              <div className="flex items-center gap-2 text-gray-600">
                 <Spinner className="size-4" />
                 <span>Loading dashboard…</span>
               </div>

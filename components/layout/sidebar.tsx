@@ -79,10 +79,10 @@ export function Sidebar({
                         key={item.href}
                         href={item.href}
                         className={cn(
-                          "flex items-center gap-3 rounded px-4 py-2.5 text-sm font-medium transition-all duration-200",
+                          "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
                           isActive(item.href)
-                            ? "bg-subtle text-ink-900 border border-border shadow-sm"
-                            : "text-ink-600 hover:bg-subtle hover:text-ink-900",
+                            ? "bg-gray-50 text-gray-900 border border-gray-200 shadow-sm"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
                         )}
                         onClick={() => onMobileOpenChange?.(false)}
                       >
@@ -90,7 +90,7 @@ export function Sidebar({
                         <div className="flex min-w-0 flex-col">
                           <span className="truncate">{item.label}</span>
                           {item.description && (
-                            <span className="text-xs text-ink-500 truncate">{item.description}</span>
+                            <span className="text-xs text-gray-500 truncate">{item.description}</span>
                           )}
                         </div>
                       </Link>
@@ -107,7 +107,7 @@ export function Sidebar({
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen border-r border-border bg-background overflow-y-auto overflow-x-hidden hidden md:block",
+          "fixed left-0 top-0 z-40 h-screen border-r border-gray-200 bg-white overflow-y-auto overflow-x-hidden hidden md:block",
           isCollapsed ? "w-20" : "w-64",
         )}
       >
@@ -123,13 +123,13 @@ export function Sidebar({
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1.5 hover:bg-subtle rounded transition-colors"
+              className="p-1.5 hover:bg-gray-50 rounded transition-colors"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? (
-                <ChevronRight className="w-4 h-4 text-ink-600" />
+                <ChevronRight className="w-4 h-4 text-gray-600" />
               ) : (
-                <ChevronLeft className="w-4 h-4 text-ink-600" />
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
               )}
             </button>
           </div>
@@ -144,10 +144,10 @@ export function Sidebar({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 rounded px-4 py-2.5 text-sm font-medium transition-all duration-200",
+                      "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
                       isActive(item.href)
-                        ? "bg-subtle text-ink-900 border border-border shadow-sm"
-                        : "text-ink-600 hover:bg-subtle hover:text-ink-900",
+                        ? "bg-gray-50 text-gray-900 border border-gray-200 shadow-sm"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
                     )}
                     title={isCollapsed ? item.label : undefined}
                   >
@@ -156,7 +156,7 @@ export function Sidebar({
                       <div className="flex min-w-0 flex-col">
                         <span className="truncate">{item.label}</span>
                         {item.description && (
-                          <span className="text-xs text-ink-500 truncate">{item.description}</span>
+                          <span className="text-xs text-gray-500 truncate">{item.description}</span>
                         )}
                       </div>
                     )}
