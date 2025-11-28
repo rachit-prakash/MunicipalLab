@@ -80,15 +80,15 @@ export default function AdminTopicsPage() {
           <div className="px-4 sm:px-6 py-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-semibold text-ink-900">Topics</h1>
-                <p className="text-sm text-ink-500">Define and organize topics</p>
+                <h1 className="text-2xl font-semibold text-gray-900">Topics</h1>
+                <p className="text-sm text-gray-500">Define and organize topics</p>
               </div>
               <Button variant="primary" size="md" onClick={addTopic}>
                 Add topic
               </Button>
             </div>
 
-            <div className="border border-border rounded-lg bg-surface overflow-hidden shadow-sm">
+            <div className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow hoverable={false}>
@@ -101,7 +101,7 @@ export default function AdminTopicsPage() {
                 <TableBody>
                   {topics.map((topic) => (
                     <TableRow key={topic.id}>
-                      <TableCell className="font-medium text-ink-900">
+                      <TableCell className="font-medium text-gray-900">
                         {editingId === topic.id ? (
                           <Input
                             value={editName}
@@ -117,14 +117,14 @@ export default function AdminTopicsPage() {
                           topic.name
                         )}
                       </TableCell>
-                      <TableCell className="text-ink-600 hidden sm:table-cell">{topic.usageCount}</TableCell>
+                      <TableCell className="text-gray-600 hidden sm:table-cell">{topic.usageCount}</TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <Badge
                           variant="solid"
                           className={
                             topic.status === "active"
                               ? "bg-ok/10 text-ok border border-ok/30"
-                              : "bg-ink-100 text-ink-900"
+                              : "bg-gray-100 text-gray-900"
                           }
                         >
                           {topic.status === "active" ? "Active" : "Archived"}
@@ -136,14 +136,14 @@ export default function AdminTopicsPage() {
                             setEditingId(topic.id)
                             setEditName(topic.name)
                           }}
-                          className="text-xs font-medium text-ink-600 hover:text-ink-900"
+                          className="text-xs font-medium text-gray-600 hover:text-gray-900"
                         >
                           Rename
                         </button>
-                        <span className="mx-2 text-ink-300">•</span>
+                        <span className="mx-2 text-gray-300">•</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="text-xs font-medium text-ink-600 hover:text-ink-900">
+                            <button className="text-xs font-medium text-gray-600 hover:text-gray-900">
                               Merge
                             </button>
                           </DropdownMenuTrigger>
@@ -157,13 +157,13 @@ export default function AdminTopicsPage() {
                               ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <span className="mx-2 text-ink-300">•</span>
+                        <span className="mx-2 text-gray-300">•</span>
                         <button
                           onClick={() => toggleStatus(topic.id)}
                           className={
                             topic.status === "active"
                               ? "text-xs font-medium text-danger hover:text-danger"
-                              : "text-xs font-medium text-ink-600 hover:text-ink-900"
+                              : "text-xs font-medium text-gray-600 hover:text-gray-900"
                           }
                         >
                           {topic.status === "active" ? "Retire" : "Activate"}

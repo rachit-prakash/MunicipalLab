@@ -119,7 +119,7 @@ export function ChatbotDrawer() {
 									'max-w-[80%] rounded-lg px-3 py-2 text-sm',
 									m.role === 'user'
 										? 'bg-blue-600 text-white'
-										: 'bg-ink-100 text-ink-900 border border-border',
+										: 'bg-gray-100 text-gray-900 border border-gray-200',
 								)}
 							>
 								{m.content}
@@ -128,7 +128,7 @@ export function ChatbotDrawer() {
 					))}
 					{sending ? (
 						<div className="flex justify-start">
-							<div className="max-w-[80%] rounded-lg px-3 py-2 border border-border bg-ink-100 text-ink-900">
+							<div className="max-w-[80%] rounded-lg px-3 py-2 border border-gray-200 bg-gray-100 text-gray-900">
 								<Spinner className="mr-2 inline-block size-4 align-[-2px]" />
 								Thinking…
 							</div>

@@ -194,7 +194,7 @@ function InboxTable({ emails }: { emails: EmailRow[] }) {
 	}, [emails])
 
 	if (!emails.length) {
-		return <div className="flex items-center justify-center h-64 text-ink-500">Inbox is empty.</div>
+		return <div className="flex items-center justify-center h-64 text-gray-500">Inbox is empty.</div>
 	}
 	return (
 		<>
@@ -211,17 +211,17 @@ function InboxTable({ emails }: { emails: EmailRow[] }) {
 			<TableBody>
 				{emails.map((e) => (
 					<TableRow key={e.id} className="group cursor-default">
-						<TableCell className="w-[28%] truncate text-ink-900" title={e.subject}>
+						<TableCell className="w-[28%] truncate text-gray-900" title={e.subject}>
 							{e.subject}
 						</TableCell>
-						<TableCell className="w-[18%] truncate text-ink-600" title={e.from}>
+						<TableCell className="w-[18%] truncate text-gray-600" title={e.from}>
 							{e.from}
 						</TableCell>
-						<TableCell className="w-[12%] text-xs text-ink-500 hidden sm:table-cell" title={e.rawDate || ""}>{e.date}</TableCell>
-						<TableCell className="w-[42%] whitespace-pre-wrap break-words text-ink-600 hidden sm:table-cell">
+						<TableCell className="w-[12%] text-xs text-gray-500 hidden sm:table-cell" title={e.rawDate || ""}>{e.date}</TableCell>
+						<TableCell className="w-[42%] whitespace-pre-wrap break-words text-gray-600 hidden sm:table-cell">
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
-									{summaries[e.id] ? summaries[e.id] : e.snippet || <span className="text-ink-400">—</span>}
+									{summaries[e.id] ? summaries[e.id] : e.snippet || <span className="text-gray-400">—</span>}
 								</div>
 								<button
 									onClick={() => {
@@ -277,12 +277,12 @@ function GmailInboxInner() {
 				</Suspense>
 				<main className="mt-16 flex-1 overflow-auto">
 					<div className="px-4 sm:px-6 pt-6">
-						<h1 className="text-xl font-semibold text-ink-900">{title}</h1>
-						<p className="text-sm text-ink-500">Latest messages from your Gmail inbox</p>
+						<h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+						<p className="text-sm text-gray-500">Latest messages from your Gmail inbox</p>
 					</div>
 					<div className="px-4 sm:px-6 py-6">
 						{loading ? (
-							<div className="flex items-center gap-2 text-ink-600">
+							<div className="flex items-center gap-2 text-gray-600">
 								<Spinner className="size-4" />
 								<span>Loading inbox…</span>
 							</div>

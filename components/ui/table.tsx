@@ -14,19 +14,19 @@ Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("border-b border-border bg-subtle", className)} {...props} />
+    <thead ref={ref} className={cn("border-b border-gray-200 bg-gray-50", className)} {...props} />
   ),
 )
 TableHeader.displayName = "TableHeader"
 
 const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => <tbody ref={ref} className={cn("divide-y divide-border", className)} {...props} />,
+  ({ className, ...props }, ref) => <tbody ref={ref} className={cn("divide-y divide-gray-200", className)} {...props} />,
 )
 TableBody.displayName = "TableBody"
 
 const TableFooter = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <tfoot ref={ref} className={cn("border-t border-border bg-subtle font-medium", className)} {...props} />
+    <tfoot ref={ref} className={cn("border-t border-gray-200 bg-gray-50 font-medium", className)} {...props} />
   ),
 )
 TableFooter.displayName = "TableFooter"
@@ -38,9 +38,9 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-border transition-colors",
+      "border-gray-200 transition-colors",
       "h-14", // 56px row height
-      hoverable && "hover:bg-subtle",
+      hoverable && "hover:bg-gray-50",
       className,
     )}
     {...props}
@@ -53,7 +53,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     <th
       ref={ref}
       className={cn(
-        "h-14 px-4 py-3 text-left text-xs font-semibold text-ink-600 [&:has([role=checkbox])]:pr-0",
+        "h-14 px-4 py-3 text-left text-xs font-semibold text-gray-600 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}

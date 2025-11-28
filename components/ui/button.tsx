@@ -10,10 +10,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-brand-500 text-surface hover:bg-brand-600 active:bg-brand-600",
-        secondary: "bg-ink-100 text-ink-900 hover:bg-ink-200 active:bg-ink-200",
-        destructive: "bg-danger text-surface hover:opacity-90 active:opacity-80",
-        ghost: "text-ink-600 hover:bg-subtle hover:text-ink-900 active:bg-ink-100",
+        primary: "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800",
+        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300",
+        destructive: "bg-red-600 text-white hover:opacity-90 active:opacity-80",
+        ghost: "text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100",
       },
       size: {
         sm: "h-7 px-3",

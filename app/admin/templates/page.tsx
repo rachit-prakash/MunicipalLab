@@ -72,8 +72,8 @@ export default function AdminTemplatesPage() {
           <div className="px-4 sm:px-6 py-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-semibold text-ink-900">Templates</h1>
-                <p className="text-sm text-ink-500">Manage response templates</p>
+                <h1 className="text-2xl font-semibold text-gray-900">Templates</h1>
+                <p className="text-sm text-gray-500">Manage response templates</p>
               </div>
               <Button variant="primary" size="md">
                 Add template
@@ -104,8 +104,8 @@ export default function AdminTemplatesPage() {
                         className="cursor-pointer"
                       >
                         <TableCell className="font-medium">{template.topic}</TableCell>
-                        <TableCell className="text-ink-600 hidden sm:table-cell">v{template.version}</TableCell>
-                        <TableCell className="text-xs text-ink-500 hidden sm:table-cell">{formatDate(template.updatedAt)}</TableCell>
+                        <TableCell className="text-gray-600 hidden sm:table-cell">v{template.version}</TableCell>
+                        <TableCell className="text-xs text-gray-500 hidden sm:table-cell">{formatDate(template.updatedAt)}</TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <button
                             onClick={(e) => {
@@ -113,14 +113,14 @@ export default function AdminTemplatesPage() {
                               setEditingId(template.id)
                               setEditContent(template.content)
                             }}
-                            className="text-xs font-medium text-ink-600 hover:text-ink-900"
+                            className="text-xs font-medium text-gray-600 hover:text-gray-900"
                           >
                             Edit
                           </button>
-                          <span className="mx-2 text-ink-300">•</span>
+                          <span className="mx-2 text-gray-300">•</span>
                           <button
                             onClick={(e) => e.stopPropagation()}
-                            className="text-xs font-medium text-ink-600 hover:text-ink-900"
+                            className="text-xs font-medium text-gray-600 hover:text-gray-900"
                           >
                             Duplicate
                           </button>
@@ -138,7 +138,7 @@ export default function AdminTemplatesPage() {
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-ink-600">Content</label>
+                      <label className="text-xs font-medium text-gray-600">Content</label>
                       <Textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
@@ -147,7 +147,7 @@ export default function AdminTemplatesPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-ink-600">Version notes</label>
+                      <label className="text-xs font-medium text-gray-600">Version notes</label>
                       <Textarea
                         value={editNotes}
                         onChange={(e) => setEditNotes(e.target.value)}
