@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { MessageCircle } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -14,6 +14,7 @@ type ChatbotButtonProps = {
 
 export function ChatbotButton({ onClick, className }: ChatbotButtonProps) {
 	const pathname = usePathname()
+	const router = useRouter()
 	
 	// Hide button on chatbot page
 	const isOnChatbotPage = pathname === '/chatbot'
@@ -23,11 +24,9 @@ export function ChatbotButton({ onClick, className }: ChatbotButtonProps) {
 			onClick()
 			return
 		}
-		// Fire a global event that can be listened to by a future chat widget
-		if (typeof window !== 'undefined') {
-			window.dispatchEvent(new CustomEvent('open-chatbot'))
-		}
-	}, [onClick])
+		// Navigate to chatbot page
+		router.push('/chatbot')
+	}, [onClick, router])
 
 	if (isOnChatbotPage) {
 		return null
