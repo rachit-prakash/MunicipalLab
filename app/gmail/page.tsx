@@ -9,6 +9,16 @@ import { cn } from "@/lib/utils"
 import { format as formatDateFn } from "date-fns"
 import type { ThreadRow } from "@/lib/types"
 import { ReplyDrawer } from "@/components/threads/reply-drawer"
+import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 type ThreadListResponse = {
 	items: ThreadRow[]
@@ -70,17 +80,39 @@ function GmailInboxInner() {
 				</Suspense>
 				<main className="mt-16 flex-1 overflow-auto">
 					<div className="px-4 sm:px-6 pt-6">
-						<h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-						<p className="text-sm text-gray-500">Latest messages synced into your workspace</p>
+						<Breadcrumb>
+							<BreadcrumbList>
+								<BreadcrumbItem>
+									<BreadcrumbLink asChild>
+										<Link href="/dashboard">Home</Link>
+									</BreadcrumbLink>
+								</BreadcrumbItem>
+								<BreadcrumbSeparator />
+								<BreadcrumbItem>
+									<BreadcrumbPage>Inbox</BreadcrumbPage>
+								</BreadcrumbItem>
+							</BreadcrumbList>
+						</Breadcrumb>
+						<h1 className="text-xl font-semibold text-foreground">{title}</h1>
+						<p className="text-sm text-muted-foreground">Latest messages synced into your workspace</p>
 					</div>
 					<div className="px-4 sm:px-6 py-6">
 						{loading ? (
-							<div className="flex items-center gap-2 text-gray-600">
-								<Spinner className="size-4" />
-								<span>Loading inbox…</span>
+							<div className="space-y-4">
+								<div className="flex items-center gap-2 text-muted-foreground">
+									<Spinner className="size-4" />
+									<span>Loading inbox…</span>
+								</div>
+								<div className="space-y-2">
+									<Skeleton className="h-10 w-full" />
+									<Skeleton className="h-10 w-full" />
+									<Skeleton className="h-10 w-full" />
+									<Skeleton className="h-10 w-full" />
+									<Skeleton className="h-10 w-full" />
+								</div>
 							</div>
 						) : error ? (
-							<div className={cn("rounded border border-border bg-subtle p-4 text-sm text-red-700")}>
+							<div className={cn("rounded border border-border bg-muted p-4 text-sm text-destructive")}>
 								{error}
 							</div>
 						) : (
@@ -106,7 +138,7 @@ function InboxTable({
 	onViewThread: (thread: ThreadRow) => void
 }) {
 	if (!threads.length) {
-		return <div className="flex items-center justify-center h-64 text-gray-500">Inbox is empty.</div>
+		return <div className="flex items-center justify-center h-64 text-muted-foreground">Inbox is empty.</div>
 	}
 	return (
 		<div className="overflow-x-auto -mx-4 md:mx-0">
@@ -122,16 +154,16 @@ function InboxTable({
 				<TableBody>
 					{threads.map((thread) => (
 						<TableRow key={thread.id} className="group cursor-pointer" onClick={() => onViewThread(thread)}>
-							<TableCell className="truncate text-gray-900" title={thread.subject}>
+							<TableCell className="truncate text-foreground" title={thread.subject}>
 								{thread.subject}
 							</TableCell>
-							<TableCell className="truncate text-gray-600" title={thread.sender}>
+							<TableCell className="truncate text-muted-foreground" title={thread.sender}>
 								{thread.sender}
 							</TableCell>
-							<TableCell className="text-xs text-gray-500 hidden sm:table-cell">
+							<TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
 								{formatDateFn(new Date(thread.receivedAt), "PP p")}
 							</TableCell>
-							<TableCell className="whitespace-pre-wrap break-words text-gray-600 hidden sm:table-cell">
+							<TableCell className="whitespace-pre-wrap break-words text-muted-foreground hidden sm:table-cell">
 								{thread.summary}
 							</TableCell>
 						</TableRow>

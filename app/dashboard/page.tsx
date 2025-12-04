@@ -8,6 +8,16 @@ import { DashboardLayoutClient } from "./dashboard-layout-client"
 import { authOptions } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { getDashboardDataset } from "@/lib/dashboard-data"
+import Link from "next/link"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { DashboardKPIs } from "@/components/dashboard/kpis"
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -30,14 +40,32 @@ export default async function DashboardPage() {
   }
 
   const dataset = await getDashboardDataset(tenantId)
+  const total = dataset.topTopics.reduce((sum, t) => sum + (t.count || 0), 0)
+  const topTopic = dataset.topTopics[0]?.topic ?? "Top topic share"
+  const topShare = total > 0 ? Math.min(100, Math.round((dataset.topTopics[0]?.count || 0) * 100 / total)) : 0
 
   return (
     <DashboardLayoutClient>
       <div className="px-4 sm:px-6 py-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-600">KPIs and trends at a glance</p>
+        <div className="space-y-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/dashboard">Home</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">KPIs and trends at a glance</p>
         </div>
+
+        <DashboardKPIs total={total} secondaryLabel={topTopic} secondaryPct={topShare} />
 
         <PolicyIntelligenceHeader />
 
