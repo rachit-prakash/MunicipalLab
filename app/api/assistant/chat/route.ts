@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { audit } from "@/lib/audit"
-import { query } from "@/lib/db"
 import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
+import { retrieveEmailContext, formatRAGContextForLLM, getEmailAnalytics, isAnalyticsQuery, isChronologicalQuery, retrieveEmailsChronologically } from "@/lib/rag"
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string }
 
@@ -33,21 +33,166 @@ export async function POST(req: NextRequest) {
 			})
 		}
 
+		// Get user info for tenant-specific RAG
+		// The JWT token stores appUserId (UUID) and tenantId directly from the auth flow
+		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+		const userId = (token as any)?.appUserId as string | undefined
+		const tenantId = (token as any)?.tenantId as string | undefined
+
+		// RAG: Retrieve relevant email context
+		let ragContext = ""
+		let analyticsData = null
+
+		if (tenantId && messages.length > 0) {
+			try {
+				const lastUserMessage = messages[messages.length - 1]
+				if (lastUserMessage.role === "user") {
+					const userQuery = lastUserMessage.content
+					const lowerQuery = userQuery.toLowerCase()
+
+					// Check if this is an analytics query
+					if (isAnalyticsQuery(userQuery)) {
+						// Parse date ranges and filters from query
+						const now = new Date()
+						let startDate: Date | undefined
+						let endDate: Date | undefined
+
+						// Simple date parsing (you can make this more sophisticated)
+						if (lowerQuery.includes("today")) {
+							startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+							endDate = now
+						} else if (lowerQuery.includes("this week")) {
+							const dayOfWeek = now.getDay()
+							startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000)
+							startDate.setHours(0, 0, 0, 0)
+							endDate = now
+						} else if (lowerQuery.includes("this month")) {
+							startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+							endDate = now
+						} else if (lowerQuery.includes("last week")) {
+							const dayOfWeek = now.getDay()
+							endDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000)
+							endDate.setHours(23, 59, 59, 999)
+							startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+							startDate.setHours(0, 0, 0, 0)
+						}
+
+						analyticsData = await getEmailAnalytics(tenantId, { startDate, endDate })
+
+						// Format analytics for the LLM
+						ragContext = `## Email Analytics\n\n`
+						ragContext += `Total Messages: ${analyticsData.totalMessages}\n`
+						ragContext += `Total Threads: ${analyticsData.totalThreads}\n\n`
+
+						if (Object.keys(analyticsData.byTopic).length > 0) {
+							ragContext += `### By Topic:\n`
+							Object.entries(analyticsData.byTopic).forEach(([topic, count]) => {
+								ragContext += `- ${topic}: ${count} emails\n`
+							})
+							ragContext += `\n`
+						}
+
+						ragContext += `### By Sentiment:\n`
+						ragContext += `- Positive: ${analyticsData.bySentiment.positive}\n`
+						ragContext += `- Neutral: ${analyticsData.bySentiment.neutral}\n`
+						ragContext += `- Negative: ${analyticsData.bySentiment.negative}\n\n`
+
+						if (Object.keys(analyticsData.byUrgency).length > 0) {
+							ragContext += `### By Urgency:\n`
+							Object.entries(analyticsData.byUrgency).forEach(([level, count]) => {
+								ragContext += `- ${level}: ${count} emails\n`
+							})
+							ragContext += `\n`
+						}
+
+						if (analyticsData.topSenders.length > 0) {
+							ragContext += `### Top Senders:\n`
+							analyticsData.topSenders.slice(0, 5).forEach((sender, i) => {
+								ragContext += `${i + 1}. ${sender.email}: ${sender.count} emails\n`
+							})
+						}
+					} else if (isChronologicalQuery(userQuery)) {
+						// Determine order (newest or oldest)
+						const orderBy = lowerQuery.includes("oldest") || lowerQuery.includes("first") ? "oldest" : "newest"
+						
+						// Determine limit based on query
+						let limit = 20 // default
+						if (lowerQuery.includes("all") || lowerQuery.includes("show me all") || lowerQuery.includes("list all")) {
+							limit = 50 // Show more emails for "all" queries
+						} else if (lowerQuery.includes("newest") || lowerQuery.includes("latest") || lowerQuery.includes("most recent")) {
+							limit = 10 // Show fewer for "newest" queries
+						}
+
+						// Parse date ranges if mentioned
+						const now = new Date()
+						let startDate: Date | undefined
+						let endDate: Date | undefined
+
+						if (lowerQuery.includes("today")) {
+							startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+							endDate = now
+						} else if (lowerQuery.includes("this week")) {
+							const dayOfWeek = now.getDay()
+							startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000)
+							startDate.setHours(0, 0, 0, 0)
+							endDate = now
+						} else if (lowerQuery.includes("this month")) {
+							startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+							endDate = now
+						}
+
+						// Retrieve emails chronologically
+						const emailContext = await retrieveEmailsChronologically(tenantId, {
+							limit,
+							orderBy,
+							startDate,
+							endDate,
+						})
+						ragContext = formatRAGContextForLLM(emailContext)
+					} else {
+						// Semantic search
+						const emailContext = await retrieveEmailContext(userQuery, tenantId, {
+							maxMessages: 5,
+							maxThreads: 3,
+							minSimilarity: 0.5,
+						})
+						ragContext = formatRAGContextForLLM(emailContext)
+					}
+				}
+			} catch (error) {
+				console.error("RAG retrieval error:", error)
+				// Continue without RAG context if it fails
+			}
+		}
+
 		const system: ChatMessage = {
 			role: "system",
 			content: [
-				"You are the Legaside AI Assistant.",
-				"Answer concisely based ONLY on the provided context.",
-				"If the context is insufficient, say what is missing and ask a clarifying question.",
-				"Prefer bullet points, include concrete steps, avoid speculation.",
+				"You are the Legaside AI Assistant, an intelligent email management assistant.",
+				"You have access to the user's email data through semantic search and chronological listing.",
+				"When answering questions, use the provided email context and analytics.",
+				"Be specific and cite relevant emails when possible (e.g., 'In the email from John on Dec 1st...').",
+				"When listing emails chronologically, present them in a clear, organized manner with dates and senders.",
+				"If the context doesn't contain enough information, acknowledge this and explain what additional information you'd need.",
+				"For analytics questions, provide clear numbers and insights.",
+				"Be helpful, concise, and professional.",
 			].join(" "),
 		}
 
+		// Combine RAG context with any additional context provided
+		const contextParts: string[] = []
+		if (ragContext) {
+			contextParts.push(ragContext)
+		}
+		if (Array.isArray(context) && context.length > 0) {
+			contextParts.push(context.map((c) => `- ${c}`).join("\n"))
+		}
+
 		const contextBlock: ChatMessage | null =
-			Array.isArray(context) && context.length > 0
+			contextParts.length > 0
 				? {
 						role: "system",
-						content: `Context:\n${context.map((c) => `- ${c}`).join("\n")}`,
+						content: `## Available Context\n\n${contextParts.join("\n\n")}`,
 				  }
 				: null
 
@@ -90,23 +235,18 @@ export async function POST(req: NextRequest) {
 
 		// best-effort audit (non-blocking)
 		try {
-			const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-			const userId = token?.sub as string | undefined
-			let tenantId: string | undefined
-			if (userId) {
-				const t = await query(
-					`SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
-					[userId]
-				)
-				if (t.rows.length > 0) tenantId = t.rows[0].tenant_id
-			}
-			if (tenantId) {
+			if (tenantId && userId) {
 				await audit({
 					tenantId,
 					actorUserId: userId,
 					action: "assistant.chat",
 					requestId: req.headers.get("x-request-id") ?? undefined,
-					payload: { model, messageCount: finalMessages.length },
+					payload: {
+						model,
+						messageCount: finalMessages.length,
+						usedRAG: !!ragContext,
+						isAnalytics: !!analyticsData,
+					},
 				})
 			}
 		} catch {}
