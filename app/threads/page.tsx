@@ -9,6 +9,16 @@ import { ThreadsTable } from "@/components/threads/threads-table"
 import { ReplyDrawer } from "@/components/threads/reply-drawer"
 import type { ThreadRow } from "@/lib/types"
 import { Spinner } from "@/components/ui/spinner"
+import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 type ThreadListResponse = {
   items: ThreadRow[]
@@ -97,18 +107,40 @@ function ThreadsPageInner() {
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
           <div className="px-4 sm:px-6 pt-6">
-            <h1 className="text-xl font-semibold text-gray-900">Threads</h1>
-            <p className="text-sm text-gray-500">Browse and triage conversations</p>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/dashboard">Home</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Threads</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <h1 className="text-xl font-semibold text-foreground">Threads</h1>
+            <p className="text-sm text-muted-foreground">Browse and triage conversations</p>
           </div>
           <FiltersToolbar availableTopics={availableTopics} onFiltersChange={setFilters} />
           <div className="px-4 sm:px-6 py-6">
             {loading ? (
-              <div className="flex items-center gap-2 text-gray-600">
-                <Spinner className="size-4" />
-                <span>Loading threads…</span>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Spinner className="size-4" />
+                  <span>Loading threads…</span>
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
               </div>
             ) : error ? (
-              <div className="text-sm text-red-600">{error}</div>
+              <div className="text-sm text-destructive">{error}</div>
             ) : threads ? (
               <ThreadsTable threads={filteredThreads} onThreadClick={setSelectedThread} />
             ) : null}

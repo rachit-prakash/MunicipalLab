@@ -37,16 +37,16 @@ export function InsightCard({
   const tapAnimation = prefersReducedMotion ? undefined : { scale: 0.98 }
   const insightColor =
     insightTone === "up"
-      ? "text-emerald-700"
+      ? "text-success"
       : insightTone === "down"
-        ? "text-rose-700"
-        : "text-gray-500"
+        ? "text-destructive"
+        : "text-muted-foreground"
 
   return (
     <motion.article
       data-slot="insight-card"
       className={cn(
-        "rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition duration-300 ease-out",
+        "rounded-[var(--radius)] border border-border bg-card p-5 shadow-sm hover:bg-muted/40 transition duration-300 ease-out",
         "flex flex-col gap-2",
         className,
       )}
@@ -54,8 +54,8 @@ export function InsightCard({
       whileHover={hoverAnimation}
       whileTap={tapAnimation}
     >
-      <div className="text-xs uppercase tracking-wide text-gray-500 font-medium">{title}</div>
-      <div className="text-3xl font-semibold text-gray-900 leading-tight">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground font-medium">{title}</div>
+      <div className="text-3xl font-semibold text-foreground leading-tight">
         {typeof value === "number" ? value.toLocaleString() : value}
       </div>
       {insight ? <div className={cn("text-sm font-medium", insightColor)}>{insight}</div> : null}
