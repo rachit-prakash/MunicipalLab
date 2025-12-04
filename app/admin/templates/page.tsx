@@ -22,7 +22,7 @@ export default function AdminTemplatesPage() {
   const [templates, setTemplates] = useState<TemplateRow[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draftContent, setDraftContent] = useState("")
-  const [draftStance] = useState("GENERIC")
+  const [draftStance, setDraftStance] = useState("GENERIC")
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
