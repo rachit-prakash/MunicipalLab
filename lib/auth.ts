@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { withTenant, query } from "@/lib/db"
-import { seal } from "@/lib/tokenVault"
+import { seal, ensureVaultKey } from "@/lib/tokenVault"
 // Writing comments for people who are not familiar with my code lmao.
 
 const scopes = [
@@ -123,6 +123,7 @@ export const authOptions: NextAuthOptions = {
 
             // 3) If we receive a refresh token, upsert it into gmail_accounts
             if (account.refresh_token) {
+              ensureVaultKey()
               const encryptedToken = seal(account.refresh_token)
               await client.query(
                 `INSERT INTO gmail_accounts (user_id, tenant_id, email, encrypted_refresh_token)

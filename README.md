@@ -51,19 +51,16 @@ pnpm install
 
 3. **Environment**
 
-Create a `.env.local` in the repo root:
+Copy the starter file and edit the values:
 
 ```bash
-NEXTAUTH_SECRET=generate-a-random-string-bro
-NEXTAUTH_URL=http://localhost:3000
-
-GOOGLE_CLIENT_ID=your-google-oauth-client-id
-GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
-
-DATABASE_URL=postgresql://user:password@localhost:5432/municipallabs_crm
+cp env.example .env.local
 ```
 
+Then update `.env.local` with your secrets (`NEXTAUTH_SECRET`, `TOKEN_VAULT_KEY`, `DATABASE_URL`, Google OAuth, etc.). See [`docs/environment-variables.md`](./docs/environment-variables.md) for every option.
+
 **Generate NEXTAUTH_SECRET:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
@@ -139,7 +136,6 @@ pnpm build     # production build
 pnpm start     # start production server (after build)
 pnpm lint      # run linter
 ```
-
 
 ---
 

@@ -17,6 +17,9 @@ const EXPECTED_KEY_LENGTH = 32; // the expected length of the key.
 // we're using symmetric encryption because javascript bundles won't return anything related to the token so it is near impossible to reverse engineer the token.
 let cachedKey: Buffer | null = null; // this is a cached key to avoid re-reading the environment variable every time.
 
+const KEY_HELP =
+  `Set ${KEY_ENV_VAR} to a base64-encoded 32-byte string (e.g. run "openssl rand -base64 32").`
+
 function getVaultKey(): Buffer {
   if (cachedKey) {
     return cachedKey;
@@ -24,22 +27,30 @@ function getVaultKey(): Buffer {
 
   const rawKey = process.env[KEY_ENV_VAR];
   if (!rawKey) {
-    throw new Error(`Environment variable ${KEY_ENV_VAR} is required for TokenVault.`);
+    throw new Error(
+      `Environment variable ${KEY_ENV_VAR} is required for TokenVault. ${KEY_HELP}`,
+    );
   }
 
   let decoded: Buffer;
   try {
     decoded = Buffer.from(rawKey, 'base64');
   } catch (error) {
-    throw new Error(`${KEY_ENV_VAR} must be valid base64.`);
+    throw new Error(`${KEY_ENV_VAR} must be valid base64. ${KEY_HELP}`);
   }
 
   if (decoded.length !== EXPECTED_KEY_LENGTH) {
-    throw new Error(`${KEY_ENV_VAR} must decode to ${EXPECTED_KEY_LENGTH} bytes.`);
+    throw new Error(
+      `${KEY_ENV_VAR} must decode to ${EXPECTED_KEY_LENGTH} bytes. ${KEY_HELP}`,
+    );
   }
 
   cachedKey = decoded;
   return cachedKey;
+}
+
+export function ensureVaultKey() {
+  getVaultKey();
 }
 
 // the function that encrypts the refresh token.

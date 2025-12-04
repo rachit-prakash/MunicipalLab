@@ -1,5 +1,5 @@
 import { withTenant } from "@/lib/db";
-import { open } from "@/lib/tokenVault";
+import { open, ensureVaultKey } from "@/lib/tokenVault";
 
 // what does this file do?
 // simple really. haha.
@@ -92,9 +92,13 @@ async function loadRefreshToken(
 
   let refreshToken: string;
   try {
+    ensureTokenVaultReady();
     refreshToken = open(encrypted);
   } catch (error) {
-    throw new Error(`Unable to decrypt refresh token for user ${userId} in tenant ${tenantId}.`);
+    throw new Error(
+      `Unable to decrypt refresh token for user ${userId} in tenant ${tenantId}. ` +
+        `Verify TOKEN_VAULT_KEY matches the value used when the token was stored. (${error instanceof Error ? error.message : "unknown error"})`,
+    );
   }
 
   if (!refreshToken) {
@@ -177,6 +181,13 @@ function normalizeToBuffer(value: unknown): Buffer {
   }
 
   throw new Error("Encrypted refresh token is stored in an unsupported format.");
+}
+
+let vaultReady = false;
+function ensureTokenVaultReady() {
+  if (vaultReady) return;
+  ensureVaultKey();
+  vaultReady = true;
 }
 
 

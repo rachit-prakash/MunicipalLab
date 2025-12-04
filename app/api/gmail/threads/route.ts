@@ -83,13 +83,13 @@ export async function GET(request: NextRequest) {
       const threadsResult = await client.query(
         `SELECT 
           id,
-          subject,
-          sender_email as sender,
+          COALESCE(subject, '(No subject)') AS subject,
+          COALESCE(sender_email, 'Unknown sender') AS sender,
           last_message_ts as "receivedAt",
           type,
           topic,
           stance,
-          summary,
+          COALESCE(summary, '(No summary yet)') AS summary,
           confidence,
           unread,
           last_message_ts
