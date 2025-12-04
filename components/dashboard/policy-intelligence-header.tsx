@@ -214,11 +214,11 @@ export function PolicyIntelligenceHeader() {
         insightTone: risingInsight.tone,
         extra: risingIssue?.exampleSubjectLine ? (
           <p className="text-xs text-gray-400">
-            e.g. "
+            e.g. &quot;
             {risingIssue.exampleSubjectLine.length > 70
               ? `${risingIssue.exampleSubjectLine.slice(0, 70)}...`
               : risingIssue.exampleSubjectLine}
-            "
+            &quot;
           </p>
         ) : null,
       },
@@ -239,7 +239,7 @@ export function PolicyIntelligenceHeader() {
       },
     ]
     return cardList
-  }, [data, placeholderCards])
+  }, [data])
 
   return (
     <section className="space-y-4">
