@@ -47,8 +47,8 @@ export function Sidebar({
 
   const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, description: "KPIs and trends at a glance" },
-    { href: "/threads", label: "Inbox", icon: Mail, description: "Browse and triage conversations" },
-    { href: "/chatbot", label: "Chatbot", icon: MessageCircle, description: "Ask questions about your data" },
+    { href: "/threads", label: "Inbox", icon: Mail, description: "Browse conversations" },
+    { href: "/chatbot", label: "Chatbot", icon: MessageCircle, description: "Ask about your data" },
     { href: "/settings", label: "Settings", icon: Settings, description: "Timezone & GDPR tools" },
   ]
 

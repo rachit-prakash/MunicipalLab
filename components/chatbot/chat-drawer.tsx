@@ -15,6 +15,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { Markdown } from '@/components/ui/markdown'
 import { cn } from '@/lib/utils'
 
 type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string }
@@ -122,7 +123,13 @@ export function ChatbotDrawer() {
 										: 'bg-gray-100 text-gray-900 border border-gray-200',
 								)}
 							>
-								{m.content}
+								{m.role === 'assistant' ? (
+									<div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:font-semibold prose-headings:text-gray-900 prose-strong:font-semibold prose-strong:text-gray-900">
+										<ReactMarkdown>{m.content}</ReactMarkdown>
+									</div>
+								) : (
+									m.content
+								)}
 							</div>
 						</div>
 					))}
