@@ -100,11 +100,18 @@ export async function retrieveEmailContext(
 export function formatRAGContextForLLM(context: RAGContext): string {
 	const parts: string[] = []
 
+	// Check if this is a chronological listing (similarity = 1.0 for all items)
+	const isChronological = context.messages.length > 0 && context.messages[0].similarity === 1.0
+
 	// Add thread summaries
 	if (context.threads.length > 0) {
-		parts.push("## Relevant Email Threads:")
+		parts.push(isChronological ? "## Email Threads (ordered by date):" : "## Relevant Email Threads:")
 		context.threads.forEach((thread, i) => {
-			parts.push(`\n### Thread ${i + 1} (similarity: ${(thread.similarity * 100).toFixed(1)}%)`)
+			if (isChronological) {
+				parts.push(`\n### Thread ${i + 1}`)
+			} else {
+				parts.push(`\n### Thread ${i + 1} (similarity: ${(thread.similarity * 100).toFixed(1)}%)`)
+			}
 			parts.push(`Subject: ${thread.subject || "No subject"}`)
 			if (thread.topic) parts.push(`Topic: ${thread.topic}`)
 			if (thread.stance) parts.push(`Stance: ${thread.stance}`)
@@ -115,9 +122,13 @@ export function formatRAGContextForLLM(context: RAGContext): string {
 
 	// Add individual messages
 	if (context.messages.length > 0) {
-		parts.push("\n## Relevant Email Messages:")
+		parts.push(isChronological ? "\n## Email Messages (ordered by date):" : "\n## Relevant Email Messages:")
 		context.messages.forEach((msg, i) => {
-			parts.push(`\n### Message ${i + 1} (similarity: ${(msg.similarity * 100).toFixed(1)}%)`)
+			if (isChronological) {
+				parts.push(`\n### Message ${i + 1}`)
+			} else {
+				parts.push(`\n### Message ${i + 1} (similarity: ${(msg.similarity * 100).toFixed(1)}%)`)
+			}
 			parts.push(`From: ${msg.from_email}`)
 			parts.push(`Date: ${new Date(msg.internal_date).toLocaleDateString()}`)
 			parts.push(`Content: ${msg.body_redacted || msg.snippet || "No content"}`)
@@ -312,5 +323,169 @@ export function isAnalyticsQuery(query: string): boolean {
 
 	const lowerQuery = query.toLowerCase()
 	return analyticsKeywords.some((keyword) => lowerQuery.includes(keyword))
+}
+
+/**
+ * Determine if a query is asking for chronological/listing access (newest, all emails, recent, etc.)
+ */
+export function isChronologicalQuery(query: string): boolean {
+	const chronologicalKeywords = [
+		"newest",
+		"newest email",
+		"latest",
+		"latest email",
+		"most recent",
+		"recent email",
+		"recent emails",
+		"all emails",
+		"all my emails",
+		"show me all",
+		"list all",
+		"list emails",
+		"show emails",
+		"show all emails",
+		"what emails",
+		"what are my emails",
+		"oldest",
+		"oldest email",
+		"first email",
+		"last email",
+	]
+
+	const lowerQuery = query.toLowerCase()
+	return chronologicalKeywords.some((keyword) => lowerQuery.includes(keyword))
+}
+
+/**
+ * Retrieve emails chronologically (ordered by date) instead of by semantic similarity
+ * Useful for queries like "newest email" or "show me all emails"
+ */
+export async function retrieveEmailsChronologically(
+	tenantId: string,
+	options: {
+		limit?: number
+		orderBy?: "newest" | "oldest"
+		startDate?: Date
+		endDate?: Date
+	} = {}
+): Promise<RAGContext> {
+	const {
+		limit = 20,
+		orderBy = "newest",
+		startDate,
+		endDate,
+	} = options
+
+	const messages: RetrievedMessage[] = []
+	const threads: RetrievedThread[] = []
+
+	// Build WHERE clause for date filtering
+	const conditions: string[] = ["m.tenant_id = $1"]
+	const params: any[] = [tenantId]
+	let paramIndex = 2
+
+	if (startDate) {
+		conditions.push(`m.internal_date >= $${paramIndex}`)
+		params.push(startDate)
+		paramIndex++
+	}
+
+	if (endDate) {
+		conditions.push(`m.internal_date <= $${paramIndex}`)
+		params.push(endDate)
+		paramIndex++
+	}
+
+	const whereClause = conditions.join(" AND ")
+	const orderDirection = orderBy === "newest" ? "DESC" : "ASC"
+
+	// Retrieve messages chronologically
+	const messageResults = await withTenant(tenantId, async (client) => {
+		const result = await client.query(
+			`
+			SELECT 
+				m.id,
+				m.thread_id,
+				m.from_email,
+				m.snippet,
+				m.body_redacted,
+				m.internal_date,
+				1.0 as similarity
+			FROM messages m
+			WHERE ${whereClause}
+			ORDER BY m.internal_date ${orderDirection}
+			LIMIT $${paramIndex}
+			`,
+			[...params, limit]
+		)
+		return result.rows.map((row: any) => ({
+			id: row.id,
+			thread_id: row.thread_id,
+			from_email: row.from_email,
+			snippet: row.snippet,
+			body_redacted: row.body_redacted,
+			internal_date: row.internal_date,
+			similarity: 1.0, // Not a similarity score, but we use 1.0 to indicate it's a chronological result
+		}))
+	})
+
+	messages.push(...messageResults)
+
+	// Also get threads for context (simplified - just get threads that match the date range)
+	const threadConditions: string[] = ["t.tenant_id = $1"]
+	const threadParams: any[] = [tenantId]
+	let threadParamIndex = 2
+
+	if (startDate) {
+		threadConditions.push(`t.last_message_ts >= $${threadParamIndex}`)
+		threadParams.push(startDate)
+		threadParamIndex++
+	}
+
+	if (endDate) {
+		threadConditions.push(`t.last_message_ts <= $${threadParamIndex}`)
+		threadParams.push(endDate)
+		threadParamIndex++
+	}
+
+	const threadWhereClause = threadConditions.join(" AND ")
+
+	const threadResults = await withTenant(tenantId, async (client) => {
+		const result = await client.query(
+			`
+			SELECT 
+				t.id,
+				t.subject,
+				t.summary,
+				t.topic,
+				t.stance,
+				t.last_message_ts,
+				1.0 as similarity
+			FROM threads t
+			WHERE ${threadWhereClause}
+			ORDER BY t.last_message_ts ${orderDirection}
+			LIMIT $${threadParamIndex}
+			`,
+			[...threadParams, limit]
+		)
+		return result.rows.map((row: any) => ({
+			id: row.id,
+			subject: row.subject,
+			summary: row.summary,
+			topic: row.topic,
+			stance: row.stance,
+			last_message_ts: row.last_message_ts,
+			similarity: 1.0,
+		}))
+	})
+
+	threads.push(...threadResults)
+
+	return {
+		messages,
+		threads,
+		query: `chronological listing (${orderBy})`,
+		totalResults: messages.length + threads.length,
+	}
 }
 

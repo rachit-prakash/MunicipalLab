@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { audit } from "@/lib/audit"
 import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
-import { retrieveEmailContext, formatRAGContextForLLM, getEmailAnalytics, isAnalyticsQuery } from "@/lib/rag"
+import { retrieveEmailContext, formatRAGContextForLLM, getEmailAnalytics, isAnalyticsQuery, isChronologicalQuery, retrieveEmailsChronologically } from "@/lib/rag"
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string }
 
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
 				const lastUserMessage = messages[messages.length - 1]
 				if (lastUserMessage.role === "user") {
 					const userQuery = lastUserMessage.content
+					const lowerQuery = userQuery.toLowerCase()
 
 					// Check if this is an analytics query
 					if (isAnalyticsQuery(userQuery)) {
@@ -57,18 +58,18 @@ export async function POST(req: NextRequest) {
 						let endDate: Date | undefined
 
 						// Simple date parsing (you can make this more sophisticated)
-						if (userQuery.toLowerCase().includes("today")) {
+						if (lowerQuery.includes("today")) {
 							startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 							endDate = now
-						} else if (userQuery.toLowerCase().includes("this week")) {
+						} else if (lowerQuery.includes("this week")) {
 							const dayOfWeek = now.getDay()
 							startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000)
 							startDate.setHours(0, 0, 0, 0)
 							endDate = now
-						} else if (userQuery.toLowerCase().includes("this month")) {
+						} else if (lowerQuery.includes("this month")) {
 							startDate = new Date(now.getFullYear(), now.getMonth(), 1)
 							endDate = now
-						} else if (userQuery.toLowerCase().includes("last week")) {
+						} else if (lowerQuery.includes("last week")) {
 							const dayOfWeek = now.getDay()
 							endDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000)
 							endDate.setHours(23, 59, 59, 999)
@@ -110,6 +111,44 @@ export async function POST(req: NextRequest) {
 								ragContext += `${i + 1}. ${sender.email}: ${sender.count} emails\n`
 							})
 						}
+					} else if (isChronologicalQuery(userQuery)) {
+						// Determine order (newest or oldest)
+						const orderBy = lowerQuery.includes("oldest") || lowerQuery.includes("first") ? "oldest" : "newest"
+						
+						// Determine limit based on query
+						let limit = 20 // default
+						if (lowerQuery.includes("all") || lowerQuery.includes("show me all") || lowerQuery.includes("list all")) {
+							limit = 50 // Show more emails for "all" queries
+						} else if (lowerQuery.includes("newest") || lowerQuery.includes("latest") || lowerQuery.includes("most recent")) {
+							limit = 10 // Show fewer for "newest" queries
+						}
+
+						// Parse date ranges if mentioned
+						const now = new Date()
+						let startDate: Date | undefined
+						let endDate: Date | undefined
+
+						if (lowerQuery.includes("today")) {
+							startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+							endDate = now
+						} else if (lowerQuery.includes("this week")) {
+							const dayOfWeek = now.getDay()
+							startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000)
+							startDate.setHours(0, 0, 0, 0)
+							endDate = now
+						} else if (lowerQuery.includes("this month")) {
+							startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+							endDate = now
+						}
+
+						// Retrieve emails chronologically
+						const emailContext = await retrieveEmailsChronologically(tenantId, {
+							limit,
+							orderBy,
+							startDate,
+							endDate,
+						})
+						ragContext = formatRAGContextForLLM(emailContext)
 					} else {
 						// Semantic search
 						const emailContext = await retrieveEmailContext(userQuery, tenantId, {
@@ -130,9 +169,10 @@ export async function POST(req: NextRequest) {
 			role: "system",
 			content: [
 				"You are the Legaside AI Assistant, an intelligent email management assistant.",
-				"You have access to the user's email data through semantic search.",
+				"You have access to the user's email data through semantic search and chronological listing.",
 				"When answering questions, use the provided email context and analytics.",
 				"Be specific and cite relevant emails when possible (e.g., 'In the email from John on Dec 1st...').",
+				"When listing emails chronologically, present them in a clear, organized manner with dates and senders.",
 				"If the context doesn't contain enough information, acknowledge this and explain what additional information you'd need.",
 				"For analytics questions, provide clear numbers and insights.",
 				"Be helpful, concise, and professional.",
