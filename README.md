@@ -46,11 +46,7 @@ Modern, lightweight CRM for municipal teams by MunicipalLabs. It centralizes con
 2. **Install**
 
 ```bash
-# with pnpm (recommended)
 pnpm install
-
-# or npm
-npm install
 ```
 
 3. **Environment**
@@ -98,8 +94,6 @@ See [OAuth Setup Guide](./docs/OAUTH_SETUP.md) for step-by-step instructions.
 
 ```bash
 pnpm dev
-# or
-npm run dev
 ```
 
 App runs at `http://localhost:3000`
@@ -146,7 +140,6 @@ pnpm start     # start production server (after build)
 pnpm lint      # run linter
 ```
 
-(npm equivalents: `npm run dev`, etc.)
 
 ---
 
