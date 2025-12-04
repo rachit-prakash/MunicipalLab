@@ -1,5 +1,7 @@
 "use client"
 
+// we have to write this button as a client component because we are using the useEffect hook to sync the timezone
+
 import { useState } from "react"
 import { Loader2, RefreshCcw } from "lucide-react"
 import { useRouter } from "next/navigation"

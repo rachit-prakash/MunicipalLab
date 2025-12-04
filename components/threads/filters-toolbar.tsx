@@ -13,17 +13,19 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 interface FiltersToolbarProps {
+  availableTopics?: string[]
   onFiltersChange: (filters: {
     type: string
     topics: string[]
   }) => void
 }
 
-const topics = ["Healthcare", "Immigration", "Education", "Infrastructure", "Environment", "Defense", "Economy"]
+const FALLBACK_TOPICS = ["Healthcare", "Immigration", "Education", "Infrastructure", "Environment", "Economy"]
 
-export function FiltersToolbar({ onFiltersChange }: FiltersToolbarProps) {
+export function FiltersToolbar({ availableTopics, onFiltersChange }: FiltersToolbarProps) {
   const [type, setType] = useState("both")
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
+  const topics = availableTopics?.length ? availableTopics : FALLBACK_TOPICS
 
   const handleTypeChange = (value: string) => {
     setType(value)

@@ -10,7 +10,9 @@
     "pages:build": "npx @cloudflare/next-on-pages",
     "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-date=2024-11-12",
     "pages:deploy": "pnpm run pages:build && pnpm exec wrangler pages deploy",
-    "validate:db": "node scripts/validate-db-url.js"
+    "validate:db": "node scripts/validate-db-url.js",
+    "analyze:messages": "tsx scripts/analyze-messages.ts",
+    "test:analytics": "tsx scripts/test-analytics.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -82,6 +84,7 @@
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
+    "tsx": "^4.19.1",
     "typescript": "^5",
     "wrangler": "^4.47.0"
   }

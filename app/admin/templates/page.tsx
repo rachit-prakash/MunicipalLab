@@ -1,65 +1,90 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { TemplateRow } from "@/lib/types"
 import { formatDate } from "@/lib/utils"
 
-// Sample data
-const sampleTemplates: TemplateRow[] = [
-  {
-    id: "1",
-    topic: "Healthcare",
-    stance: "SUPPORT",
-    version: 3,
-    updatedAt: "2025-10-31T12:00:00Z",
-    content: "Thank you for your support of healthcare reform...",
-  },
-  {
-    id: "2",
-    topic: "Healthcare",
-    stance: "OPPOSE",
-    version: 2,
-    updatedAt: "2025-10-30T10:00:00Z",
-    content: "We appreciate your concerns regarding healthcare policy...",
-  },
-  {
-    id: "3",
-    topic: "Immigration",
-    stance: "GENERIC",
-    version: 1,
-    updatedAt: "2025-10-29T14:00:00Z",
-    content: "Thank you for contacting us about immigration...",
-  },
-  {
-    id: "4",
-    topic: "Infrastructure",
-    stance: "SUPPORT",
-    version: 2,
-    updatedAt: "2025-10-28T09:00:00Z",
-    content: "We are grateful for your support of infrastructure investment...",
-  },
-]
+type TemplateRow = {
+  id: string
+  topic_id: string | null
+  topic_name?: string | null
+  stance: string
+  version: number
+  content: string
+  updated_at: string
+}
 
 export default function AdminTemplatesPage() {
-  const [templates, setTemplates] = useState(sampleTemplates)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editContent, setEditContent] = useState("")
-  const [editNotes, setEditNotes] = useState("")
+  const [templates, setTemplates] = useState<TemplateRow[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [draftContent, setDraftContent] = useState("")
+  const [draftStance, setDraftStance] = useState("GENERIC")
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSave = (id: string) => {
-    setTemplates(
-      templates.map((t) => (t.id === id ? { ...t, content: editContent, updatedAt: new Date().toISOString() } : t)),
-    )
-    setEditingId(null)
+  useEffect(() => {
+    void fetchTemplates()
+  }, [])
+
+  const selectedTemplate = useMemo(
+    () => templates.find((tpl) => tpl.id === selectedId) ?? null,
+    [templates, selectedId],
+  )
+
+  const fetchTemplates = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/admin/templates", { cache: "no-store" })
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
+      const data = await res.json()
+      setTemplates(data.items ?? [])
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load templates")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  
+  const handleSelect = (template: TemplateRow) => {
+    setSelectedId(template.id)
+    setDraftContent(template.content)
+    setDraftStance(template.stance)
+  }
+
+  const handleSave = async () => {
+    if (!selectedId) return
+    try {
+      await fetch("/api/admin/templates", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: selectedId, content: draftContent, stance: draftStance }),
+      })
+      await fetchTemplates()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleCreate = async () => {
+    try {
+      await fetch("/api/admin/templates", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ content: "New template content...", stance: "GENERIC" }),
+      })
+      await fetchTemplates()
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -69,102 +94,96 @@ export default function AdminTemplatesPage() {
           <Header onMenuClick={() => setMobileNavOpen(true)} />
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
-          <div className="px-4 sm:px-6 py-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="px-4 sm:px-6 py-6 space-y-6">
+            <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-semibold text-gray-900">Templates</h1>
-                <p className="text-sm text-gray-500">Manage response templates</p>
+                <p className="text-sm text-gray-500">Maintain reply templates per topic & stance</p>
               </div>
-              <Button variant="primary" size="md">
+              <Button variant="primary" size="md" onClick={handleCreate} disabled={loading}>
                 Add template
               </Button>
             </div>
 
+            {error ? (
+              <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+            ) : null}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Left: Templates table */}
-              <div className="col-span-1 md:col-span-2 border border-border rounded-lg bg-surface overflow-hidden shadow-sm">
+              <div className="col-span-1 md:col-span-2 border border-border rounded-lg bg-white overflow-hidden shadow-sm">
                 <Table>
                   <TableHeader>
                     <TableRow hoverable={false}>
                       <TableHead>Topic</TableHead>
+                      <TableHead className="hidden sm:table-cell">Stance</TableHead>
                       <TableHead className="hidden sm:table-cell">Version</TableHead>
                       <TableHead className="hidden sm:table-cell">Updated</TableHead>
-                      <TableHead className="hidden sm:table-cell">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {templates.map((template) => (
-                      <TableRow
-                        key={template.id}
-                        onClick={() => {
-                          setEditingId(template.id)
-                          setEditContent(template.content)
-                          setEditNotes("")
-                        }}
-                        className="cursor-pointer"
-                      >
-                        <TableCell className="font-medium">{template.topic}</TableCell>
-                        <TableCell className="text-gray-600 hidden sm:table-cell">v{template.version}</TableCell>
-                        <TableCell className="text-xs text-gray-500 hidden sm:table-cell">{formatDate(template.updatedAt)}</TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingId(template.id)
-                              setEditContent(template.content)
-                            }}
-                            className="text-xs font-medium text-gray-600 hover:text-gray-900"
-                          >
-                            Edit
-                          </button>
-                          <span className="mx-2 text-gray-300">•</span>
-                          <button
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-xs font-medium text-gray-600 hover:text-gray-900"
-                          >
-                            Duplicate
-                          </button>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-gray-500">
+                          Loading…
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : templates.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-gray-500">
+                          No templates yet. Add one to get started.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      templates.map((template) => (
+                        <TableRow
+                          key={template.id}
+                          onClick={() => handleSelect(template)}
+                          className={`cursor-pointer ${selectedId === template.id ? "bg-blue-50/70" : ""}`}
+                        >
+                          <TableCell className="font-medium">
+                            {template.topic_name ?? "Uncategorized"}
+                          </TableCell>
+                          <TableCell className="text-gray-600 hidden sm:table-cell">
+                            {template.stance}
+                          </TableCell>
+                          <TableCell className="text-gray-600 hidden sm:table-cell">
+                            v{template.version}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-500 hidden sm:table-cell">
+                            {formatDate(template.updated_at)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
 
-              {/* Right: Editor panel */}
-              {editingId && (
-                <div className="border border-border rounded-lg bg-surface p-6 shadow-sm h-fit">
-                  <h3 className="text-sm font-semibold text-ink-900 mb-4">Edit template</h3>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-600">Content</label>
-                      <Textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        className="min-h-32"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-600">Version notes</label>
-                      <Textarea
-                        value={editNotes}
-                        onChange={(e) => setEditNotes(e.target.value)}
-                        className="min-h-20"
-                        placeholder="Describe your changes..."
-                      />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button variant="primary" size="md" onClick={() => handleSave(editingId)} className="flex-1">
-                        Save
-                      </Button>
-                      <Button variant="ghost" size="md" onClick={() => setEditingId(null)} className="flex-1">
-                        Cancel
-                      </Button>
-                    </div>
+              {selectedTemplate ? (
+                <div className="border border-border rounded-lg bg-white p-6 shadow-sm h-fit space-y-4">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      Editing {selectedTemplate.topic_name ?? "Uncategorized"} ({selectedTemplate.stance})
+                    </p>
+                    <p className="text-xs text-gray-500">Version {selectedTemplate.version}</p>
                   </div>
+                  <Textarea
+                    value={draftContent}
+                    onChange={(e) => setDraftContent(e.target.value)}
+                    className="min-h-48"
+                  />
+                  <div className="flex gap-2">
+                    <Button variant="primary" size="md" className="flex-1" onClick={handleSave}>
+                      Save
+                    </Button>
+                    <Button variant="ghost" size="md" className="flex-1" onClick={() => setSelectedId(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border border-dashed border-gray-300 rounded-lg p-6 text-gray-500">
+                  Select a template to edit its content.
                 </div>
               )}
             </div>

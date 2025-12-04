@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Playfair_Display } from "next/font/google"
 import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight, LayoutGrid, Mail } from "lucide-react"
+import { ChevronLeft, ChevronRight, LayoutGrid, Mail, Settings } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600"] })
@@ -18,18 +19,16 @@ export function Sidebar({
   onMobileOpenChange?: (open: boolean) => void
 }) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-    try {
-      const stored = window.localStorage.getItem("sidebar_collapsed") === "true"
-      setIsCollapsed(stored)
-    } catch {
-      // ignore
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === "undefined") {
+      return false
     }
-  }, [])
+    try {
+      return window.localStorage.getItem("sidebar_collapsed") === "true"
+    } catch {
+      return false
+    }
+  })
 
   useEffect(() => {
     try {
@@ -50,6 +49,7 @@ export function Sidebar({
   const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, description: "KPIs and trends at a glance" },
     { href: "/threads", label: "Inbox", icon: Mail, description: "Browse and triage conversations" },
+    { href: "/settings", label: "Settings", icon: Settings, description: "Timezone & GDPR tools" },
   ]
 
 
@@ -64,10 +64,13 @@ export function Sidebar({
             </SheetHeader>
             <div className="flex h-full flex-col">
               <div className="px-6 py-5 flex items-center justify-between flex-shrink-0">
-                <img
+                <Image
                   src="/logo.png"
                   alt="Logo"
+                  width={120}
+                  height={32}
                   className="h-8 w-auto object-contain"
+                  priority
                 />
               </div>
               <nav className="flex-1 overflow-y-auto px-3 py-6">
@@ -115,10 +118,13 @@ export function Sidebar({
           {/* Logo and toggle */}
           <div className="px-6 py-5 flex items-center justify-between flex-shrink-0">
             {!isCollapsed && (
-              <img
+              <Image
                 src="/logo.png"
                 alt="Logo"
-                className="h-12 object-contain"
+                width={160}
+                height={40}
+                className="h-12 w-auto object-contain"
+                priority
               />
             )}
             <button

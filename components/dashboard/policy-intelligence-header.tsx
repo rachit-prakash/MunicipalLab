@@ -180,6 +180,23 @@ export function PolicyIntelligenceHeader() {
     return () => controller.abort()
   }, [handleSync, loadInsights])
 
+  useEffect(() => {
+    if (!data || typeof window === "undefined") return
+    const contextLines = [
+      `New messages today: ${data.newMessagesToday.count} (${Math.round(
+        data.newMessagesToday.deltaPercent,
+      )}% vs avg)`,
+      data.topRisingIssue
+        ? `Top rising issue: ${data.topRisingIssue.topic} (${Math.round(
+            data.topRisingIssue.deltaPercent,
+          )}% WoW)`
+        : "Top rising issue: none",
+      `Sentiment shift: ${Math.round(data.sentimentShift.deltaPercent)}%`,
+      `Urgent cases: ${data.urgentCases.count}`,
+    ]
+    ;(window as any).__ASSISTANT_CONTEXT__ = contextLines
+  }, [data])
+
   const cards = useMemo<InsightCardSpec[]>(() => {
     if (!data) return placeholderCards
     const deltaVsAvg = formatDeltaLabel(data.newMessagesToday.deltaPercent, "vs 7-day avg")
@@ -214,11 +231,11 @@ export function PolicyIntelligenceHeader() {
         insightTone: risingInsight.tone,
         extra: risingIssue?.exampleSubjectLine ? (
           <p className="text-xs text-gray-400">
-            e.g. "
+            e.g. &quot;
             {risingIssue.exampleSubjectLine.length > 70
               ? `${risingIssue.exampleSubjectLine.slice(0, 70)}...`
               : risingIssue.exampleSubjectLine}
-            "
+            &quot;
           </p>
         ) : null,
       },
@@ -239,7 +256,7 @@ export function PolicyIntelligenceHeader() {
       },
     ]
     return cardList
-  }, [data, placeholderCards])
+  }, [data])
 
   return (
     <section className="space-y-4">

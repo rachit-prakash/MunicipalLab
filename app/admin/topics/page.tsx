@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
@@ -13,60 +13,86 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { TopicRow } from "@/lib/types"
 
-// Sample data
-const sampleTopics: TopicRow[] = [
-  { id: "1", name: "Healthcare", usageCount: 245, status: "active" },
-  { id: "2", name: "Immigration", usageCount: 198, status: "active" },
-  { id: "3", name: "Infrastructure", usageCount: 156, status: "active" },
-  { id: "4", name: "Education", usageCount: 142, status: "active" },
-  { id: "5", name: "Environment", usageCount: 118, status: "active" },
-  { id: "6", name: "Defense", usageCount: 89, status: "active" },
-  { id: "7", name: "Economy", usageCount: 76, status: "archived" },
-]
+type TopicRow = {
+  id: string
+  name: string
+  status: "active" | "archived"
+}
 
 export default function AdminTopicsPage() {
-  const [topics, setTopics] = useState(sampleTopics)
+  const [topics, setTopics] = useState<TopicRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
-  const handleRename = (id: string, newName: string) => {
-    setTopics(topics.map((t) => (t.id === id ? { ...t, name: newName } : t)))
-    setEditingId(null)
+  useEffect(() => {
+    void fetchTopics()
+  }, [])
+
+  const activeCount = useMemo(() => topics.filter((t) => t.status === "active").length, [topics])
+
+  const fetchTopics = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/admin/topics", { cache: "no-store" })
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
+      const data = await res.json()
+      setTopics(data.items ?? [])
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load topics")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const addTopic = () => {
-    const newId = `t-${Date.now()}`
-    const newTopic: TopicRow = { id: newId, name: "New topic", usageCount: 0, status: "active" }
-    setTopics([newTopic, ...topics])
-    setEditingId(newId)
-    setEditName(newTopic.name)
-  }
-
-  const toggleStatus = (id: string) => {
-    setTopics(
-      topics.map((t) =>
-        t.id === id ? { ...t, status: t.status === "active" ? "archived" : "active" } : t,
-      ),
-    )
-  }
-
-  const mergeTopics = (sourceId: string, targetId: string) => {
-    if (sourceId === targetId) return
-    const source = topics.find((t) => t.id === sourceId)
-    const target = topics.find((t) => t.id === targetId)
-    if (!source || !target) return
-    const updated = topics
-      .map((t) => {
-        if (t.id === targetId) {
-          return { ...t, usageCount: t.usageCount + source.usageCount }
-        }
-        return t
+  const handleRename = async (id: string, name: string) => {
+    try {
+      await fetch("/api/admin/topics", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, name }),
       })
-      .filter((t) => t.id !== sourceId)
-    setTopics(updated)
+      await fetchTopics()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setEditingId(null)
+    }
+  }
+
+  const addTopic = async () => {
+    try {
+      await fetch("/api/admin/topics", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "New topic" }),
+      })
+      await fetchTopics()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const toggleStatus = async (topic: TopicRow) => {
+    try {
+      await fetch("/api/admin/topics", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id: topic.id,
+          status: topic.status === "active" ? "archived" : "active",
+        }),
+      })
+      await fetchTopics()
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   return (
@@ -77,100 +103,99 @@ export default function AdminTopicsPage() {
           <Header onMenuClick={() => setMobileNavOpen(true)} />
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
-          <div className="px-4 sm:px-6 py-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="px-4 sm:px-6 py-6 space-y-6">
+            <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-semibold text-gray-900">Topics</h1>
-                <p className="text-sm text-gray-500">Define and organize topics</p>
+                <p className="text-sm text-gray-500">Define and organize topics ({activeCount} active)</p>
               </div>
-              <Button variant="primary" size="md" onClick={addTopic}>
+              <Button variant="primary" size="md" onClick={addTopic} disabled={loading}>
                 Add topic
               </Button>
             </div>
+
+            {error ? (
+              <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+            ) : null}
 
             <div className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow hoverable={false}>
                     <TableHead>Topic</TableHead>
-                    <TableHead className="hidden sm:table-cell">Usage count</TableHead>
                     <TableHead className="hidden sm:table-cell">Status</TableHead>
                     <TableHead className="hidden sm:table-cell">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {topics.map((topic) => (
-                    <TableRow key={topic.id}>
-                      <TableCell className="font-medium text-gray-900">
-                        {editingId === topic.id ? (
-                          <Input
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            onBlur={() => handleRename(topic.id, editName)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleRename(topic.id, editName)
-                            }}
-                            autoFocus
-                            className="max-w-xs"
-                          />
-                        ) : (
-                          topic.name
-                        )}
-                      </TableCell>
-                      <TableCell className="text-gray-600 hidden sm:table-cell">{topic.usageCount}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <Badge
-                          variant="solid"
-                          className={
-                            topic.status === "active"
-                              ? "bg-ok/10 text-ok border border-ok/30"
-                              : "bg-gray-100 text-gray-900"
-                          }
-                        >
-                          {topic.status === "active" ? "Active" : "Archived"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <button
-                          onClick={() => {
-                            setEditingId(topic.id)
-                            setEditName(topic.name)
-                          }}
-                          className="text-xs font-medium text-gray-600 hover:text-gray-900"
-                        >
-                          Rename
-                        </button>
-                        <span className="mx-2 text-gray-300">•</span>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="text-xs font-medium text-gray-600 hover:text-gray-900">
-                              Merge
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-64">
-                            {topics
-                              .filter((t) => t.id !== topic.id)
-                              .map((t) => (
-                                <DropdownMenuItem key={t.id} onClick={() => mergeTopics(topic.id, t.id)}>
-                                  Merge into &ldquo;{t.name}&rdquo;
-                                </DropdownMenuItem>
-                              ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <span className="mx-2 text-gray-300">•</span>
-                        <button
-                          onClick={() => toggleStatus(topic.id)}
-                          className={
-                            topic.status === "active"
-                              ? "text-xs font-medium text-danger hover:text-danger"
-                              : "text-xs font-medium text-gray-600 hover:text-gray-900"
-                          }
-                        >
-                          {topic.status === "active" ? "Retire" : "Activate"}
-                        </button>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-gray-500">
+                        Loading…
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : topics.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-gray-500">
+                        No topics yet. Click “Add topic” to create one.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    topics.map((topic) => (
+                      <TableRow key={topic.id}>
+                        <TableCell className="font-medium text-gray-900">
+                          {editingId === topic.id ? (
+                            <Input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onBlur={() => handleRename(topic.id, editName)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleRename(topic.id, editName)
+                              }}
+                              autoFocus
+                              className="max-w-xs"
+                            />
+                          ) : (
+                            topic.name
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge
+                            variant="solid"
+                            className={
+                              topic.status === "active"
+                                ? "bg-ok/10 text-ok border border-ok/30"
+                                : "bg-gray-100 text-gray-900"
+                            }
+                          >
+                            {topic.status === "active" ? "Active" : "Archived"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <button
+                            onClick={() => {
+                              setEditingId(topic.id)
+                              setEditName(topic.name)
+                            }}
+                            className="text-xs font-medium text-gray-600 hover:text-gray-900"
+                          >
+                            Rename
+                          </button>
+                          <span className="mx-2 text-gray-300">•</span>
+                          <button
+                            onClick={() => toggleStatus(topic)}
+                            className={
+                              topic.status === "active"
+                                ? "text-xs font-medium text-danger hover:text-danger"
+                                : "text-xs font-medium text-gray-600 hover:text-gray-900"
+                            }
+                          >
+                            {topic.status === "active" ? "Retire" : "Activate"}
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
