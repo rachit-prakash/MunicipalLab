@@ -89,6 +89,9 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     }
   }
 
+  // Hide search bar on chatbot page
+  const isOnChatbotPage = pathname === '/chatbot'
+
   return (
     <header className="fixed right-0 top-0 z-30 border-b border-border bg-background left-0 md:left-[var(--app-sidebar-width,256px)]">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6">
@@ -101,18 +104,20 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           >
             <PanelLeft className="h-4 w-4" />
           </button>
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search subject, sender, text"
-              className="pl-10 focus-visible:outline-ring"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              aria-label="Search"
-            />
-          </div>
+          {!isOnChatbotPage && (
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search subject, sender, text"
+                className="pl-10 focus-visible:outline-ring"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                aria-label="Search"
+              />
+            </div>
+          )}
         </div>
         <div className="ml-4 shrink-0">
           {authChecked ? (

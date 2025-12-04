@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Playfair_Display } from "next/font/google"
 import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight, LayoutGrid, Mail, Settings } from "lucide-react"
+import { ChevronLeft, ChevronRight, LayoutGrid, Mail, Settings, MessageCircle } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600"] })
@@ -48,6 +48,7 @@ export function Sidebar({
   const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, description: "KPIs and trends at a glance" },
     { href: "/threads", label: "Inbox", icon: Mail, description: "Browse and triage conversations" },
+    { href: "/chatbot", label: "Chatbot", icon: MessageCircle, description: "Ask questions about your data" },
     { href: "/settings", label: "Settings", icon: Settings, description: "Timezone & GDPR tools" },
   ]
 

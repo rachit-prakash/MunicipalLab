@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import ChatbotButton from "@/components/chatbot/chatbot-button"
 import ChatbotDrawer from "@/components/chatbot/chat-drawer"
+import { ChatbotPuller } from "@/components/chatbot/chatbot-puller"
 import CookieConsent from "@/components/ui/cookie-consent"
 import { DemoBanner } from "@/components/ui/demo-banner"
 
@@ -37,6 +38,7 @@ export default function RootLayout({
         <CookieConsent />
         <ChatbotDrawer />
         <ChatbotButton />
+        <ChatbotPuller />
       </body>
     </html>
   )

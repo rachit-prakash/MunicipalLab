@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { MessageCircle } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -12,6 +13,11 @@ type ChatbotButtonProps = {
 }
 
 export function ChatbotButton({ onClick, className }: ChatbotButtonProps) {
+	const pathname = usePathname()
+	
+	// Hide button on chatbot page
+	const isOnChatbotPage = pathname === '/chatbot'
+	
 	const handleClick = React.useCallback(() => {
 		if (onClick) {
 			onClick()
@@ -22,6 +28,10 @@ export function ChatbotButton({ onClick, className }: ChatbotButtonProps) {
 			window.dispatchEvent(new CustomEvent('open-chatbot'))
 		}
 	}, [onClick])
+
+	if (isOnChatbotPage) {
+		return null
+	}
 
 	return (
 		<div

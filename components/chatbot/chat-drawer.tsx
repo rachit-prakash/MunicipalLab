@@ -25,7 +25,7 @@ export function ChatbotDrawer() {
 		{
 			id: 'welcome',
 			role: 'assistant',
-			content: "Hi! I'm your AI Assistant. Ask me anything about your data.",
+			content: "Hi! I'm the Legaside AI Assistant. Ask me anything about your data.",
 		},
 	])
 	const [input, setInput] = React.useState('')
@@ -104,7 +104,7 @@ export function ChatbotDrawer() {
 		<Drawer open={open} onOpenChange={setOpen}>
 			<DrawerContent>
 				<DrawerHeader className="flex items-center justify-between gap-3">
-					<DrawerTitle>AI Assistant</DrawerTitle>
+					<DrawerTitle>Legaside AI Assistant</DrawerTitle>
 					<DrawerClose asChild>
 						<Button variant="ghost" size="sm" aria-label="Close">
 							<X className="h-4 w-4" />
