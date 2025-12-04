@@ -124,9 +124,7 @@ export function ChatbotDrawer() {
 								)}
 							>
 								{m.role === 'assistant' ? (
-									<div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:font-semibold prose-headings:text-gray-900 prose-strong:font-semibold prose-strong:text-gray-900">
-										<ReactMarkdown>{m.content}</ReactMarkdown>
-									</div>
+									<Markdown>{m.content}</Markdown>
 								) : (
 									m.content
 								)}

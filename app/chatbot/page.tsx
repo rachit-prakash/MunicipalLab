@@ -5,6 +5,7 @@ import { SendHorizonal, Bot, User } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { Markdown } from '@/components/ui/markdown'
 import { cn } from '@/lib/utils'
 
 type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string; isTyping?: boolean }
@@ -20,7 +21,7 @@ function TypingIndicator() {
   )
 }
 
-// Component for animating text appearance
+// Component for animating text appearance with markdown rendering
 function TypingText({ text }: { text: string }) {
   const [displayedText, setDisplayedText] = React.useState('')
   const [currentIndex, setCurrentIndex] = React.useState(0)
@@ -41,7 +42,7 @@ function TypingText({ text }: { text: string }) {
     }
   }, [currentIndex, text])
 
-  return <span>{displayedText}</span>
+  return <Markdown>{displayedText}</Markdown>
 }
 
 export default function ChatbotPage() {
@@ -178,9 +179,9 @@ export default function ChatbotPage() {
                 {m.isTyping && m.role === 'assistant' ? (
                   <TypingIndicator />
                 ) : m.role === 'assistant' && m.content && typingMessageId === m.id ? (
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                    <TypingText text={m.content} />
-                  </div>
+                  <TypingText text={m.content} />
+                ) : m.role === 'assistant' ? (
+                  <Markdown>{m.content}</Markdown>
                 ) : (
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">{m.content}</div>
                 )}
