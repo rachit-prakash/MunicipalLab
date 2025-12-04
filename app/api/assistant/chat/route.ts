@@ -2,10 +2,17 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { audit } from "@/lib/audit"
 import { query } from "@/lib/db"
+import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string }
 
 export async function POST(req: NextRequest) {
+	// Check rate limit
+	const rateLimitResponse = await checkRateLimit(req, RateLimits.CHATBOT)
+	if (rateLimitResponse) {
+		return rateLimitResponse
+	}
+
 	try {
 		const body = await req.json().catch(() => ({}))
 		const messages = (body?.messages ?? []) as ChatMessage[]

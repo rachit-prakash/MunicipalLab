@@ -3,12 +3,19 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { runIncrementalSync } from "@/scripts/sync"
+import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 /**
  * Manual sync endpoint - pulls latest emails from Gmail into the database
  * GET /api/sync
  */
 export async function GET(request: NextRequest) {
+  // Check rate limit
+  const rateLimitResponse = await checkRateLimit(request, RateLimits.SYNC)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -64,6 +71,12 @@ export async function GET(request: NextRequest) {
  * POST endpoint for triggering sync (same as GET, but follows REST conventions)
  */
 export async function POST(request: NextRequest) {
+  // Check rate limit
+  const rateLimitResponse = await checkRateLimit(request, RateLimits.SYNC)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   return GET(request)
 }
 

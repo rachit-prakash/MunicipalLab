@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { query, withTenant } from "@/lib/db"
+import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 type PolicyInsightsResponse = {
   newMessagesToday: {
@@ -32,7 +33,13 @@ function calculateDelta(current: number, baseline: number): number {
   return ((current - baseline) / baseline) * 100
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
+  // Check rate limit
+  const rateLimitResponse = await checkRateLimit(request, RateLimits.POLICY_INTELLIGENCE)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {

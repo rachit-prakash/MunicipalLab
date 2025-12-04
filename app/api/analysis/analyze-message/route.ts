@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { analyzeMessage, type MessageAnalysis, type MessageForAnalysis } from "@/lib/analysis"
+import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
+  // Check rate limit
+  const rateLimitResponse = await checkRateLimit(request, RateLimits.ANALYSIS)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   try {
     const payload = await request.json().catch(() => ({}))
     const message = normalizePayload(payload)
