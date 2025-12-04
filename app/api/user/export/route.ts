@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { audit } from "@/lib/audit"
 import { query, withTenant } from "@/lib/db"
+import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 export async function GET(req: NextRequest) {
+	// Check rate limit
+	const rateLimitResponse = await checkRateLimit(req, RateLimits.USER_EXPORT)
+	if (rateLimitResponse) {
+		return rateLimitResponse
+	}
+
 	try {
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 		const userId = (token as any)?.appUserId ?? token?.sub

@@ -4,8 +4,14 @@ import { refreshGoogleAccessToken } from "@/lib/auth"
 import { demoMessages } from "@/lib/demo"
 import { audit } from "@/lib/audit"
 import { query } from "@/lib/db"
+import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 export async function GET(req: NextRequest) {
+  // Check rate limit
+  const rateLimitResponse = await checkRateLimit(req, RateLimits.GMAIL_INBOX)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
   const isDemo =
     req.nextUrl.searchParams.get("demo") === "1" ||
     req.cookies.get("demo")?.value === "1" ||

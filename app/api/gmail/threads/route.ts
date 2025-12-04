@@ -3,8 +3,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { withTenant, query } from '@/lib/db';
 import { audit } from '@/lib/audit';
+import { checkRateLimit, RateLimits } from '@/lib/rateLimit';
 
 export async function GET(request: NextRequest) {
+  // Check rate limit
+  const rateLimitResponse = await checkRateLimit(request, RateLimits.GMAIL_THREADS)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   try {
     // Authentication check
     const session = await getServerSession(authOptions);
