@@ -7,6 +7,7 @@ import ChatbotDrawer from "@/components/chatbot/chat-drawer"
 import { ChatbotPuller } from "@/components/chatbot/chatbot-puller"
 import CookieConsent from "@/components/ui/cookie-consent"
 import { DemoBanner } from "@/components/ui/demo-banner"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -39,6 +40,7 @@ export default function RootLayout({
         <ChatbotDrawer />
         <ChatbotButton />
         <ChatbotPuller />
+        <Toaster />
       </body>
     </html>
   )

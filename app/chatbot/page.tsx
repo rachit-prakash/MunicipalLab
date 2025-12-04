@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Markdown } from '@/components/ui/markdown'
 import { ChatHistorySidebar } from '@/components/chatbot/chat-history-sidebar'
+import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 
 type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string; isTyping?: boolean; saved?: boolean }
@@ -68,6 +69,7 @@ function TypingText({ text }: { text: string }) {
 }
 
 export default function ChatbotPage() {
+  const { toast } = useToast()
   const [messages, setMessages] = React.useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -136,8 +138,26 @@ export default function ChatbotPage() {
       })
       
       if (!res.ok) {
-        const errorText = await res.text()
+        const errorData = await res.json().catch(() => null)
+        
+        // Handle rate limit
+        if (res.status === 429 && errorData) {
+          const retryAfter = errorData.retryAfter || 30
+          toast({
+            variant: 'destructive',
+            title: '⏱️ Rate Limit Reached',
+            description: `Too many new chats created. Please wait ${retryAfter} seconds before starting a new conversation.`,
+          })
+          return null
+        }
+        
+        const errorText = errorData?.message || await res.text()
         console.error('Failed to create session:', res.status, errorText)
+        toast({
+          variant: 'destructive',
+          title: '❌ Failed to Create Chat',
+          description: errorText || 'Could not create a new chat session. Please try again.',
+        })
         return null
       }
       
@@ -145,6 +165,11 @@ export default function ChatbotPage() {
       
       if (!data?.session?.id) {
         console.error('Invalid session response:', data)
+        toast({
+          variant: 'destructive',
+          title: '❌ Invalid Response',
+          description: 'Received an invalid response from the server. Please try again.',
+        })
         return null
       }
       
@@ -152,6 +177,11 @@ export default function ChatbotPage() {
       return data.session.id
     } catch (error) {
       console.error('Failed to create session:', error)
+      toast({
+        variant: 'destructive',
+        title: '❌ Connection Error',
+        description: 'Could not connect to the server. Please check your internet connection.',
+      })
       return null
     }
   }
@@ -167,9 +197,30 @@ export default function ChatbotPage() {
         
         // If session not found (404), it's a stale entry - just start fresh
         if (res.status === 404) {
+          toast({
+            title: 'ℹ️ Chat Not Found',
+            description: 'This chat no longer exists. Starting a new chat.',
+          })
           handleNewChat()
           return
         }
+        
+        // Handle rate limit
+        if (res.status === 429 && errorData) {
+          const retryAfter = errorData.retryAfter || 30
+          toast({
+            variant: 'destructive',
+            title: '⏱️ Rate Limit Reached',
+            description: `Too many requests. Please wait ${retryAfter} seconds before loading chats.`,
+          })
+          return
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: '❌ Failed to Load Chat',
+          description: errorData.message || 'Could not load this chat. Please try again.',
+        })
         
         return
       }
@@ -178,6 +229,11 @@ export default function ChatbotPage() {
       
       if (!data || !data.messages || !Array.isArray(data.messages)) {
         console.error('Invalid session data:', data)
+        toast({
+          variant: 'destructive',
+          title: '❌ Invalid Data',
+          description: 'Received invalid chat data. Starting a new chat.',
+        })
         handleNewChat()
         return
       }
@@ -204,6 +260,11 @@ export default function ChatbotPage() {
       }
     } catch (error) {
       console.error('Failed to load session:', error)
+      toast({
+        variant: 'destructive',
+        title: '❌ Connection Error',
+        description: 'Could not connect to the server. Starting a new chat.',
+      })
       handleNewChat()
     }
   }
@@ -275,8 +336,31 @@ export default function ChatbotPage() {
       })
 
       if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || 'Request failed')
+        const errorData = await res.json().catch(() => null)
+        
+        // Handle rate limit error
+        if (res.status === 429 && errorData) {
+          const retryAfter = errorData.retryAfter || 30
+          const errorMsg = errorData.message || 'Too many requests. Please slow down.'
+          
+          toast({
+            variant: 'destructive',
+            title: '⏱️ Rate Limit Reached',
+            description: `You're sending messages too quickly. Please wait ${retryAfter} seconds before trying again.`,
+          })
+          
+          throw new Error(errorMsg)
+        }
+        
+        // Handle other errors
+        const errorText = errorData?.message || await res.text() || 'Request failed'
+        toast({
+          variant: 'destructive',
+          title: '❌ Error',
+          description: errorText,
+        })
+        
+        throw new Error(errorText)
       }
 
       const data = (await res.json()) as { role: 'assistant'; content: string }
@@ -301,7 +385,11 @@ export default function ChatbotPage() {
         setTypingMessageId(null)
       }, data.content.length * 15 + 500) // Estimate typing time + buffer
     } catch (err: any) {
-      const errorContent = `Sorry, I ran into an error. ${err?.message ?? ''}`
+      // Don't show error in chat if we already showed a toast
+      const errorContent = err?.message?.includes('Rate limit') || err?.message?.includes('Too many')
+        ? 'Please try again in a moment.'
+        : `Sorry, I ran into an error. ${err?.message ?? 'Please try again.'}`
+      
       setMessages((m) =>
         m.map((msg) =>
           msg.id === assistantMsgId
