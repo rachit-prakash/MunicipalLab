@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { MessageSquare, Plus, Trash2, MoreVertical } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -108,71 +109,89 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
   }, [sessions])
 
   return (
-    <div className="flex flex-col h-full border-l border-border bg-background">
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex h-full flex-col bg-white"
+    >
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <Button onClick={onNewChat} className="w-full" size="sm">
-          <Plus className="w-4 h-4 mr-2" />
+      <div className="border-b border-slate-200 p-4">
+        <Button
+          onClick={onNewChat}
+          size="sm"
+          className="w-full bg-slate-900 text-white hover:bg-slate-800"
+        >
+          <Plus className="mr-2 h-4 w-4" />
           New Chat
         </Button>
       </div>
 
       {/* Sessions List */}
       <ScrollArea className="flex-1">
-        <div className="p-2">
+        <div className="p-3">
           {loading ? (
-            <div className="text-center text-sm text-muted-foreground py-8">
-              Loading chats...
-            </div>
+            <div className="py-8 text-center text-sm text-slate-500">Loading chats...</div>
           ) : sessions.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground py-8">
+            <div className="py-10 text-center text-sm text-slate-500">
               No chat history yet
+              <div className="mt-1 text-xs text-slate-400">Start a conversation to see it here.</div>
             </div>
           ) : (
             <>
               {Object.entries(groupedSessions).map(([group, groupSessions]) => {
                 if (groupSessions.length === 0) return null
                 return (
-                  <div key={group} className="mb-4">
-                    <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+                  <div key={group} className="mb-5">
+                    <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
                       {group}
                     </div>
-                    {groupSessions.map(session => (
-                      <div
-                        key={session.id}
-                        className={cn(
-                          'group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer hover:bg-accent transition-colors',
-                          currentSessionId === session.id && 'bg-accent'
-                        )}
-                        onClick={() => onSessionSelect(session.id)}
-                      >
-                        <MessageSquare className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm truncate">{session.title}</div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreVertical className="w-3 h-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={(e) => deleteSession(session.id, e as any)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
+                    <AnimatePresence initial={false}>
+                      {groupSessions.map((session) => (
+                        <motion.div
+                          key={session.id}
+                          layout
+                          onClick={() => onSessionSelect(session.id)}
+                          className={cn(
+                            'group mt-1 flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left transition-all cursor-pointer',
+                            currentSessionId === session.id
+                              ? 'bg-slate-100'
+                              : 'hover:bg-slate-50'
+                          )}
+                          whileHover={{ x: 2 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                        >
+                          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600 transition group-hover:bg-slate-200">
+                            <MessageSquare className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium text-slate-700">{session.title}</div>
+                            <div className="text-xs text-slate-400">{formatDate(session.updated_at)}</div>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 transition group-hover:opacity-100"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-3 w-3 text-slate-400" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={(e) => deleteSession(session.id, e as any)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 )
               })}
@@ -180,7 +199,7 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
           )}
         </div>
       </ScrollArea>
-    </div>
+    </motion.div>
   )
 }
 

@@ -34,12 +34,23 @@ CREATE INDEX IF NOT EXISTS chat_messages_session_id_idx ON public.chat_messages 
 ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for re-running migration)
+DROP POLICY IF EXISTS chat_sessions_tenant_isolation ON public.chat_sessions;
+DROP POLICY IF EXISTS chat_messages_tenant_isolation ON public.chat_messages;
+
 -- Policy: Users can only see their own chat sessions
 CREATE POLICY chat_sessions_tenant_isolation ON public.chat_sessions
-  USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+  USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
+  WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
 CREATE POLICY chat_messages_tenant_isolation ON public.chat_messages
   USING (
+    session_id IN (
+      SELECT id FROM public.chat_sessions 
+      WHERE tenant_id = current_setting('app.tenant_id', true)::uuid
+    )
+  )
+  WITH CHECK (
     session_id IN (
       SELECT id FROM public.chat_sessions 
       WHERE tenant_id = current_setting('app.tenant_id', true)::uuid

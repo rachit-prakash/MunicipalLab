@@ -8,7 +8,7 @@ import { getToken } from "next-auth/jwt"
 import { withTenant } from "@/lib/db"
 import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	// Check rate limit
 	const rateLimitResponse = await checkRateLimit(req, RateLimits.CHATBOT)
 	if (rateLimitResponse) {
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 	}
 
 	try {
-		const sessionId = params.id
+		const { id: sessionId } = await params
 
 		// Get user info
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
@@ -68,14 +68,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 		})
 	} catch (err: any) {
 		console.error("Error fetching chat session:", err)
-		return new Response(JSON.stringify({ error: err?.message ?? "Unexpected error" }), {
-			status: 500,
+		const errorMessage = err?.message || "Unexpected error"
+		const isNotFound = errorMessage.includes("not found") || errorMessage.includes("does not exist")
+		return new Response(JSON.stringify({ error: errorMessage }), {
+			status: isNotFound ? 404 : 500,
 			headers: { "content-type": "application/json" },
 		})
 	}
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	// Check rate limit
 	const rateLimitResponse = await checkRateLimit(req, RateLimits.CHATBOT)
 	if (rateLimitResponse) {
@@ -83,7 +85,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	}
 
 	try {
-		const sessionId = params.id
+		const { id: sessionId } = await params
 
 		// Get user info
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
@@ -150,16 +152,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 		})
 	} catch (err: any) {
 		console.error("Error saving message:", err)
-		return new Response(JSON.stringify({ error: err?.message ?? "Unexpected error" }), {
-			status: 500,
+		const errorMessage = err?.message ?? "Unexpected error"
+		const isNotFound = errorMessage.includes("not found") || errorMessage.includes("does not exist")
+		return new Response(JSON.stringify({ error: errorMessage }), {
+			status: isNotFound ? 404 : 500,
 			headers: { "content-type": "application/json" },
 		})
 	}
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	try {
-		const sessionId = params.id
+		const { id: sessionId } = await params
 
 		// Get user info
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
