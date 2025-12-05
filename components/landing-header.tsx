@@ -12,7 +12,7 @@ export function LandingHeader() {
   const { scrollY } = useScroll()
 
   // Transform values for a refined morphing effect
-  const width = useTransform(scrollY, [0, 200], ["100%", "85%"])
+  const width = useTransform(scrollY, [0, 200], ["100%", "65%"])
   const top = useTransform(scrollY, [0, 200], ["0px", "16px"])
   const borderRadius = useTransform(scrollY, [0, 200], ["0px", "24px"])
   // Warm, cream-tinted glass with subtle blur
@@ -50,7 +50,7 @@ export function LandingHeader() {
     { label: "The Problem", id: "split-section" },
     { label: "Features", id: "features-section" },
     { label: "How it works", id: "how-section" },
-    { label: "Proof", id: "proof-section" },
+  
   ]
 
   return (
