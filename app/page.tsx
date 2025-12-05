@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { EB_Garamond, Figtree } from "next/font/google"
-import { motion, useScroll, useTransform } from "framer-motion"
-import { useRef } from "react"
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
+import { useRef, useState, useEffect } from "react"
+import { LandingHeader } from "@/components/landing-header"
 
 const garamond = EB_Garamond({
   subsets: ["latin"],
@@ -62,6 +63,338 @@ const socialProof = [
   },
 ]
 
+const chaosEmails = [
+  "RE: Newsletter - Best deals this week!",
+  "FW: Team lunch moved to Thursday 🍕",
+  "Your Amazon order has shipped",
+  "Weekly digest from LinkedIn",
+  "Webinar: Top 10 productivity hacks",
+  "Sale Alert: 50% off everything!",
+  "Reminder: Complete your profile",
+  "Flash Sale ends in 2 hours!",
+  "RE: RE: RE: FW: Quick question",
+  "You have 47 new notifications",
+  "Your subscription is expiring soon",
+  "Don't miss out on these savings!",
+  "New connection request on LinkedIn",
+  "Your weekly summary is ready",
+  "FW: FW: Funny cat video 😂",
+]
+
+const calmEmails = [
+  "Urgent: Constituent needs help with zoning",
+  "HELP: Housing crisis in District 5",
+  "Follow-up: Budget meeting with Finance",
+  "Priority: Town hall scheduling",
+  "Action needed: Bill HB-2847 vote Friday",
+  "Constituent: Water main break on Oak St",
+  "Response needed: EPA inquiry",
+  "Meeting: District 5 community board",
+  "Flagged: Permit approval pending",
+  "Important: School funding proposal",
+]
+
+function TypingEmail({ text, delay = 0 }: { text: string; delay?: number }) {
+  const [displayText, setDisplayText] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
+
+  useEffect(() => {
+    setDisplayText("")
+    setIsTyping(false)
+    
+    const timeout = setTimeout(() => {
+      setIsTyping(true)
+      let i = 0
+      const interval = setInterval(() => {
+        if (i <= text.length) {
+          setDisplayText(text.slice(0, i))
+          i++
+        } else {
+          clearInterval(interval)
+          setIsTyping(false)
+        }
+      }, 50) // Slower typing speed
+
+      return () => clearInterval(interval)
+    }, delay)
+
+    return () => clearTimeout(timeout)
+  }, [text, delay])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="email-line"
+    >
+      {displayText}
+      {isTyping && <span className="cursor-blink">|</span>}
+    </motion.div>
+  )
+}
+
+function AnimatedEmailList({ emails, type }: { emails: string[]; type: "chaos" | "calm" }) {
+  // Randomize starting point
+  const getRandomStart = () => Math.floor(Math.random() * emails.length)
+  const [visibleEmails, setVisibleEmails] = useState<{ text: string; id: number }[]>(() => {
+    const start = getRandomStart()
+    return [
+      { text: emails[start], id: 0 },
+      { text: emails[(start + 1) % emails.length], id: 1 },
+      { text: emails[(start + 2) % emails.length], id: 2 },
+    ]
+  })
+  const counterRef = useRef(3)
+  const indexRef = useRef(2)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      indexRef.current = (indexRef.current + 1) % emails.length
+      const newEmail = { text: emails[indexRef.current], id: counterRef.current }
+      counterRef.current += 1
+
+      setVisibleEmails((prev) => [...prev, newEmail].slice(-3)) // Keep only last 3
+    }, 4000) // Longer interval between new emails
+
+    return () => clearInterval(interval)
+  }, [emails])
+
+  if (type === "chaos") {
+    return (
+      <div className="email-list chaos-list">
+        <AnimatePresence mode="popLayout">
+          {visibleEmails.map((email, index) => (
+            <motion.div
+              key={email.id}
+              initial={{ opacity: 0, x: -30, rotate: -5, scale: 0.9 }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                rotate: [0, -1, 1, -0.5, 0],
+                scale: 1,
+                y: [0, -2, 0, -1, 0],
+              }}
+              exit={{ opacity: 0, x: 30, rotate: 5, scale: 0.9 }}
+              transition={{
+                duration: 0.5,
+                rotate: { repeat: Infinity, duration: 2, ease: "easeInOut" },
+                y: { repeat: Infinity, duration: 1.5, ease: "easeInOut" },
+              }}
+              className="email-item chaos"
+              style={{ zIndex: visibleEmails.length - index }}
+            >
+              <div className="email-dot" />
+              <TypingEmail text={email.text} delay={index * 100} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    )
+  }
+
+  return (
+    <div className="email-list calm-list">
+      <AnimatePresence mode="popLayout">
+        {visibleEmails.map((email, index) => (
+          <motion.div
+            key={email.id}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="email-item calm"
+          >
+            <div className="email-priority">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 2L9.5 6.5L14 8L9.5 9.5L8 14L6.5 9.5L2 8L6.5 6.5L8 2Z"
+                  fill="#034f46"
+                  opacity="0.8"
+                />
+              </svg>
+            </div>
+            <TypingEmail text={email.text} delay={index * 100} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+const queries = [
+  {
+    text: "What are my most urgent emails?",
+    response: "Sure, here is your priority list",
+    results: [
+      { text: "Water main break on Oak St", tag: "Urgent", type: "urgent" },
+      { text: "Budget meeting with Finance", tag: "Today", type: "normal" },
+    ]
+  },
+  {
+    text: "Show me constituent requests",
+    response: "Here are recent constituent requests",
+    results: [
+      { text: "Housing complaint - District 5", tag: "Urgent", type: "urgent" },
+    ]
+  },
+  {
+    text: "What needs follow-up this week?",
+    response: "These items need your attention",
+    results: [
+      { text: "EPA inquiry response due Friday", tag: "This Week", type: "normal" },
+      { text: "Town hall scheduling confirmation", tag: "This Week", type: "normal" },
+      { text: "Zoning appeal - Oak Street", tag: "Tomorrow", type: "urgent" },
+    ]
+  },
+  {
+    text: "Summarize policy updates",
+    response: "Latest policy updates",
+    results: [
+      { text: "Bill HB-2847 vote scheduled", tag: "Important", type: "normal" },
+      { text: "School funding proposal review", tag: "Tomorrow", type: "urgent" },
+    ]
+  },
+]
+
+function HeroSearchAnimation() {
+  const [text, setText] = useState("")
+  const [phase, setPhase] = useState("idle") // idle, typing, deleting, sending, loading, result
+  const [currentQueryIndex, setCurrentQueryIndex] = useState(0)
+  const currentQuery = queries[currentQueryIndex]
+
+  useEffect(() => {
+    const startDelay = setTimeout(() => {
+      runCycle()
+    }, 1000)
+
+    return () => clearTimeout(startDelay)
+  }, [currentQueryIndex])
+
+  const runCycle = () => {
+    // Typing phase
+    setPhase("typing")
+    let i = 0
+    const typingInterval = setInterval(() => {
+      if (i <= currentQuery.text.length) {
+        setText(currentQuery.text.slice(0, i))
+        i++
+      } else {
+        clearInterval(typingInterval)
+        setPhase("sending")
+        setTimeout(() => {
+          setPhase("loading")
+          setTimeout(() => {
+            setPhase("result")
+            // Show result for 3 seconds, then start deleting
+            setTimeout(() => {
+              startDeleting()
+            }, 3000)
+          }, 1500)
+        }, 600)
+      }
+    }, 45)
+  }
+
+  const startDeleting = () => {
+    setPhase("deleting")
+    let i = currentQuery.text.length
+    const deletingInterval = setInterval(() => {
+      if (i >= 0) {
+        setText(currentQuery.text.slice(0, i))
+        i--
+      } else {
+        clearInterval(deletingInterval)
+        // Move to next query
+        setTimeout(() => {
+          setCurrentQueryIndex((prev) => (prev + 1) % queries.length)
+        }, 300)
+      }
+    }, 30)
+  }
+
+  return (
+    <div className="hero-search-wrapper">
+      <motion.div 
+        className={`hero-search-bar ${phase === 'result' ? 'has-result' : ''}`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+      >
+        <div className="search-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </div>
+        <div className="search-text">
+          {text}
+          {(phase === 'typing' || phase === 'deleting') && <span className="cursor-blink">|</span>}
+        </div>
+
+        <div className="search-action">
+           {phase === 'loading' ? (
+             <div className="spinner" />
+           ) : (
+             <motion.div 
+               className={`send-button ${text.length > 0 ? 'active' : ''}`}
+               animate={phase === 'sending' ? { scale: 0.8, opacity: 0.8 } : { scale: 1, opacity: 1 }}
+               transition={{ duration: 0.2 }}
+             >
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                 <line x1="22" y1="2" x2="11" y2="13" />
+                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
+               </svg>
+             </motion.div>
+           )}
+        </div>
+      </motion.div>
+
+      <AnimatePresence mode="wait">
+        {phase === 'result' && (
+          <motion.div
+            key={currentQueryIndex}
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="hero-search-result"
+          >
+            <div className="result-content">
+              <motion.div 
+                 className="result-header"
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+                 transition={{ delay: 0.3 }}
+              >
+                <span className="ai-sparkle">✨</span>
+                <span>{currentQuery.response}</span>
+              </motion.div>
+              <div className="result-items">
+                {currentQuery.results.map((result, idx) => (
+                  <motion.div 
+                    key={idx}
+                    className={`result-item ${result.type === 'urgent' ? 'urgent' : ''}`}
+                    initial={{ opacity: 0, x: -10, y: 5 }}
+                    animate={{ opacity: 1, x: 0, y: 0 }}
+                    transition={{ delay: 0.5 + (idx * 0.2) }}
+                  >
+                    <div className="result-item-row">
+                      <span className={`dot ${result.type === 'urgent' ? 'red' : 'orange'}`}></span>
+                      <span className="item-text">{result.text}</span>
+                    </div>
+                    <span className={`tag ${result.type === 'urgent' ? 'red' : 'orange'}`}>{result.tag}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export default function Home() {
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] })
@@ -70,19 +403,13 @@ export default function Home() {
 
   return (
     <>
+      <LandingHeader />
       <div className={figtree.className}>
         <main className="landing">
           {/* Hero Section */}
           <section ref={heroRef} className="hero-section">
             <motion.div style={{ y, opacity }} className="hero-inner">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="eyebrow"
-              >
-                For legislators who live in their inbox
-              </motion.div>
+              
 
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
@@ -108,50 +435,102 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5 }}
-                className="cta-group"
               >
-                <Link href="/auth/signin" className="btn btn-primary">
-                  Sign up with Google
-                </Link>
-                <Link href="/auth/signin?demo=1" className="btn btn-secondary">
-                  Try demo mode
-                </Link>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-                className="hero-note"
-              >
-                Built for the pace of governance
+                <HeroSearchAnimation />
               </motion.div>
             </motion.div>
 
-            {/* Decorative SVG curves */}
+            {/* Decorative SVG curves with animated text */}
             <div className="hero-decoration">
-              <svg className="curve-left" viewBox="0 0 600 400" fill="none">
+              {/* Floating email keywords */}
+              {[
+                { text: "constituent emails", left: "8%", top: "15%", duration: 20, delay: 1 },
+                { text: "policy updates", left: "72%", top: "18%", duration: 25, delay: 1.5 },
+                { text: "follow-ups", left: "5%", top: "75%", duration: 22, delay: 2 },
+                { text: "district messages", left: "78%", top: "70%", duration: 28, delay: 1.8 },
+                { text: "urgent requests", left: "3%", top: "45%", duration: 24, delay: 2.2 },
+                { text: "stakeholder notes", left: "82%", top: "42%", duration: 26, delay: 1.3 },
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  className="floating-text"
+                  style={{ left: item.left, top: item.top }}
+                  initial={{ opacity: 0, x: 0, y: 0 }}
+                  animate={{
+                    opacity: [0, 0.35, 0.35, 0],
+                    x: [0, 30, -15, 0],
+                    y: [0, -40, 25, 0],
+                  }}
+                  transition={{
+                    duration: item.duration,
+                    delay: item.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {item.text}
+                </motion.div>
+              ))}
+
+              {/* Animated dots/particles */}
+              {[
+                { left: "25%", top: "25%", size: 8, delay: 1.5 },
+                { left: "68%", top: "35%", size: 6, delay: 2 },
+                { left: "15%", top: "60%", size: 10, delay: 1.8 },
+                { left: "75%", top: "65%", size: 7, delay: 2.3 },
+                { left: "88%", top: "30%", size: 9, delay: 1.6 },
+              ].map((dot, idx) => (
+                <motion.div
+                  key={`dot-${idx}`}
+                  className="floating-dot"
+                  style={{ left: dot.left, top: dot.top, width: dot.size, height: dot.size }}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{
+                    opacity: [0, 0.5, 0.5, 0],
+                    scale: [0, 1, 1, 0],
+                    x: [0, 20, -10, 0],
+                    y: [0, -30, 20, 0],
+                  }}
+                  transition={{
+                    duration: 18,
+                    delay: dot.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+
+              {/* Curved SVG paths */}
+              <svg className="curve-spiral" viewBox="0 0 1400 800" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <motion.path
-                  d="M 0 100 Q 150 50, 300 150 T 600 200"
+                  d="M 0 320 Q 200 180, 400 280 T 800 320 Q 1000 360, 1200 280"
                   stroke="#034F46"
                   strokeWidth="1.5"
                   fill="none"
-                  opacity="0.15"
+                  opacity="0.08"
                   initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.15 }}
+                  animate={{ pathLength: 1, opacity: 0.08 }}
                   transition={{ duration: 2.5, ease: "easeInOut", delay: 0.9 }}
                 />
-              </svg>
-              <svg className="curve-right" viewBox="0 0 600 400" fill="none">
                 <motion.path
-                  d="M 0 200 Q 200 50, 400 180 T 600 150"
+                  d="M 200 520 Q 400 400, 600 500 T 1000 520 Q 1200 560, 1400 480"
                   stroke="#034F46"
                   strokeWidth="1.5"
                   fill="none"
-                  opacity="0.15"
+                  opacity="0.08"
                   initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.15 }}
-                  transition={{ duration: 2.5, ease: "easeInOut", delay: 1.1 }}
+                  animate={{ pathLength: 1, opacity: 0.08 }}
+                  transition={{ duration: 2.5, ease: "easeInOut", delay: 1.2 }}
+                />
+                <motion.path
+                  d="M 100 400 Q 350 250, 600 420 Q 850 590, 1100 450 Q 1350 310, 1400 380"
+                  stroke="#034F46"
+                  strokeWidth="2"
+                  fill="none"
+                  opacity="0.06"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 0.06 }}
+                  transition={{ duration: 3, ease: "easeInOut", delay: 1.5 }}
                 />
               </svg>
             </div>
@@ -163,7 +542,7 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.8 }}
               className="hero-visual"
             >
-              <div className="mockup">
+              {/* <div className="mockup">
                 <div className="mockup-header">
                   <div className="dot" />
                   <div className="dot" />
@@ -175,34 +554,7 @@ export default function Home() {
                   <div className="line medium" />
                   <div className="block" />
                 </div>
-              </div>
-            </motion.div>
-          </section>
-
-          {/* Trust strip */}
-          <section className="trust-section">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true, margin: "-80px" }}
-            >
-              <h3 className="trust-heading">Trusted by teams who serve real people</h3>
-              <div className="trust-grid">
-                {["District offices", "Policy groups", "Constituent services", "Community boards"].map((item, idx) => (
-                  <motion.div
-                    key={item}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.08, duration: 0.5 }}
-                    viewport={{ once: true }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    className="trust-badge"
-                  >
-                    {item}
-                  </motion.div>
-                ))}
-              </div>
+              </div> */}
             </motion.div>
           </section>
 
@@ -218,7 +570,7 @@ export default function Home() {
               >
                 <div className="label">The problem</div>
                 <h2 className={garamond.className}>
-                  Gmail wasn't built for <em>governance</em>.
+                  Gmail wasn&apos;t built for <em>governance</em>.
                 </h2>
                 <p>
                   Important constituent emails get buried under newsletters. Policy updates blend into noise. Follow-ups slip through the
@@ -233,28 +585,58 @@ export default function Home() {
                 viewport={{ once: true, margin: "-100px" }}
                 className="split-right"
               >
-                <div className="card-chaos">
-                  <span className="badge badge-red">chaos</span>
-                  <div className="lines">
-                    <div className="line wide shimmer" />
-                    <div className="line shimmer" />
-                    <div className="line shimmer" />
-                  </div>
-                </div>
-                <div className="card-calm">
-                  <span className="badge badge-green">calm</span>
-                  <div className="lines">
-                    <div className="line wide" />
-                    <div className="line short" />
-                    <div className="line short" />
-                  </div>
-                </div>
+                <motion.div
+                  className="card-chaos"
+                  initial={{ opacity: 0, y: 20, rotate: -2 }}
+                  whileInView={{ opacity: 1, y: 0, rotate: -0.5 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  viewport={{ once: true }}
+                  whileHover={{
+                    scale: 1.02,
+                    rotate: 0,
+                    boxShadow: "0 24px 64px rgba(217, 74, 56, 0.2)",
+                  }}
+                >
+                  <motion.span
+                    className="badge badge-red"
+                    initial={{ scale: 0, rotate: -180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+                    viewport={{ once: true }}
+                  >
+                    chaos
+                  </motion.span>
+                  <AnimatedEmailList emails={chaosEmails} type="chaos" />
+                </motion.div>
+                <motion.div
+                  className="card-calm"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  viewport={{ once: true }}
+                  whileHover={{
+                    scale: 1.03,
+                    y: -4,
+                    boxShadow: "0 32px 80px rgba(3, 79, 70, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                  }}
+                >
+                  <motion.span
+                    className="badge badge-green"
+                    initial={{ scale: 0, rotate: 180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+                    viewport={{ once: true }}
+                  >
+                    calm
+                  </motion.span>
+                  <AnimatedEmailList emails={calmEmails} type="calm" />
+                </motion.div>
               </motion.div>
             </div>
           </section>
 
           {/* Features */}
-          <section className="features-section">
+          <section id="features-section" className="features-section">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -289,7 +671,7 @@ export default function Home() {
           </section>
 
           {/* How it works */}
-          <section className="how-section">
+          <section id="how-section" className="how-section">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -325,7 +707,7 @@ export default function Home() {
           </section>
 
           {/* Social proof */}
-          <section className="proof-section">
+          <section id="proof-section" className="proof-section">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -347,7 +729,7 @@ export default function Home() {
                   whileHover={{ y: -4 }}
                   className="quote"
                 >
-                  <p className="quote-text">"{item.quote}"</p>
+                  <p className="quote-text">&ldquo;{item.quote}&rdquo;</p>
                   <div className="quote-author">
                     <div className="author-name">{item.name}</div>
                     <div className="author-role">{item.role}</div>
@@ -395,7 +777,7 @@ export default function Home() {
 
         .landing {
           min-height: 100vh;
-          background: radial-gradient(ellipse 140% 80% at 50% 0%, #ffffff 0%, #fffef0 50%, #fffef0 100%);
+          background: radial-gradient(ellipse 140% 80% at 50% 0%, #ffffff 0%,rgb(251, 248, 216) 50%, #fffef0 100%);
           overflow-x: hidden;
         }
 
@@ -403,9 +785,14 @@ export default function Home() {
         .hero-section {
           position: relative;
           text-align: center;
-          padding: clamp(80px, 12vw, 160px) 24px clamp(60px, 10vw, 120px);
+          padding: 24px;
           max-width: 1400px;
           margin: 0 auto;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
         }
 
         .hero-inner {
@@ -503,27 +890,44 @@ export default function Home() {
           position: absolute;
           top: 0;
           left: 0;
+          right: 0;
+          bottom: 0;
           width: 100%;
           height: 100%;
           pointer-events: none;
           z-index: 1;
-          overflow: hidden;
+          overflow: visible;
         }
 
-        .curve-left {
+        .curve-spiral {
           position: absolute;
-          top: 10%;
-          left: -10%;
-          width: 50%;
-          height: auto;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 140%;
+          height: 140%;
+          max-width: 1600px;
         }
 
-        .curve-right {
+        .floating-text {
           position: absolute;
-          bottom: 20%;
-          right: -10%;
-          width: 50%;
-          height: auto;
+          font-size: clamp(14px, 1.5vw, 18px);
+          color: #034f46;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          white-space: nowrap;
+          pointer-events: none;
+          user-select: none;
+          will-change: transform, opacity;
+        }
+
+        .floating-dot {
+          position: absolute;
+          border-radius: 50%;
+          background: radial-gradient(circle, #034f46, rgba(3, 79, 70, 0.4));
+          box-shadow: 0 0 12px rgba(3, 79, 70, 0.3);
+          pointer-events: none;
+          will-change: transform, opacity;
         }
 
         .hero-visual {
@@ -571,12 +975,12 @@ export default function Home() {
 
         .block {
           height: 180px;
-          background: repeating-linear-gradient(45deg, #f8f4e8, #f8f4e8 14px, #f1ebdc 14px, #f1ebdc 28px);
+          background: repeating-linear-gradient(45deg,rgb(248, 235, 196), #f8f4e8 14px, #f1ebdc 14px, #f1ebdc 28px);
           border-radius: 16px;
           margin-top: 20px;
         }
 
-        /* Trust Section */
+        /* Trust Section */s
         .trust-section {
           text-align: center;
           padding: clamp(60px, 8vw, 100px) 24px;
@@ -656,39 +1060,256 @@ export default function Home() {
 
         .split-right {
           display: grid;
-          gap: 20px;
+          gap: 28px;
         }
 
         .card-chaos,
         .card-calm {
-          padding: 24px;
+          padding: 32px;
           border-radius: 20px;
           background: #ffffff;
-          border: 1px solid rgba(3, 79, 70, 0.1);
-          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.06);
           position: relative;
+          min-height: 240px;
+          transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+          overflow: visible;
+        }
+
+        .card-chaos {
+          background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 50%, #fff5f5 100%);
+          border: 2px dashed rgba(217, 74, 56, 0.3);
+          box-shadow: 0 8px 24px rgba(217, 74, 56, 0.15), 0 4px 8px rgba(0, 0, 0, 0.05),
+            inset 0 0 100px rgba(217, 74, 56, 0.03);
+          transform: rotate(-0.5deg);
+          position: relative;
+        }
+
+        .card-chaos::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 10px,
+              rgba(217, 74, 56, 0.02) 10px,
+              rgba(217, 74, 56, 0.02) 20px
+            ),
+            repeating-linear-gradient(
+              -45deg,
+              transparent,
+              transparent 10px,
+              rgba(217, 74, 56, 0.02) 10px,
+              rgba(217, 74, 56, 0.02) 20px
+            );
+          border-radius: 20px;
+          pointer-events: none;
+        }
+
+        .card-calm {
+          background: linear-gradient(135deg, #ffffff 0%, #f0f9f8 100%);
+          border: 2px solid rgba(3, 79, 70, 0.15);
+          box-shadow: 0 20px 60px rgba(3, 79, 70, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            inset 0 0 60px rgba(3, 79, 70, 0.03);
+          position: relative;
+        }
+
+        .card-calm::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 50% 0%, rgba(3, 79, 70, 0.03) 0%, transparent 70%);
+          border-radius: 20px;
+          pointer-events: none;
         }
 
         .badge {
           position: absolute;
-          top: 16px;
-          right: 16px;
-          padding: 7px 13px;
+          top: 20px;
+          right: 20px;
+          padding: 8px 16px;
           border-radius: 999px;
           font-size: 11px;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           font-weight: 700;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 10;
         }
 
         .badge-red {
           background: #d94a38;
           color: #fff;
+          animation: shake 3s ease-in-out infinite;
         }
 
         .badge-green {
-          background: #034f46;
+          background: linear-gradient(135deg, #034f46 0%, #046157 100%);
           color: #fff;
+          box-shadow: 0 6px 20px rgba(3, 79, 70, 0.3);
+        }
+
+        @keyframes shake {
+          0%,
+          100% {
+            transform: translateX(0) rotate(0deg);
+          }
+          25% {
+            transform: translateX(-2px) rotate(-2deg);
+          }
+          75% {
+            transform: translateX(2px) rotate(2deg);
+          }
+        }
+
+        .email-list {
+          display: flex;
+          flex-direction: column;
+          min-height: 200px;
+          position: relative;
+          padding-top: 8px;
+        }
+
+        .chaos-list {
+          gap: 8px;
+        }
+
+        .calm-list {
+          gap: 14px;
+        }
+
+        .email-item {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 16px 20px;
+          border-radius: 12px;
+          transition: all 0.3s ease;
+        }
+
+        .email-item.chaos {
+          background: rgba(255, 255, 255, 0.95);
+          border: 1.5px solid rgba(217, 74, 56, 0.35);
+          border-left: 4px solid #d94a38;
+          box-shadow: 0 4px 12px rgba(217, 74, 56, 0.12), 2px 4px 8px rgba(0, 0, 0, 0.06);
+          transform: rotate(var(--rotation, 0deg));
+        }
+
+        .email-item.chaos:nth-child(1) {
+          --rotation: -1deg;
+        }
+
+        .email-item.chaos:nth-child(2) {
+          --rotation: 0.8deg;
+        }
+
+        .email-item.chaos:nth-child(3) {
+          --rotation: -0.5deg;
+        }
+
+        .email-item.chaos:hover {
+          transform: rotate(0deg) scale(1.02);
+          z-index: 5;
+        }
+
+        .email-item.calm {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 248, 0.98) 100%);
+          border: 1px solid rgba(3, 79, 70, 0.18);
+          border-left: 4px solid #034f46;
+          box-shadow: 0 3px 12px rgba(3, 79, 70, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+        }
+
+        .email-item.calm:hover {
+          transform: translateX(4px);
+          box-shadow: 0 6px 20px rgba(3, 79, 70, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .email-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: currentColor;
+          flex-shrink: 0;
+          animation: chaotic-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .email-item.chaos .email-dot {
+          background: #d94a38;
+          box-shadow: 0 0 8px rgba(217, 74, 56, 0.6);
+        }
+
+        .email-priority {
+          flex-shrink: 0;
+          animation: gentle-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes chaotic-pulse {
+          0%,
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          25% {
+            opacity: 0.7;
+            transform: scale(1.3);
+          }
+          50% {
+            opacity: 0.5;
+            transform: scale(0.8);
+          }
+          75% {
+            opacity: 0.8;
+            transform: scale(1.1);
+          }
+        }
+
+        @keyframes gentle-pulse {
+          0%,
+          100% {
+            opacity: 0.8;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.1);
+          }
+        }
+
+        .email-line {
+          font-size: 15px;
+          font-weight: 500;
+          line-height: 1.4;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          flex: 1;
+        }
+
+        .email-item.chaos .email-line {
+          color: #4a4a4a;
+        }
+
+        .email-item.calm .email-line {
+          color: #1a1a1a;
+          font-weight: 600;
+        }
+
+        .cursor-blink {
+          display: inline-block;
+          animation: blink 1s step-end infinite;
+          color: #034f46;
+          margin-left: 2px;
+          font-weight: 700;
+        }
+
+        @keyframes blink {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0;
+          }
         }
 
         .lines {
@@ -982,10 +1603,137 @@ export default function Home() {
             gap: 48px;
           }
 
-          .curve-left,
-          .curve-right {
+          .hero-decoration {
             display: none;
           }
+        }
+
+        /* Hero Search Animation */
+        .hero-search-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          width: 100%;
+          max-width: 520px;
+          margin: 0 auto;
+        }
+
+        .hero-search-bar {
+          background: #ffffff;
+          border: 1px solid rgba(3, 79, 70, 0.15);
+          border-radius: 16px;
+          padding: 16px 20px;
+          box-shadow: 0 12px 32px rgba(3, 79, 70, 0.08), 0 2px 6px rgba(3, 79, 70, 0.04);
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          width: 100%;
+          height: 60px;
+        }
+
+        .search-icon {
+          color: #8d8d83;
+          display: flex;
+          align-items: center;
+        }
+
+        .search-text {
+          font-size: 18px;
+          color: #1a1a1a;
+          font-weight: 500;
+          flex: 1;
+          text-align: left;
+        }
+
+        .hero-search-result {
+          width: 100%;
+          overflow: hidden;
+        }
+
+        .result-content {
+          background: #ffffff;
+          border: 1px solid rgba(3, 79, 70, 0.1);
+          border-radius: 16px;
+          padding: 20px;
+          box-shadow: 0 16px 48px rgba(3, 79, 70, 0.12), 0 4px 12px rgba(3, 79, 70, 0.06);
+        }
+
+        .result-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #6b6b64;
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 16px;
+        }
+
+        .result-items {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .result-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          border-radius: 10px;
+          background: #f8fcfb;
+          border: 1px solid rgba(3, 79, 70, 0.06);
+        }
+
+        .result-item.urgent {
+          background: #fff5f5;
+          border-color: rgba(217, 74, 56, 0.1);
+        }
+
+        .result-item-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .result-item .dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+        }
+
+        .result-item .dot.red {
+          background: #d94a38;
+          box-shadow: 0 0 6px rgba(217, 74, 56, 0.4);
+        }
+
+        .result-item .dot.orange {
+          background: #f59e0b;
+        }
+
+        .item-text {
+          font-size: 15px;
+          color: #1a1a1a;
+          font-weight: 500;
+        }
+
+        .tag {
+          font-size: 11px;
+          font-weight: 600;
+          padding: 4px 8px;
+          border-radius: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .tag.red {
+          background: rgba(217, 74, 56, 0.1);
+          color: #d94a38;
+        }
+
+        .tag.orange {
+          background: rgba(245, 158, 11, 0.1);
+          color: #d97706;
         }
       `}</style>
     </>
