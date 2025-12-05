@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { EB_Garamond, Figtree } from "next/font/google"
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
+import { motion, useScroll, useTransform, AnimatePresence, useAnimationControls } from "framer-motion"
 import { useRef, useState, useEffect } from "react"
 import { LandingHeader } from "@/components/landing-header"
+import { Footer } from "@/components/footer"
 
 const garamond = EB_Garamond({
   subsets: ["latin"],
@@ -28,22 +30,150 @@ const stagger = { show: { transition: { staggerChildren: 0.12, delayChildren: 0.
 
 const features = [
   {
-    title: "Priority focus",
-    body: "Constituent and stakeholder emails float to the top so you never miss the urgent ones.",
+    title: "Dashboard Overview",
+    body: "Your inbox stats, priorities, and team activity at a glance.",
+    image: "/Dashboard1.png",
   },
   {
-    title: "Order in the inbox",
-    body: "Labels, threads, and follow-ups stay tidy without you wrestling filters all day.",
+    title: "District Pulse",
+    body: "Track constituent sentiment and emerging district issues.",
+    image: "/DistrictPulse1.png",
   },
   {
-    title: "One home for everything",
-    body: "Keep district updates, task notes, and replies together so the team moves in sync.",
+    title: "Smart Insights",
+    body: "Data-driven insights about your district's top priorities.",
+    image: "/DistrictPulse2.png",
   },
   {
-    title: "Track every promise",
-    body: "Set simple reminders on threads so commitments don't slip through the cracks.",
+    title: "AI Assistant",
+    body: "Ask questions and get instant answers about your work.",
+    image: "/Chatbot1.png",
   },
 ]
+
+function FeaturesCarousel() {
+  const controls = useAnimationControls()
+  const [isPaused, setIsPaused] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+
+  // Duplicate the features array to create seamless loop
+  const duplicatedFeatures = [...features, ...features, ...features]
+
+  useEffect(() => {
+    // Mark as ready after a brief moment
+    setIsReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isPaused && !isDragging && isReady) {
+      // Start the animation with smoother settings
+      const animate = async () => {
+        await controls.start({
+          x: `-${100 * features.length}%`,
+          transition: {
+            duration: 60, // Slower = smoother
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "loop",
+          },
+        })
+      }
+      animate()
+    }
+  }, [controls, isPaused, isDragging, isReady])
+
+  const handleDragStart = () => {
+    setIsDragging(true)
+    controls.stop()
+  }
+
+  const handleDragEnd = () => {
+    setIsDragging(false)
+    // Resume animation from current position
+    controls.start({
+      x: `-${100 * features.length}%`,
+      transition: {
+        duration: 60,
+        ease: "linear",
+        repeat: Infinity,
+        repeatType: "loop",
+      },
+    })
+  }
+
+  const handlePause = () => {
+    if (!isDragging) {
+      setIsPaused(true)
+      controls.stop()
+    }
+  }
+
+  const handleResume = () => {
+    if (!isDragging) {
+      setIsPaused(false)
+      controls.start({
+        x: `-${100 * features.length}%`,
+        transition: {
+          duration: 60, // Slower = smoother
+          ease: "linear",
+          repeat: Infinity,
+          repeatType: "loop",
+        },
+      })
+    }
+  }
+
+  return (
+    <div 
+      className="carousel-container" 
+      style={{ 
+        overflow: 'hidden', 
+        position: 'relative',
+        opacity: isReady ? 1 : 0,
+        transition: 'opacity 0.4s ease-out'
+      }}
+    >
+      <motion.div
+        className="carousel-track"
+        style={{ display: 'flex', flexWrap: 'nowrap', gap: '28px' }}
+        animate={controls}
+        drag="x"
+        dragConstraints={{ left: -5000, right: 100 }}
+        dragElastic={0.1}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onMouseDown={handlePause}
+        onMouseUp={handleResume}
+        onMouseLeave={handleResume}
+        onTouchStart={handlePause}
+        onTouchEnd={handleResume}
+      >
+        {duplicatedFeatures.map((feature, idx) => (
+          <div key={idx} className="carousel-item" style={{ flexShrink: 0, width: '550px', minWidth: '550px' }}>
+            <div className="carousel-card">
+              <div className="carousel-image-wrapper">
+                <Image
+                  src={feature.image}
+                  alt={feature.title}
+                  width={800}
+                  height={500}
+                  style={{ objectFit: 'cover', pointerEvents: 'none' }}
+                  priority={idx < 4}
+                  draggable={false}
+                />
+              </div>
+              <div className="carousel-caption">
+                <h3>{feature.title}</h3>
+                <p>{feature.body}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  )
+}
 
 const socialProof = [
   {
@@ -630,24 +760,11 @@ export default function Home() {
               </h2>
               <p className="lead">Legislative teams get clarity, speed, and follow-through without wrestling filters all day.</p>
             </motion.div>
+          </section>
 
-            <div className="features-grid">
-              {features.map((item, idx) => (
-                <motion.div
-                  key={item.title}
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1, duration: 0.6 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  whileHover={{ y: -4, boxShadow: "0 20px 50px rgba(0,0,0,0.08)" }}
-                  className="feature-card"
-                >
-                  <h3>{item.title}</h3>
-                  <p>{item.body}</p>
-                  <div className="feature-visual" />
-                </motion.div>
-              ))}
-            </div>
+          {/* Full-width Carousel Section */}
+          <section className="carousel-section-full">
+            <FeaturesCarousel />
           </section>
 
           {/* How it works */}
@@ -659,88 +776,152 @@ export default function Home() {
               viewport={{ once: true, margin: "-100px" }}
             >
               <div className="label">How it works</div>
-              <h2 className={garamond.className}>Three steps to a clear inbox.</h2>
+              <h2 className={garamond.className}>Three steps to a <span className="text-accent">clear</span> inbox.</h2>
             </motion.div>
 
-            <ol className="steps-list">
+            <div className="steps-grid">
               {[
-                { title: "Connect Gmail", body: "Securely connect your inbox. No re-training your team." },
-                { title: "Let the software sort", body: "Important threads get organized, flagged, and ready to act." },
-                { title: "Respond faster", body: "See what matters first, follow up on time, and keep constituents in the loop." },
+                { 
+                  title: "Connect Gmail", 
+                  body: "Securely connect your inbox. No re-training your team.",
+                  time: "Takes 2 min",
+                  icon: (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="m2 7 10 7 10-7" />
+                    </svg>
+                  )
+                },
+                { 
+                  title: "Let the software sort", 
+                  body: "Important threads get organized, flagged, and ready to act.",
+                  time: "Automatic",
+                  icon: (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                  )
+                },
+                { 
+                  title: "Respond faster", 
+                  body: "See what matters first, follow up on time, and keep constituents in the loop.",
+                  time: "Save hours daily",
+                  icon: (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                  )
+                },
               ].map((step, idx) => (
-                <motion.li
+                <motion.div
                   key={step.title}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.15, duration: 0.6 }}
                   viewport={{ once: true, margin: "-80px" }}
-                  className="step-item"
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  className="step-card"
                 >
+                  <div className="step-icon">{step.icon}</div>
                   <div className="step-number">{idx + 1}</div>
                   <div className="step-content">
                     <h3>{step.title}</h3>
                     <p>{step.body}</p>
+                    <div className="step-time">{step.time}</div>
                   </div>
-                </motion.li>
-              ))}
-            </ol>
-          </section>
-
-          {/* Social proof */}
-          <section id="proof-section" className="proof-section">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <div className="label">Proof</div>
-              <h2 className={garamond.className}>Teams already feel the calm.</h2>
-            </motion.div>
-
-            <div className="quotes-grid">
-              {socialProof.map((item, idx) => (
-                <motion.blockquote
-                  key={item.quote}
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1, duration: 0.6 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  whileHover={{ y: -4 }}
-                  className="quote"
-                >
-                  <p className="quote-text">&ldquo;{item.quote}&rdquo;</p>
-                  <div className="quote-author">
-                    <div className="author-name">{item.name}</div>
-                    <div className="author-role">{item.role}</div>
-                  </div>
-                </motion.blockquote>
+                </motion.div>
               ))}
             </div>
           </section>
 
+         
+
           {/* Final CTA */}
           <section className="final-cta-section">
             <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8 }}
+              initial={{ opacity: 0, scale: 0.98, y: 20 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               viewport={{ once: true, margin: "-100px" }}
               className="cta-card"
             >
-              <h2 className={garamond.className}>Ready for a calmer inbox?</h2>
-              <p>Give your team software that respects urgency and keeps every promise visible.</p>
-              <div className="cta-group">
-                <Link href="/auth/signin" className="btn btn-primary">
-                  Sign up with Google
-                </Link>
-                <Link href="/auth/signin?demo=1" className="btn btn-secondary">
-                  Try demo mode
-                </Link>
-              </div>
+              <motion.div
+                animate={{
+                  y: [0, -8, 0],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.8,
+                }}
+              >
+                <h2 className={garamond.className}>
+                  Ready for a <span className="highlight-calmer">calmer</span> inbox?
+                </h2>
+                <p>Give your team software that respects urgency and keeps every promise visible.</p>
+                <div className="cta-group">
+                  <Link href="/auth/signin" style={{ textDecoration: "none" }}>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="wiggle-button"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        background: "linear-gradient(135deg,rgb(240, 141, 255) 0%,rgb(240, 129, 255) 100%)",
+                        color: "#1a1a1a",
+                        fontWeight: 600,
+                        fontSize: "15px",
+                        padding: "13px 28px",
+                        borderRadius: "999px",
+                        border: "2px solid #000000",
+                        cursor: "pointer",
+                        boxShadow: "0 4px 16px rgba(217, 70, 239, 0.3)",
+                        whiteSpace: "nowrap",
+                        position: "relative",
+                      }}
+                    >
+                      {/* Email Icon */}
+                      <svg 
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      >
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="m2 7 10 7 10-7" />
+                      </svg>
+                      <span style={{ display: "inline-flex" }}>
+                        {"Try Legaside".split("").map((char, i) => (
+                          <span
+                            key={i}
+                            className="wiggle-letter"
+                            style={{
+                              display: "inline-block",
+                              animationDelay: `${i * 0.05}s`,
+                            }}
+                          >
+                            {char === " " ? "\u00A0" : char}
+                          </span>
+                        ))}
+                      </span>
+                    </motion.button>
+                  </Link>
+                </div>
+              </motion.div>
             </motion.div>
           </section>
         </main>
+
+        {/* Footer */}
+        <Footer />
       </div>
 
       <style jsx global>{`
@@ -1328,15 +1509,15 @@ export default function Home() {
 
         /* Features Section */
         .features-section {
-          padding: clamp(60px, 10vw, 140px) 24px;
-          max-width: 1300px;
+          padding: clamp(40px, 5vw, 60px) 24px 0;
+          max-width: 1400px;
           margin: 0 auto;
         }
 
         .features-header {
           text-align: center;
           max-width: 760px;
-          margin: 0 auto 56px;
+          margin: 0 auto;
         }
 
         .features-header .label {
@@ -1344,14 +1525,14 @@ export default function Home() {
           letter-spacing: 0.1em;
           text-transform: uppercase;
           color: #8d8d83;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
           font-weight: 600;
         }
 
         .features-header h2 {
-          font-size: clamp(36px, 5vw, 52px);
+          font-size: clamp(32px, 4vw, 44px);
           line-height: 1.1;
-          margin: 0 0 18px;
+          margin: 0 0 12px;
           font-weight: 500;
         }
 
@@ -1361,50 +1542,149 @@ export default function Home() {
         }
 
         .features-header .lead {
-          font-size: clamp(17px, 1.8vw, 20px);
-          line-height: 1.65;
+          font-size: clamp(16px, 1.6vw, 18px);
+          line-height: 1.6;
           color: #4a4a42;
         }
 
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-          gap: 20px;
+        /* Full-width Carousel Section */
+        .carousel-section-full {
+          width: 100vw;
+          position: relative;
+          left: 50%;
+          right: 50%;
+          margin-left: -50vw;
+          margin-right: -50vw;
+          padding: clamp(30px, 4vw, 50px) 0 clamp(40px, 5vw, 60px);
+          contain: content;
         }
 
-        .feature-card {
+        /* Carousel Styles */
+        .carousel-container {
+          position: relative;
+          width: 100%;
+          overflow: hidden;
+          padding: 30px 0;
+          cursor: grab;
+          user-select: none;
+          min-height: 500px;
+        }
+
+        .carousel-container:active {
+          cursor: grabbing;
+        }
+
+        .carousel-track {
+          display: flex;
+          gap: 28px;
+          will-change: transform;
+          backface-visibility: hidden;
+          -webkit-font-smoothing: antialiased;
+          transform: translateZ(0);
+          cursor: grab;
+          flex-wrap: nowrap;
+        }
+
+        .carousel-track:active {
+          cursor: grabbing;
+        }
+
+        .carousel-item {
+          flex-shrink: 0;
+          width: 550px;
+          min-width: 550px;
+        }
+
+        .carousel-card {
           background: #ffffff;
-          border: 1px solid rgba(3, 79, 70, 0.1);
-          border-radius: 20px;
-          padding: 28px;
-          box-shadow: 0 16px 44px rgba(0, 0, 0, 0.06);
-          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          border: 3px solid #1a1a1a;
+          border-radius: 16px;
+          padding: 18px;
+          transition: all 0.3s ease;
+          height: 100%;
         }
 
-        .feature-card h3 {
-          font-size: 22px;
-          margin: 0 0 12px;
+        .carousel-card:hover {
+          transform: translateY(-2px);
+          border-color: #034f46;
+        }
+
+        .carousel-image-wrapper {
+          width: 100%;
+          height: 320px;
+          background: #f7f3e6;
+          border-radius: 10px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 14px;
+          border: 2px solid #1a1a1a;
+        }
+
+        .carousel-image-wrapper img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .carousel-caption {
+          text-align: center;
+        }
+
+        .carousel-caption h3 {
+          font-size: 19px;
+          margin: 0 0 6px;
           font-weight: 600;
           color: #1a1a1a;
+          letter-spacing: -0.01em;
         }
 
-        .feature-card p {
-          font-size: 16px;
-          line-height: 1.6;
+        .carousel-caption p {
+          font-size: 13px;
+          line-height: 1.4;
           color: #6b6b64;
-          margin: 0 0 20px;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
-        .feature-visual {
-          height: 100px;
-          border-radius: 14px;
-          background: repeating-linear-gradient(135deg, #f7f3e6, #f7f3e6 12px, #f0eadc 12px, #f0eadc 24px);
+        @media (max-width: 768px) {
+          .carousel-item {
+            width: 80vw;
+            min-width: 300px;
+          }
+
+          .carousel-image-wrapper {
+            height: 240px;
+          }
+
+          .carousel-caption h3 {
+            font-size: 18px;
+          }
+
+          .carousel-caption p {
+            font-size: 13px;
+          }
+
+          .carousel-card {
+            padding: 16px;
+          }
+
+          .features-section {
+            padding: 30px 20px 0;
+          }
+
+          .carousel-section-full {
+            padding: 20px 0 30px;
+          }
         }
 
         /* How Section */
         .how-section {
           padding: clamp(60px, 10vw, 140px) 24px;
-          max-width: 1000px;
+          max-width: 1400px;
           margin: 0 auto;
           text-align: center;
         }
@@ -1421,55 +1701,119 @@ export default function Home() {
         .how-section h2 {
           font-size: clamp(36px, 5vw, 52px);
           line-height: 1.1;
-          margin: 0 0 48px;
+          margin: 0 0 60px;
           font-weight: 500;
         }
 
-        .steps-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          display: grid;
-          gap: 16px;
-          text-align: left;
+        .how-section .text-accent {
+          color: #034f46;
+          font-style: italic;
         }
 
-        .step-item {
+        .steps-grid {
           display: grid;
-          grid-template-columns: auto 1fr;
-          gap: 20px;
-          align-items: flex-start;
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+          gap: 32px;
+          text-align: left;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .step-card {
+          position: relative;
           background: #ffffff;
-          border: 1px solid rgba(3, 79, 70, 0.1);
-          border-radius: 18px;
-          padding: 24px;
-          box-shadow: 0 14px 40px rgba(0, 0, 0, 0.05);
+          border: 2px solid #000000;
+          border-radius: 20px;
+          padding: 36px 28px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+          overflow: visible;
+        }
+
+        .step-card:hover {
+          box-shadow: 0 12px 40px rgba(240, 135, 255, 0.2), 0 6px 20px rgba(0, 0, 0, 0.12);
+          border-color: rgb(240, 135, 255);
+        }
+
+        .step-icon {
+          position: absolute;
+          top: -16px;
+          left: 28px;
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgb(240, 141, 255) 0%, rgb(240, 129, 255) 100%);
+          border: 2px solid #000000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #1a1a1a;
+          box-shadow: 0 4px 12px rgba(240, 135, 255, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .step-card:hover .step-icon {
+          transform: scale(1.1) rotate(5deg);
+          box-shadow: 0 6px 20px rgba(240, 135, 255, 0.5);
         }
 
         .step-number {
-          width: 42px;
-          height: 42px;
+          position: absolute;
+          top: -12px;
+          right: 28px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
-          background: #034f46;
+          background: #000000;
           color: #fff;
           display: grid;
           place-items: center;
           font-weight: 700;
-          font-size: 18px;
-          flex-shrink: 0;
+          font-size: 16px;
+          border: 2px solid #ffffff;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .step-content {
+          margin-top: 24px;
         }
 
         .step-content h3 {
-          margin: 0 0 8px;
-          font-size: 20px;
-          font-weight: 600;
+          margin: 0 0 12px;
+          font-size: 22px;
+          font-weight: 700;
+          color: #1a1a1a;
+          letter-spacing: -0.02em;
         }
 
         .step-content p {
-          margin: 0;
-          color: #6b6b64;
-          line-height: 1.6;
+          margin: 0 0 16px;
+          color: #4a4a42;
+          line-height: 1.65;
           font-size: 16px;
+        }
+
+        .step-time {
+          display: inline-block;
+          font-size: 13px;
+          font-weight: 600;
+          padding: 6px 14px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, rgba(240, 141, 255, 0.15) 0%, rgba(240, 129, 255, 0.15) 100%);
+          color: rgb(180, 60, 200);
+          border: 1px solid rgba(240, 135, 255, 0.3);
+          letter-spacing: 0.02em;
+        }
+
+        @media (max-width: 768px) {
+          .steps-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+
+          .step-card {
+            padding: 40px 24px 32px;
+          }
         }
 
         /* Proof Section */
@@ -1544,12 +1888,32 @@ export default function Home() {
         }
 
         .cta-card {
-          background: linear-gradient(135deg, rgba(3, 79, 70, 0.08) 0%, rgba(3, 79, 70, 0.02) 100%);
-          border: 1px solid rgba(3, 79, 70, 0.14);
+          position: relative;
+          background: transparent;
           border-radius: 24px;
           padding: clamp(40px, 6vw, 60px) clamp(28px, 5vw, 48px);
           text-align: center;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+          overflow: visible;
+        }
+
+        .cta-card::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 80%;
+          height: 100%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.3) 40%, transparent 70%);
+          filter: blur(60px);
+          z-index: -1;
+          pointer-events: none;
+        }
+
+        .highlight-calmer {
+          position: relative;
+          color: #034f46;
+          font-style: italic;
         }
 
         .cta-card h2 {
