@@ -10,17 +10,85 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: {
-    default: "Legaside",
-    template: "Legaside • %s",
+    default: "Legaside - Your Inbox, Reimagined",
+    template: "%s | Legaside",
   },
-  description: "Legislative inbox copilot",
-  generator: "v0.app",
+  description: "Software that keeps your inbox calm, your priorities clear, and your constituents answered. Built for legislative teams who need clarity, speed, and follow-through without wrestling filters all day.",
+  keywords: [
+    "legislative inbox",
+    "government email management",
+    "constituent communication",
+    "legislative software",
+    "inbox organization",
+    "policy management",
+    "government productivity",
+    "legislative teams",
+    "email prioritization",
+    "constituent services",
+  ],
+  authors: [{ name: "Legaside" }],
+  creator: "Legaside",
+  publisher: "Legaside",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://legaside.com"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Legaside",
+    title: "Legaside - Your Inbox, Reimagined",
+    description: "Software that keeps your inbox calm, your priorities clear, and your constituents answered. Built for legislative teams.",
+    images: [
+      {
+        url: "/logo-icon.png",
+        width: 1200,
+        height: 630,
+        alt: "Legaside - Legislative Inbox Management",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Legaside - Your Inbox, Reimagined",
+    description: "Software that keeps your inbox calm, your priorities clear, and your constituents answered.",
+    images: ["/logo-icon.png"],
+    creator: "@legaside",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: [
+      { url: "/logo-icon.png", sizes: "any" },
+    ],
+    apple: [
+      { url: "/logo-icon.png", sizes: "180x180" },
+    ],
+  },
+  manifest: "/manifest.json",
+  generator: "Next.js",
 }
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   interactiveWidget: "resizes-content",
+  themeColor: "#034f46",
 }
 
 export default function RootLayout({

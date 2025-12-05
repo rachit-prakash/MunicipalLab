@@ -1,0 +1,16 @@
+{
+  "name": "Legaside | Digital Communication Made Simple",
+  "short_name": "Legaside",
+  "description": "Software that keeps your inbox calm, your priorities clear, and your constituents answered.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffef0",
+  "theme_color": "#034f46",
+  "icons": [
+    {
+      "src": "/logo-icon.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
