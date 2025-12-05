@@ -13,10 +13,6 @@ interface ThreadsTableProps {
 }
 
 export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
-  if (threads.length === 0) {
-    return <div className="flex items-center justify-center h-96 text-muted-foreground">No threads match your filters.</div>
-  }
-
   const [sortKey, setSortKey] = useState<"type" | "topic" | "receivedAt">("receivedAt")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [page, setPage] = useState(1)
@@ -58,6 +54,11 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
       setSortDir("asc")
     }
     setPage(1)
+  }
+
+  // Early return AFTER hooks are declared (React rules require hooks to run in the same order every render)
+  if (threads.length === 0) {
+    return <div className="flex items-center justify-center h-96 text-muted-foreground">No threads match your filters.</div>
   }
 
   return (

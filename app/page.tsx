@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { EB_Garamond, Figtree } from "next/font/google"
 import { motion, useScroll, useTransform, AnimatePresence, useAnimationControls } from "framer-motion"
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useCallback } from "react"
 import { LandingHeader } from "@/components/landing-header"
 import { Footer } from "@/components/footer"
 
@@ -53,76 +53,22 @@ const features = [
 
 function FeaturesCarousel() {
   const controls = useAnimationControls()
-  const [isPaused, setIsPaused] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isReady, setIsReady] = useState(false)
 
   // Duplicate the features array to create seamless loop
   const duplicatedFeatures = [...features, ...features, ...features]
 
   useEffect(() => {
-    // Mark as ready after a brief moment
-    setIsReady(true)
-  }, [])
-
-  useEffect(() => {
-    if (!isPaused && !isDragging && isReady) {
-      // Start the animation with smoother settings
-      const animate = async () => {
-        await controls.start({
-          x: `-${100 * features.length}%`,
-          transition: {
-            duration: 60, // Slower = smoother
-            ease: "linear",
-            repeat: Infinity,
-            repeatType: "loop",
-          },
-        })
-      }
-      animate()
-    }
-  }, [controls, isPaused, isDragging, isReady])
-
-  const handleDragStart = () => {
-    setIsDragging(true)
-    controls.stop()
-  }
-
-  const handleDragEnd = () => {
-    setIsDragging(false)
-    // Resume animation from current position
+    // Start the animation with smoother settings
     controls.start({
       x: `-${100 * features.length}%`,
       transition: {
-        duration: 60,
+        duration: 60, // Slower = smoother
         ease: "linear",
         repeat: Infinity,
         repeatType: "loop",
       },
     })
-  }
-
-  const handlePause = () => {
-    if (!isDragging) {
-      setIsPaused(true)
-      controls.stop()
-    }
-  }
-
-  const handleResume = () => {
-    if (!isDragging) {
-      setIsPaused(false)
-      controls.start({
-        x: `-${100 * features.length}%`,
-        transition: {
-          duration: 60, // Slower = smoother
-          ease: "linear",
-          repeat: Infinity,
-          repeatType: "loop",
-        },
-      })
-    }
-  }
+  }, [controls])
 
   return (
     <div 
@@ -130,24 +76,13 @@ function FeaturesCarousel() {
       style={{ 
         overflow: 'hidden', 
         position: 'relative',
-        opacity: isReady ? 1 : 0,
-        transition: 'opacity 0.4s ease-out'
+        pointerEvents: 'none', // Disable all interactions
       }}
     >
       <motion.div
         className="carousel-track"
         style={{ display: 'flex', flexWrap: 'nowrap', gap: '28px' }}
         animate={controls}
-        drag="x"
-        dragConstraints={{ left: -5000, right: 100 }}
-        dragElastic={0.1}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onMouseDown={handlePause}
-        onMouseUp={handleResume}
-        onMouseLeave={handleResume}
-        onTouchStart={handlePause}
-        onTouchEnd={handleResume}
       >
         {duplicatedFeatures.map((feature, idx) => (
           <div key={idx} className="carousel-item" style={{ flexShrink: 0, width: '550px', minWidth: '550px' }}>
@@ -393,15 +328,38 @@ function HeroSearchAnimation() {
   const [currentQueryIndex, setCurrentQueryIndex] = useState(0)
   const currentQuery = queries[currentQueryIndex]
 
-  useEffect(() => {
-    const startDelay = setTimeout(() => {
-      runCycle()
-    }, 1000)
+  // Use refs to store timeout/interval IDs for cleanup
+  const intervalsRef = useRef<NodeJS.Timeout[]>([])
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([])
 
-    return () => clearTimeout(startDelay)
-  }, [currentQueryIndex])
+  // Clear all intervals and timeouts
+  const clearAllTimers = useCallback(() => {
+    intervalsRef.current.forEach(clearInterval)
+    timeoutsRef.current.forEach(clearTimeout)
+    intervalsRef.current = []
+    timeoutsRef.current = []
+  }, [])
 
-  const runCycle = () => {
+  const startDeleting = useCallback(() => {
+    setPhase("deleting")
+    let i = currentQuery.text.length
+    const deletingInterval = setInterval(() => {
+      if (i >= 0) {
+        setText(currentQuery.text.slice(0, i))
+        i--
+      } else {
+        clearInterval(deletingInterval)
+        // Move to next query
+        const timeout = setTimeout(() => {
+          setCurrentQueryIndex((prev) => (prev + 1) % queries.length)
+        }, 300)
+        timeoutsRef.current.push(timeout)
+      }
+    }, 30)
+    intervalsRef.current.push(deletingInterval)
+  }, [currentQuery.text])
+
+  const runCycle = useCallback(() => {
     // Typing phase
     setPhase("typing")
     let i = 0
@@ -412,36 +370,34 @@ function HeroSearchAnimation() {
       } else {
         clearInterval(typingInterval)
         setPhase("sending")
-        setTimeout(() => {
+        const timeout1 = setTimeout(() => {
           setPhase("loading")
-          setTimeout(() => {
+          const timeout2 = setTimeout(() => {
             setPhase("result")
             // Show result for 3 seconds, then start deleting
-            setTimeout(() => {
+            const timeout3 = setTimeout(() => {
               startDeleting()
             }, 3000)
+            timeoutsRef.current.push(timeout3)
           }, 1500)
+          timeoutsRef.current.push(timeout2)
         }, 600)
+        timeoutsRef.current.push(timeout1)
       }
     }, 45)
-  }
+    intervalsRef.current.push(typingInterval)
+  }, [currentQuery.text, startDeleting])
 
-  const startDeleting = () => {
-    setPhase("deleting")
-    let i = currentQuery.text.length
-    const deletingInterval = setInterval(() => {
-      if (i >= 0) {
-        setText(currentQuery.text.slice(0, i))
-        i--
-      } else {
-        clearInterval(deletingInterval)
-        // Move to next query
-        setTimeout(() => {
-          setCurrentQueryIndex((prev) => (prev + 1) % queries.length)
-        }, 300)
-      }
-    }, 30)
-  }
+  useEffect(() => {
+    const startDelay = setTimeout(() => {
+      runCycle()
+    }, 1000)
+    timeoutsRef.current.push(startDelay)
+
+    return () => {
+      clearAllTimers()
+    }
+  }, [currentQueryIndex, clearAllTimers])
 
   return (
     <div className="hero-search-wrapper">
@@ -678,7 +634,7 @@ export default function Home() {
                 viewport={{ once: true, margin: "-100px" }}
                 className="split-left"
               >
-                <div className="label">The problem</div>
+                <div className="label">The mess that we are fixing</div>
                 <h2 className={garamond.className}>
                   Gmail wasn&apos;t built for <em>governance</em>.
                 </h2>
@@ -1565,13 +1521,8 @@ export default function Home() {
           width: 100%;
           overflow: hidden;
           padding: 30px 0;
-          cursor: grab;
           user-select: none;
           min-height: 500px;
-        }
-
-        .carousel-container:active {
-          cursor: grabbing;
         }
 
         .carousel-track {
@@ -1581,12 +1532,7 @@ export default function Home() {
           backface-visibility: hidden;
           -webkit-font-smoothing: antialiased;
           transform: translateZ(0);
-          cursor: grab;
           flex-wrap: nowrap;
-        }
-
-        .carousel-track:active {
-          cursor: grabbing;
         }
 
         .carousel-item {
