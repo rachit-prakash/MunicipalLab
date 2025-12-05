@@ -2,8 +2,6 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import ChatbotButton from "@/components/chatbot/chatbot-button"
-import { ChatbotPuller } from "@/components/chatbot/chatbot-puller"
 import CookieConsent from "@/components/ui/cookie-consent"
 import { DemoBanner } from "@/components/ui/demo-banner"
 import { Toaster } from "@/components/ui/toaster"
@@ -36,8 +34,6 @@ export default function RootLayout({
         {children}
         <DemoBanner />
         <CookieConsent />
-        <ChatbotButton />
-        <ChatbotPuller />
         <Toaster />
       </body>
     </html>

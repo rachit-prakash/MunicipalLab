@@ -4,11 +4,12 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 export function DemoBanner() {
-  const [active, setActive] = useState(false)
+  // Initialize state with the cookie value (lazy initializer runs once on mount)
+  const [active, setActive] = useState(() => hasDemoCookie())
   const [message, setMessage] = useState<string | null>(null)
 
+  // Poll for cookie changes periodically
   useEffect(() => {
-    setActive(hasDemoCookie())
     const id = window.setInterval(() => {
       setActive(hasDemoCookie())
     }, 5000)
