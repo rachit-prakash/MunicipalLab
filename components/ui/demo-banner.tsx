@@ -46,3 +46,4 @@ function hasDemoCookie() {
   return typeof document !== "undefined" && document.cookie.includes("demo=1")
 }
 
+

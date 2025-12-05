@@ -135,9 +135,6 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                   <DropdownMenuItem asChild>
                     <Link href="/settings">Settings</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/docs">Help & Docs</Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => signOut({ callbackUrl: "/auth/signin" })}
                     className="text-destructive focus:text-destructive"

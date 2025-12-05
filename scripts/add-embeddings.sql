@@ -122,3 +122,4 @@ BEGIN
   RAISE NOTICE '2. Update your sync process to generate embeddings for new emails';
 END $$;
 
+
