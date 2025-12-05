@@ -535,31 +535,11 @@ export default function Home() {
               </svg>
             </div>
 
-            {/* Hero visual */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.8 }}
-              className="hero-visual"
-            >
-              {/* <div className="mockup">
-                <div className="mockup-header">
-                  <div className="dot" />
-                  <div className="dot" />
-                  <div className="dot" />
-                </div>
-                <div className="mockup-content">
-                  <div className="line wide" />
-                  <div className="line" />
-                  <div className="line medium" />
-                  <div className="block" />
-                </div>
-              </div> */}
-            </motion.div>
+            
           </section>
 
           {/* Problem/Solution split */}
-          <section className="split-section">
+          <section id="split-section" className="split-section">
             <div className="split-grid">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
