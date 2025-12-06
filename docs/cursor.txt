@@ -1,0 +1,61 @@
+# Project Context
+MunicipalLabs-CRM (Legaside) helps municipal teams triage Gmail conversations, surface quick insights, and draft replies. It now ships with a Gmail-driven dashboard, a threads workspace, topic admin screens, and an AI helper. Demo data is available so the UI still works without a live Gmail hookup.
+
+# Architecture
+- Frontend: Next.js 16 (App Router) with React 19, TypeScript, Tailwind, and shadcn-style UI primitives. Layout lives under `app/` with shared pieces in `components/`.
+- Authentication: NextAuth + Google OAuth. JWT sessions hold access tokens; refresh tokens are sealed via AES-256-GCM (`lib/tokenVault.ts`) before landing in Postgres.
+- Database access: `pg` connection pool (`lib/db.ts`). Always call `withTenant(tenantId, fn)` so Postgres RLS can read `current_setting('app.tenant_id')`. Core schema is documented in `docs/database.sql`.
+- Gmail APIs: `app/api/gmail/...` routes read from Postgres first and fall back to Gmail. PII is stripped with `redactPII` when normalising Gmail payloads. Access tokens are cached in-memory per tenant/user (`lib/googleTokens.ts`).
+- Background sync: `scripts/sync.ts` runs an incremental historyId sync (bootstrap + delta) using the same token helpers. Today it is a manual/cron script; push-based webhooks are still aspirational.
+- Observability: `middleware.ts` guarantees every API request carries an `x-request-id`. There is no Sentry wiring yet.
+- AI assistant: `/api/assistant/chat` proxies to OpenAI or OpenRouter (whichever key is set). The floating chat button + drawer (`components/chatbot/`) use that endpoint.
+- Demo mode: `/api/demo/enable|disable` toggles a cookie so the UI loads synthetic messages from `lib/demo.ts` when Gmail access is missing.
+- UI behaviour: Dashboard and Threads pages hydrate by pulling `/api/gmail/inbox` and `/api/gmail/messages/{id}`, then run heuristics client-side for topics, stance, and charts.
+
+# Data Model
+Tables: `tenants`, `users`, `memberships`, `roles`, `topics`, `threads`, `messages`, `gmail_accounts`, `audit_logs`. Each has `tenant_id` (for RLS) plus `created_at`/`updated_at` defaults. `messages.body_redacted` stores sanitised snippets; `gmail_accounts.history_id` and `last_sync_at` back the incremental sync.
+
+# Security Principles
+- Refresh tokens are never stored raw; AES-256-GCM seal/open helpers enforce key length and base64 input.
+- Gmail bodies are sanitised before storage (`lib/sanitizer.ts`), and helpers exist for optional field-level encryption.
+- `withTenant` must wrap any tenant-aware query so RLS policies can apply.
+- `lib/audit.ts` inserts structured audit rows per tenant (hook it into write paths as we expand).
+- Avoid logging secrets; API routes return JSON responses only.
+
+# Current Roadmap
+- ✅ Phase 1: multi-tenant Postgres, encrypted token vault, basic incremental sync helpers, RBAC types, audit helper, dashboard + threads UX, AI assistant shell.
+- 🚧 Next steps: wire audit + RBAC into live routes, move background sync to a worker, add Gmail webhook handling, track observability (Sentry/logging), ship true reply sending + retention tooling.
+- ✳️ Later: billing/SSO, tenant export, richer AI workflows.
+
+# Coding Guidelines
+- Stick to TypeScript + ESM imports. Follow the flat `eslint.config.mjs`.
+- Prefer `async/await`, return `NextResponse.json(...)`, and never send HTML from APIs.
+- No direct `pool.query` for tenant data—go through `withTenant`.
+- Sanitize anything written back to the DB with the provided helpers.
+- Keep feature flags simple (`DEMO_MODE`) and document new env vars in this file.
+
+# Key Environment Variables
+- `DATABASE_URL` – Postgres connection string (MUST use connection pooler with `?pgbouncer=true&sslmode=require` for Cloudflare Pages).
+- `TOKEN_VAULT_KEY` – base64-encoded 32-byte key for AES-256-GCM sealing.
+- `NEXTAUTH_SECRET`, `NEXTAUTH_URL` – NextAuth session crypto + callback URL.
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` – Google OAuth credentials.
+- `DEMO_MODE` – `"1"` to default APIs into demo responses.
+- `OPENAI_API_KEY` or `OPENROUTER_API_KEY` – required for the assistant endpoint.
+- Optional: `NODE_ENV`, `VERCEL_URL` (deployment), anything new should be added here.
+
+# Deployment
+- Target platform: Cloudflare Pages with custom domains.
+- Production URL: `https://legaside.municipallabs.ai`
+- Preview URL: `https://devlegaside.municipallabs.ai`
+- Build adapter: `@cloudflare/next-on-pages` (handles Next.js → Workers conversion).
+- Build command: `pnpm run pages:build`
+- Deploy command: `pnpm run pages:deploy`
+- Database: Supabase with connection pooler (required for serverless).
+- Docs: See `docs/cloudflare-deployment.md`, `docs/supabase-setup.md`, `docs/google-oauth-setup.md`.
+
+# Handy References
+- Schema: `docs/database.sql`
+- Gmail sync script: `scripts/sync.ts`
+- Token helpers: `lib/tokenVault.ts`, `lib/googleTokens.ts`
+- Sanitisation + audit: `lib/sanitizer.ts`, `lib/audit.ts`
+- UI entrypoints: `app/dashboard/page.tsx`, `app/threads/page.t

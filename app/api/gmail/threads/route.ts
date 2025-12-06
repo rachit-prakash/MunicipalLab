@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { withTenant, query } from '@/lib/db';
 import { audit } from '@/lib/audit';
 import { checkRateLimit, RateLimits } from '@/lib/rateLimit';
+import { filterMessage } from '@/lib/message-filter';
 
 export async function GET(request: NextRequest) {
   // Check rate limit
@@ -21,9 +22,9 @@ export async function GET(request: NextRequest) {
 
     const userId = (session.user as any).id || (session as any).token?.sub;
 
-    // Get tenant_id for this user
+    // Get tenant_id and user email for this user
     const tenantResult = await query(
-      `SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
+      `SELECT tenant_id, email FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
       [userId]
     );
 
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tenantId = tenantResult.rows[0].tenant_id;
+    const userEmail = tenantResult.rows[0].email;
 
     // we parse the query parameters.
     const searchParams = request.nextUrl.searchParams;
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
     const assigneeId = searchParams.get('assigneeId') || '';
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100); // we cap the limit at 100.
     const cursor = searchParams.get('cursor') || '';
+    const importantOnly = searchParams.get('important') === 'true'; // NEW: Filter for important emails only
 
     // we query the threads with filters and pagination.
     const result = await withTenant(tenantId, async (client) => {
@@ -48,6 +51,11 @@ export async function GET(request: NextRequest) {
       const conditions: string[] = ['tenant_id = $1'];
       const params: any[] = [tenantId];
       let paramIndex = 2;
+
+      // Exclude outbound threads (sent by the user)
+      conditions.push(`sender_email NOT ILIKE $${paramIndex}`);
+      params.push(`%${userEmail}%`);
+      paramIndex++;
 
       // Full-text search on subject and snippet using ILIKE for case-insensitive search.
       if (q) {
@@ -108,11 +116,20 @@ export async function GET(request: NextRequest) {
       );
 
       const threads = threadsResult.rows;
-      
+
+      // NEW: Apply smart filter to remove newsletters/bots if importantOnly is true
+      let filteredThreads = threads;
+      if (importantOnly) {
+        filteredThreads = threads.filter((thread) => {
+          const filterResult = filterMessage(thread.sender, thread.subject);
+          return filterResult.shouldAnalyze; // Only show emails worth analyzing (real people)
+        });
+      }
+
       // we check if there are more results.
-      const hasMore = threads.length > limit;
-      const items = hasMore ? threads.slice(0, limit) : threads;
-      
+      const hasMore = filteredThreads.length > limit;
+      const items = hasMore ? filteredThreads.slice(0, limit) : filteredThreads;
+
       // we generate the next cursor if there are more results.
       let nextCursor: string | undefined;
       if (hasMore) {

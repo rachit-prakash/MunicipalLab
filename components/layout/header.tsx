@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { Search, PanelLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { signOut } from "next-auth/react"
@@ -12,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter()
@@ -93,9 +95,10 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const isOnChatbotPage = pathname === '/chatbot'
 
   return (
-    <header className="fixed right-0 top-0 z-30 border-b border-border bg-background left-0 md:left-[var(--app-sidebar-width,256px)]">
-      <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+    <header className="fixed right-0 top-0 z-30 border-b border-border bg-background left-0 md:left-0">
+      <div className="flex h-16 items-center justify-between px-2">
         <div className="flex items-center gap-3 flex-1">
+          {/* Mobile menu button */}
           <button
             type="button"
             className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-border"
@@ -104,6 +107,24 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           >
             <PanelLeft className="h-4 w-4" />
           </button>
+          
+          {/* Logo - now always visible on desktop, in top-left */}
+          <Link href="/dashboard" className="flex items-center">
+            <Image
+              src="/logo-icon.png"
+              alt="Legaside"
+              width={32}
+              height={32}
+              className="h-8 w-8 block dark:hidden"
+            />
+            <Image
+              src="/logo-icon-white.png"
+              alt="Legaside"
+              width={32}
+              height={32}
+              className="h-8 w-8 hidden dark:block"
+            />
+          </Link>
           {!isOnChatbotPage && (
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -119,7 +140,8 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             </div>
           )}
         </div>
-        <div className="ml-4 shrink-0">
+        <div className="ml-4 shrink-0 flex items-center gap-2">
+          <ThemeToggle />
           {authChecked ? (
             profileName ? (
               <DropdownMenu modal={false}>

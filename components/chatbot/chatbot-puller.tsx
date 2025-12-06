@@ -68,8 +68,8 @@ export function ChatbotPuller() {
               'h-full w-[60px] bg-gradient-to-br from-sky-400 via-blue-600 to-indigo-700',
               'rounded-r-2xl shadow-2xl cursor-grab active:cursor-grabbing',
               'flex items-center justify-center',
-              'hover:shadow-blue-500/50 transition-shadow',
-              isDragging && 'shadow-blue-500/50'
+              'hover:shadow-primary/50 transition-shadow',
+              isDragging && 'shadow-primary/50'
             )}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -91,7 +91,7 @@ export function ChatbotPuller() {
             {/* Visual feedback line */}
             {isDragging && (
               <motion.div
-                className="absolute left-full top-0 bottom-0 w-1 bg-blue-500/30"
+                className="absolute left-full top-0 bottom-0 w-1 bg-primary/30"
                 style={{ width: `${Math.min(100, (dragOffset / EXPAND_THRESHOLD) * 100)}%` }}
               />
             )}

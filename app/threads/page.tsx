@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
-import { FiltersToolbar } from "@/components/threads/filters-toolbar"
 import { ThreadsTable } from "@/components/threads/threads-table"
 import { ReplyDrawer } from "@/components/threads/reply-drawer"
 import type { ThreadRow } from "@/lib/types"
@@ -24,7 +23,7 @@ type ThreadListResponse = {
   items: ThreadRow[]
 }
 
-function useThreadsData(query: string) {
+function useThreadsData(query: string, importantOnly: boolean) {
   const [threads, setThreads] = useState<ThreadRow[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +36,7 @@ function useThreadsData(query: string) {
       try {
         const params = new URLSearchParams({ limit: "100" })
         if (query) params.set("q", query)
+        if (importantOnly) params.set("important", "true")
         const res = await fetch(`/api/gmail/threads?${params.toString()}`, {
           cache: "no-store",
         })
@@ -58,7 +58,7 @@ function useThreadsData(query: string) {
     return () => {
       cancelled = true
     }
-  }, [query])
+  }, [query, importantOnly])
 
   return { threads, loading, error }
 }
@@ -66,37 +66,21 @@ function useThreadsData(query: string) {
 function ThreadsPageInner() {
   const searchParams = useSearchParams()
   const query = (searchParams.get("q") ?? "").toLowerCase()
-  const { threads, loading, error } = useThreadsData(query)
+  const [importantOnly, setImportantOnly] = useState(true) // Default to important only
+  const { threads, loading, error } = useThreadsData(query, importantOnly)
   const [selectedThread, setSelectedThread] = useState<ThreadRow | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [filters, setFilters] = useState({
-    type: "both",
-    topics: [] as string[],
-  })
-
-  const availableTopics = useMemo(() => {
-    const list = threads ?? []
-    return Array.from(
-      new Set(
-        list
-          .map((thread) => thread.topic)
-          .filter((topic): topic is string => Boolean(topic && topic !== "Uncategorized")),
-      ),
-    )
-  }, [threads])
 
   const filteredThreads = useMemo(() => {
     const list = threads ?? []
     return list.filter((thread) => {
-      if (filters.type !== "both" && thread.type !== filters.type.toUpperCase()) return false
-      if (filters.topics.length > 0 && !filters.topics.includes(thread.topic)) return false
       if (query) {
         const haystack = `${thread.subject} ${thread.sender} ${thread.summary}`.toLowerCase()
         if (!haystack.includes(query)) return false
       }
       return true
     })
-  }, [threads, filters, query])
+  }, [threads, query])
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -120,10 +104,32 @@ function ThreadsPageInner() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="text-xl font-semibold text-foreground">Threads</h1>
-            <p className="text-sm text-muted-foreground">Browse and triage conversations</p>
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold text-foreground font-display">Threads</h1>
+              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg">
+                <button
+                  onClick={() => setImportantOnly(true)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    importantOnly
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Important
+                </button>
+                <button
+                  onClick={() => setImportantOnly(false)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    !importantOnly
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All
+                </button>
+              </div>
+            </div>
           </div>
-          <FiltersToolbar availableTopics={availableTopics} onFiltersChange={setFilters} />
           <div className="px-4 sm:px-6 py-6">
             {loading ? (
               <div className="space-y-4">

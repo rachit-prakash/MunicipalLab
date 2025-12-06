@@ -16,6 +16,8 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
         ghost: "text-foreground hover:bg-muted active:bg-muted/80",
+        marketing:
+          "rounded-full border-2 border-black bg-gradient-to-br from-[rgb(240,141,255)] to-[rgb(240,129,255)] text-black font-semibold shadow-[0_4px_16px_rgba(217,70,239,0.3)] hover:scale-[1.02] active:scale-[0.97] transition-transform",
       },
       size: {
         sm: "h-7 px-3",

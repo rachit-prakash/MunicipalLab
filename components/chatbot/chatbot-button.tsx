@@ -57,11 +57,11 @@ export function ChatbotButton({ onClick, className }: ChatbotButtonProps) {
 						)}
 					>
 						{/* Gradient background */}
-						<span className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-400 via-blue-600 to-indigo-700" />
+						<span className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/90 via-primary to-primary" />
 
 						{/* Glow/pulse ring for visibility */}
-						<span className="pointer-events-none absolute -inset-2 rounded-full bg-blue-500/20 blur-md" />
-						<span className="pointer-events-none absolute inset-0 rounded-full ring-4 ring-blue-400/30 animate-pulse" />
+						<span className="pointer-events-none absolute -inset-2 rounded-full bg-primary/20 blur-md" />
+						<span className="pointer-events-none absolute inset-0 rounded-full ring-4 ring-primary/30 animate-pulse" />
 
 						{/* Icon */}
 						<span className="relative flex h-full w-full items-center justify-center text-white">

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp add:*)",
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "mcp__supabase__list_projects",
+      "Bash(node scripts/run-migration.js:*)",
+      "Bash(node scripts/check-migration.js:*)",
+      "Bash(pnpm tsx:*)",
+      "Bash(node scripts/build-profiles.js:*)",
+      "Bash(node scripts/check-profile.js:*)",
+      "Bash(node scripts/list-profiles.js:*)",
+      "Bash(node -e:*)",
+      "Bash(node scripts/check-analysis.js:*)",
+      "Bash(node scripts/test-filter.js:*)",
+      "Bash(pnpm run analyze:messages:*)",
+      "Bash(node scripts/analyze-with-filter.js:*)",
+      "Bash(node scripts/check-important-filter.js:*)",
+      "Bash(node scripts/check-unknown-senders.js:*)",
+      "Bash(node scripts/backfill-sender-emails.js:*)",
+      "Bash(node scripts/check-outbound.js:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -5,32 +5,48 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { Figtree } from "next/font/google"
+import { useTheme } from "next-themes"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600"], display: "swap" })
 
 export function LandingHeader() {
   const { scrollY } = useScroll()
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Transform values for a refined morphing effect
   const width = useTransform(scrollY, [0, 200], ["100%", "65%"])
   const top = useTransform(scrollY, [0, 200], ["0px", "16px"])
   const borderRadius = useTransform(scrollY, [0, 200], ["0px", "24px"])
-  // Warm, cream-tinted glass with subtle blur
+
+  // Theme-aware glassmorphic effect
+  const isDark = mounted && resolvedTheme === "dark"
   const backgroundColor = useTransform(
     scrollY,
     [0, 200],
-    ["rgba(255, 254, 240, 0)", "rgba(255, 254, 240, 0.85)"]
+    isDark
+      ? ["rgba(15, 23, 42, 0)", "rgba(15, 23, 42, 0.75)"] // Dark mode: slate-900
+      : ["rgba(255, 254, 240, 0)", "rgba(255, 255, 255, 0.85)"] // Light mode: white
   )
-  const backdropBlur = useTransform(scrollY, [0, 200], ["blur(0px)", "blur(16px)"])
+  const backdropBlur = useTransform(scrollY, [0, 200], ["blur(0px)", "blur(20px)"])
   const borderColor = useTransform(
     scrollY,
     [0, 200],
-    ["rgba(3, 79, 70, 0)", "rgba(3, 79, 70, 0.12)"]
+    isDark
+      ? ["rgba(6, 168, 147, 0)", "rgba(6, 168, 147, 0.2)"] // Dark mode: teal
+      : ["rgba(3, 79, 70, 0)", "rgba(3, 79, 70, 0.15)"] // Light mode: darker teal
   )
   const boxShadow = useTransform(
     scrollY,
     [0, 200],
-    ["0 0 0 0 rgba(0,0,0,0)", "0 8px 32px -8px rgba(3, 79, 70, 0.1)"]
+    isDark
+      ? ["0 0 0 0 rgba(0,0,0,0)", "0 8px 32px -8px rgba(0, 0, 0, 0.6)"] // Dark mode: stronger shadow
+      : ["0 0 0 0 rgba(0,0,0,0)", "0 8px 32px -8px rgba(0, 0, 0, 0.1)"] // Light mode: subtle shadow
   )
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -85,9 +101,9 @@ export function LandingHeader() {
             boxShadow,
             borderWidth: 1,
             borderStyle: "solid",
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
             alignItems: "center",
-            justifyContent: "space-between",
             paddingLeft: "32px",
             paddingRight: "32px",
             pointerEvents: "auto",
@@ -102,6 +118,7 @@ export function LandingHeader() {
               alignItems: "center",
               textDecoration: "none",
               cursor: "pointer",
+              justifySelf: "start",
             }}
           >
             <Image
@@ -110,6 +127,15 @@ export function LandingHeader() {
               width={36}
               height={36}
               style={{ height: "36px", width: "36px", objectFit: "contain" }}
+              className="block dark:hidden"
+            />
+            <Image
+              src="/logo-icon-white.png"
+              alt="Legaside Logo"
+              width={36}
+              height={36}
+              style={{ height: "36px", width: "36px", objectFit: "contain" }}
+              className="hidden dark:block"
             />
           </Link>
 
@@ -123,6 +149,7 @@ export function LandingHeader() {
               listStyle: "none",
               margin: 0,
               padding: 0,
+              justifySelf: "center",
             }}
           >
             {navItems.map((item) => (
@@ -155,59 +182,62 @@ export function LandingHeader() {
           </nav>
 
           {/* CTA Right */}
-          <Link href="/auth/signin" style={{ textDecoration: "none" }}>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="wiggle-button"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                background: "linear-gradient(135deg,rgb(240, 141, 255) 0%,rgb(240, 129, 255) 100%)",
-                color: "#1a1a1a",
-                fontWeight: 600,
-                fontSize: "15px",
-                padding: "13px 28px",
-                borderRadius: "999px",
-                border: "2px solid #000000",
-                cursor: "pointer",
-                boxShadow: "0 4px 16px rgba(217, 70, 239, 0.3)",
-                whiteSpace: "nowrap",
-                position: "relative",
-              }}
-            >
-              {/* Email Icon */}
-              <svg 
-                width="18" 
-                height="18" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", justifySelf: "end" }}>
+            <ThemeToggle />
+            <Link href="/auth/signin" style={{ textDecoration: "none" }}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="wiggle-button"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  background: "linear-gradient(135deg,rgb(240, 141, 255) 0%,rgb(240, 129, 255) 100%)",
+                  color: "#1a1a1a",
+                  fontWeight: 600,
+                  fontSize: "15px",
+                  padding: "13px 28px",
+                  borderRadius: "999px",
+                  border: "2px solid #000000",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 16px rgba(217, 70, 239, 0.3)",
+                  whiteSpace: "nowrap",
+                  position: "relative",
+                }}
               >
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m2 7 10 7 10-7" />
-              </svg>
-              <span style={{ display: "inline-flex" }}>
-                {"Try Legaside".split("").map((char, i) => (
-                  <span
-                    key={i}
-                    className="wiggle-letter"
-                    style={{
-                      display: "inline-block",
-                      animationDelay: `${i * 0.05}s`,
-                    }}
-                  >
-                    {char === " " ? "\u00A0" : char}
-                  </span>
-                ))}
-              </span>
-            </motion.button>
-          </Link>
+                {/* Email Icon */}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m2 7 10 7 10-7" />
+                </svg>
+                <span style={{ display: "inline-flex" }}>
+                  {"Try Legaside".split("").map((char, i) => (
+                    <span
+                      key={i}
+                      className="wiggle-letter"
+                      style={{
+                        display: "inline-block",
+                        animationDelay: `${i * 0.05}s`,
+                      }}
+                    >
+                      {char === " " ? "\u00A0" : char}
+                    </span>
+                  ))}
+                </span>
+              </motion.button>
+            </Link>
+          </div>
         </motion.header>
       </div>
 

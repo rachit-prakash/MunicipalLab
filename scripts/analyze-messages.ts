@@ -5,6 +5,7 @@ import {
   isMessageEligibleForAnalysis,
   persistMessageAnalysis,
 } from "@/lib/messageAnalysis"
+import { filterMessage } from "@/lib/message-filter"
 
 loadEnvConfig(process.cwd())
 
@@ -40,6 +41,9 @@ async function main() {
 async function processTenant(tenantId: string, tenantName?: string) {
   console.log(`\n🧠 Analyzing messages for tenant ${tenantName ?? tenantId}`)
   let processed = 0
+  let skippedByFilter = 0
+  let filterStats: Record<string, number> = {}
+
   while (true) {
     const batch = await loadPendingBatch(tenantId, 25)
     if (!batch.length) break
@@ -58,6 +62,22 @@ async function processTenant(tenantId: string, tenantName?: string) {
         continue
       }
 
+      // 🔍 NEW: Apply smart filter before AI analysis
+      const filterResult = filterMessage(
+        message.from_email ?? "",
+        message.subject ?? undefined,
+        message.snippet ?? undefined
+      )
+
+      if (!filterResult.shouldAnalyze) {
+        skippedByFilter++
+        filterStats[filterResult.type] = (filterStats[filterResult.type] || 0) + 1
+        console.log(
+          `  ⊘ Skipped ${message.from_email?.substring(0, 30)} - ${filterResult.reason}`
+        )
+        continue
+      }
+
       try {
         const analysis = await analyzeMessage(analysisInput)
         await persistMessageAnalysis({
@@ -71,9 +91,7 @@ async function processTenant(tenantId: string, tenantName?: string) {
         })
         processed++
         console.log(
-          `  ✓ ${message.id} · topic=${analysis.topic ?? "unknown"} · urgency=${
-            analysis.urgencyLevel
-          }`,
+          `  ✓ ${message.from_email?.substring(0, 30)} · topic=${analysis.topic ?? "unknown"} · sentiment=${analysis.sentimentScore?.toFixed(2) ?? "N/A"}`,
         )
       } catch (error) {
         console.error(`  ✗ Failed to analyze ${message.id}:`, error)
@@ -81,11 +99,23 @@ async function processTenant(tenantId: string, tenantName?: string) {
     }
   }
 
-  if (processed === 0) {
+  console.log("\n" + "═".repeat(60))
+  if (processed === 0 && skippedByFilter === 0) {
     console.log("  No pending messages. All caught up!")
   } else {
-    console.log(`  Completed ${processed} analyses.`)
+    console.log(`  ✅ Analyzed: ${processed} messages`)
+    console.log(`  ⊘ Skipped by filter: ${skippedByFilter} messages`)
+    if (Object.keys(filterStats).length > 0) {
+      console.log(`  📊 Filter breakdown:`)
+      for (const [type, count] of Object.entries(filterStats)) {
+        console.log(`     - ${type}: ${count}`)
+      }
+    }
+    const total = processed + skippedByFilter
+    const savingsPercent = total > 0 ? ((skippedByFilter / total) * 100).toFixed(1) : "0"
+    console.log(`  💰 Cost savings: ${savingsPercent}% (${skippedByFilter}/${total} skipped)`)
   }
+  console.log("═".repeat(60))
 }
 
 async function loadPendingBatch(

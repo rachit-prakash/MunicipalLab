@@ -85,7 +85,7 @@ function TrustIndicator({ title, lines }: TrustIndicatorProps) {
         <button
           type="button"
           aria-label={`Trust indicators for ${title}`}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary transition hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           <Info className="h-4 w-4" />
         </button>
@@ -111,18 +111,18 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
   const digestTrust = getDigestTrust(data.digest.meta)
 
   return (
-    <section className="border border-gray-200 rounded-2xl bg-white/60 p-6 shadow-sm space-y-6">
+    <section className="border border-border rounded-2xl bg-card/60 p-6 shadow-sm space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">District Pulse</p>
-          <h2 className="text-2xl font-semibold text-gray-900">District Pulse</h2>
-          <p className="text-sm text-gray-600">Updated every 24 hours</p>
+          <h2 className="text-2xl font-semibold text-foreground">District Pulse</h2>
+          <p className="text-sm text-muted-foreground">Updated every 24 hours</p>
         </div>
         <p className="text-xs text-gray-500">Last refreshed {updatedAt} ET</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="shadow-none border-gray-200">
+        <Card className="shadow-none border-border">
           <CardHeader className="pb-0">
             <div>
               <CardTitle className="text-base">Top 3 Concerns This Week</CardTitle>
@@ -136,16 +136,16 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
             {data.topConcerns.data.map((concern) => (
               <div key={concern.label} className="flex items-start justify-between gap-3 rounded-lg bg-gray-50 px-4 py-3">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{concern.label}</p>
+                  <p className="text-sm font-semibold text-foreground">{concern.label}</p>
                   <p className="text-xs text-gray-500">{formatSigned(concern.deltaVsLastWeek)} vs last week</p>
                 </div>
-                <p className="text-lg font-semibold text-gray-900">{concern.count.toLocaleString()}</p>
+                <p className="text-lg font-semibold text-foreground">{concern.count.toLocaleString()}</p>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-gray-200">
+        <Card className="shadow-none border-border">
           <CardHeader className="pb-0">
             <div>
               <CardTitle className="text-base">Priority Cases This Week</CardTitle>
@@ -159,15 +159,15 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
             {data.priorityCases.data.map((priority) => (
               <div key={priority.title} className="rounded-lg border border-amber-100 bg-amber-50/60 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">{priority.category}</p>
-                <p className="mt-1 text-sm font-semibold text-gray-900">{`“${priority.title}”`}</p>
-                <p className="text-sm text-gray-600">{priority.detail}</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">{`“${priority.title}”`}</p>
+                <p className="text-sm text-muted-foreground">{priority.detail}</p>
                 <p className="mt-2 text-xs font-medium text-amber-700">{priority.insight}</p>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-gray-200">
+        <Card className="shadow-none border-border">
           <CardHeader className="pb-0">
             <div>
               <CardTitle className="text-base">Top Negative Sentiment Triggers</CardTitle>
@@ -188,7 +188,7 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border-gray-200">
+        <Card className="shadow-none border-border">
           <CardHeader className="pb-0">
             <div>
               <CardTitle className="text-base">Top Positive Sentiment Triggers</CardTitle>
@@ -210,7 +210,7 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
         </Card>
       </div>
 
-      <Card className="shadow-none border-blue-100 bg-gradient-to-br from-blue-50 to-white">
+      <Card className="shadow-none border-primary/20 bg-gradient-to-br from-primary/5 to-card">
         <CardHeader className="pb-0">
           <div>
             <CardTitle className="text-base">This Week in Your District (AI Digest)</CardTitle>
@@ -221,26 +221,26 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
           </CardAction>
         </CardHeader>
         <CardContent className="mt-4 space-y-4">
-          <p className="text-gray-900 font-semibold">{data.digest.data.headline}</p>
+          <p className="text-foreground font-semibold">{data.digest.data.headline}</p>
           <div>
-            <p className="text-sm font-semibold text-gray-800">What changed</p>
-            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-gray-700">
+            <p className="text-sm font-semibold text-foreground">What changed</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-foreground/90">
               {data.digest.data.whatChanged.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">Why sentiment shifted</p>
-            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-gray-700">
+            <p className="text-sm font-semibold text-foreground">Why sentiment shifted</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-foreground/90">
               {data.digest.data.whySentimentShift.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">Going into your next town hall</p>
-            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-gray-700">
+            <p className="text-sm font-semibold text-foreground">Going into your next town hall</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-foreground/90">
               {data.digest.data.nextTownHall.map((item) => (
                 <li key={item}>{item}</li>
               ))}

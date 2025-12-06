@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
 import { X, Copy, Check } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-// hello world lol
+import { ConstituentProfileCard } from "@/components/constituents/profile-card"
 interface ReplyDrawerProps {
   thread: ThreadRow
   onClose: () => void
@@ -91,7 +91,12 @@ export function ReplyDrawer({ thread, onClose }: ReplyDrawerProps) {
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <DrawerTitle className="text-xl font-semibold text-ink-900">{thread.subject}</DrawerTitle>
-              <p className="text-sm text-ink-500 mt-1">From: {thread.sender}</p>
+              <div className="text-sm text-ink-500 mt-1">
+                From:{" "}
+                <ConstituentProfileCard email={thread.sender}>
+                  <span className="font-medium hover:text-primary transition-colors truncate max-w-md inline-block align-bottom">{thread.sender}</span>
+                </ConstituentProfileCard>
+              </div>
               <p className="text-xs text-ink-400">{formatDate(thread.receivedAt)}</p>
             </div>
             <DrawerClose asChild>
