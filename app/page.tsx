@@ -886,25 +886,21 @@ export default function Home() {
         }
 
         body {
-          background: #fffef0;
+          background: radial-gradient(ellipse 140% 80% at 50% 0%, #ffffff 0%,rgb(251, 248, 216) 50%, #fffef0 100%);
           color: #1a1a1a;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
 
         :global(.dark) body {
-          background: #0f172a;
+          background: radial-gradient(ellipse 140% 80% at 50% 0%, #0f172a 0%, #1e293b 50%, #0f172a 100%);
           color: #f8fafc;
         }
 
         .landing {
           min-height: 100vh;
-          background: radial-gradient(ellipse 140% 80% at 50% 0%, #ffffff 0%,rgb(251, 248, 216) 50%, #fffef0 100%);
+          width: 100%;
           overflow-x: hidden;
-        }
-
-        :global(.dark) .landing {
-          background: radial-gradient(ellipse 140% 80% at 50% 0%, #0f172a 0%, #1e293b 50%, #0f172a 100%);
         }
 
         /* Hero Section */

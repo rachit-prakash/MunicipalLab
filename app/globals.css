@@ -65,9 +65,9 @@
   --sidebar-ring: var(--primary);
 
   /* Scrollbars */
-  --scrollbar-track: #f9fafb;
-  --scrollbar-thumb: #d1d5db;
-  --scrollbar-thumb-hover: #9ca3af;
+  --scrollbar-track: #fffef0;
+  --scrollbar-thumb: rgba(3, 79, 70, 0.3);
+  --scrollbar-thumb-hover: rgba(3, 79, 70, 0.5);
 }
 
 .dark {
@@ -116,8 +116,8 @@
 
   /* Scrollbars (dark) */
   --scrollbar-track: #0f172a;       /* slate-900 */
-  --scrollbar-thumb: #334155;       /* slate-700 */
-  --scrollbar-thumb-hover: #475569; /* slate-600 */
+  --scrollbar-thumb: rgba(6, 168, 147, 0.3);
+  --scrollbar-thumb-hover: rgba(6, 168, 147, 0.5);
 }
 
 @theme inline {
