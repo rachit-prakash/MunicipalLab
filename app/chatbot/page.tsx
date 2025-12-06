@@ -35,7 +35,7 @@ function TypingIndicator() {
       {[0, 1, 2].map((dot) => (
         <motion.span
           key={dot}
-          className="h-2.5 w-2.5 rounded-full bg-slate-400/80"
+          className="h-2.5 w-2.5 rounded-full bg-muted-foreground/80"
           animate={{ y: ['0%', '-45%', '0%'], opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 0.8, repeat: Infinity, delay: dot * 0.15, ease: 'easeInOut' }}
         />
@@ -414,10 +414,10 @@ export default function ChatbotPage() {
     'px-4 py-3 rounded-lg text-sm leading-relaxed max-w-[85%] sm:max-w-[70%]'
 
   return (
-    <div className="flex h-full bg-slate-50">
+    <div className="flex h-full bg-muted">
       <div className="flex flex-1 flex-col">
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto bg-slate-50 px-4 py-6 sm:px-6">
+        <div className="flex-1 overflow-y-auto bg-muted px-4 py-6 sm:px-6">
           <div className="mx-auto flex w-full max-w-4xl flex-col space-y-4">
             <AnimatePresence initial={false}>
               {messages.map((m) => (
@@ -435,17 +435,17 @@ export default function ChatbotPage() {
                       variants={avatarVariants}
                       initial="hidden"
                       animate="visible"
-                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-700"
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary"
                     >
-                      <Bot className="h-4 w-4 text-white" />
+                      <Bot className="h-4 w-4 text-primary-foreground" />
                     </motion.div>
                   )}
                   <motion.div
                     className={cn(
                       bubbleBaseClasses,
                       m.role === 'user'
-                        ? 'bg-slate-700 text-white'
-                        : 'bg-white text-slate-900 border border-slate-200 shadow-sm'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card text-card-foreground border border-border shadow-sm'
                     )}
                     layout
                   >
@@ -464,9 +464,9 @@ export default function ChatbotPage() {
                       variants={avatarVariants}
                       initial="hidden"
                       animate="visible"
-                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-700"
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary"
                     >
-                      <User className="h-4 w-4 text-white" />
+                      <User className="h-4 w-4 text-primary-foreground" />
                     </motion.div>
                   )}
                 </motion.div>
@@ -479,10 +479,10 @@ export default function ChatbotPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex gap-3 justify-start"
               >
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-700">
-                  <Bot className="h-4 w-4 text-white" />
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary">
+                  <Bot className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <div className={cn(bubbleBaseClasses, 'bg-white text-slate-900 border border-slate-200 shadow-sm')}>
+                <div className={cn(bubbleBaseClasses, 'bg-card text-card-foreground border border-border shadow-sm')}>
                   <TypingIndicator />
                 </div>
               </motion.div>
@@ -493,7 +493,7 @@ export default function ChatbotPage() {
         </div>
 
         {/* Input area */}
-        <div className="border-t border-slate-200 bg-white px-4 py-4 sm:px-6">
+        <div className="border-t border-border bg-card px-4 py-4 sm:px-6">
           <form onSubmit={sendMessage} className="mx-auto flex w-full max-w-4xl items-end gap-3">
             <Textarea
               ref={inputRef}
@@ -503,13 +503,14 @@ export default function ChatbotPage() {
               placeholder="Ask a question about your data..."
               disabled={sending}
               rows={1}
-              className="min-h-[48px] max-h-[200px] flex-1 resize-none rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-slate-400 focus-visible:ring-0"
+              className="min-h-[48px] max-h-[200px] flex-1 resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-ring focus-visible:ring-0"
             />
             <Button
               type="submit"
               disabled={sending || !input.trim()}
               size="lg"
-              className="h-[48px] rounded-lg bg-slate-900 px-5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-50"
+              variant="primary"
+              className="h-[48px] rounded-lg px-5 text-sm font-medium"
             >
               {sending ? (
                 <Spinner className="h-5 w-5" />
@@ -522,7 +523,7 @@ export default function ChatbotPage() {
       </div>
 
       {/* Chat history sidebar */}
-      <div className="hidden w-80 shrink-0 border-l border-slate-200 lg:block">
+      <div className="hidden w-80 shrink-0 border-l border-border lg:block">
         <ChatHistorySidebar
           currentSessionId={currentSessionId || undefined}
           onSessionSelect={loadSession}

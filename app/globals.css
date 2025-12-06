@@ -4,27 +4,27 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Minimal, professional palette with a single accent (Indigo) */
+  /* Neutral, calm palette with deep green accent (app UI only, landing page unchanged) */
 
   /* Surfaces & text */
-  --background: #ffffff;
-  --foreground: #0b1220; /* near gray-950 */
+  --background: #f9fafb; /* very light neutral with slight warmth */
+  --foreground: #1a1a1a; /* rich ink text */
   --card: #ffffff;
   --card-foreground: var(--foreground);
   --popover: #ffffff;
   --popover-foreground: var(--foreground);
 
-  /* Primary brand (Indigo 600) */
-  --primary: #4f46e5;
+  /* Primary brand (Deep Green) */
+  --primary: #034f46;
   --primary-foreground: #ffffff;
 
   /* Secondary & muted surfaces */
-  --secondary: #f6f7fb;
+  --secondary: #f3f4f6; /* soft neutral */
   --secondary-foreground: var(--foreground);
-  --muted: #f6f7fb;
-  --muted-foreground: #6b7280; /* gray-500/600 */
-  --accent: #eef2ff; /* indigo-100 */
-  --accent-foreground: #111827; /* gray-900 */
+  --muted: #f3f4f6; /* soft neutral gray */
+  --muted-foreground: #6b7280; /* neutral gray */
+  --accent: #e5e7eb; /* slightly stronger neutral for pills */
+  --accent-foreground: #1a1a1a;
 
   /* Semantic feedback */
   --success: #059669; /* emerald-600 */
@@ -33,52 +33,52 @@
   --warning-foreground: #111827;
   --info: #2563eb; /* blue-600 */
   --info-foreground: #ffffff;
-  --destructive: #dc2626; /* red-600 */
+  --destructive: #d94a38; /* red */
   --destructive-foreground: #ffffff;
 
   /* Controls */
-  --border: #e5e7eb; /* gray-200 */
+  --border: #e5e7eb; /* neutral light gray */
   --input: #ffffff;
-  --ring: #94a3b8; /* slate-400 for neutral focus highlight */
+  --ring: #034f46; /* green focus ring for brand consistency */
   /* Text selection */
-  --selection: #e5e7eb;            /* gray-200 */
-  --selection-foreground: #111827; /* gray-900 */
+  --selection: #e5e7eb;
+  --selection-foreground: #1a1a1a;
 
-  /* Charts: one accent + neutrals */
-  --chart-1: var(--primary);
-  --chart-2: #94a3b8; /* slate-400 */
+  /* Charts: green accent + neutral grays */
+  --chart-1: #034f46; /* primary green */
+  --chart-2: #9ca3af; /* gray-400 */
   --chart-3: #6b7280; /* gray-500 */
-  --chart-4: #a3a3a3; /* neutral-400 */
-  --chart-5: #d4d4d8; /* zinc-300 */
+  --chart-4: #d1d5db; /* gray-300 */
+  --chart-5: #e5e7eb; /* gray-200 */
 
   /* Sizing */
   --radius: 0.5rem; /* 8px for a modern, softer look */
 
   /* Sidebar */
-  --sidebar: #f9fafb; /* gray-50 */
+  --sidebar: #f9fafb; /* neutral matching background */
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eef2ff;
-  --sidebar-accent-foreground: #111827;
-  --sidebar-border: var(--border);
+  --sidebar-accent: #e5e7eb; /* neutral accent */
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #e5e7eb; /* neutral border */
   --sidebar-ring: var(--primary);
 
   /* Scrollbars */
-  --scrollbar-track: #ffffff;
-  --scrollbar-thumb: #e5e7eb;       /* gray-200 */
-  --scrollbar-thumb-hover: #d1d5db; /* gray-300 */
+  --scrollbar-track: #f9fafb;
+  --scrollbar-thumb: #d1d5db;
+  --scrollbar-thumb-hover: #9ca3af;
 }
 
 .dark {
-  /* Dark mode uses muted slates and a lighter accent */
+  /* Dark mode: neutral slate with a lighter green accent */
   --background: #0f172a;            /* slate-900 */
   --foreground: #f8fafc;            /* slate-50 */
   --card: #0f172a;
   --card-foreground: var(--foreground);
   --popover: #0f172a;
   --popover-foreground: var(--foreground);
-  --primary: #818cf8;               /* indigo-400 */
+  --primary: #06a893;               /* lighter teal-green for dark mode */
   --primary-foreground: #0b1220;    /* dark text on light accent */
   --secondary: #111827;             /* gray-900 */
   --secondary-foreground: var(--foreground);
@@ -96,23 +96,23 @@
   --destructive-foreground: #0b1220;
   --border: #1f2937;                /* gray-800 */
   --input: #0f172a;
-  --ring: #475569;                  /* slate-600 */
+  --ring: #06a893;                  /* green ring for consistency */
   /* Text selection */
   --selection: #374151;            /* gray-700 */
   --selection-foreground: #f9fafb; /* gray-50 */
-  --chart-1: var(--primary);
+  --chart-1: #06a893;              /* lighter green */
   --chart-2: #64748b;              /* slate-500 */
   --chart-3: #9ca3af;              /* gray-400 */
   --chart-4: #94a3b8;              /* slate-400 */
   --chart-5: #cbd5e1;              /* slate-300 */
   --sidebar: #0f172a;
   --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
+  --sidebar-primary: #06a893;
   --sidebar-primary-foreground: #0b1220;
   --sidebar-accent: #111827;
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: #1f2937;
-  --sidebar-ring: var(--ring);
+  --sidebar-ring: #06a893;
 
   /* Scrollbars (dark) */
   --scrollbar-track: #0f172a;       /* slate-900 */
@@ -236,5 +236,12 @@
   select:focus-visible,
   textarea:focus-visible {
     @apply outline-2 outline-offset-1 outline-ring;
+  }
+
+  /* Display heading utility for Garamond serif (applied via className in components) */
+  .font-display {
+    font-family: var(--font-garamond), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
 }

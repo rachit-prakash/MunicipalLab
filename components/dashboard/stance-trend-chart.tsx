@@ -14,12 +14,12 @@ export function StanceTrendChart({ trendsByTopic, defaultTopic }: StanceTrendCha
   const data = useMemo(() => trendsByTopic[selectedTopic] ?? [], [selectedTopic, trendsByTopic])
 
   return (
-    <div className="border border-gray-200 rounded-xl bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="border border-border rounded-xl bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-4 gap-3">
-        <h3 className="text-sm font-semibold text-gray-900">Support vs. oppose 30d</h3>
+        <h3 className="text-sm font-semibold text-foreground">Support vs. oppose 30d</h3>
         {topicKeys.length > 0 ? (
           <select
-            className="text-sm border border-gray-300 rounded-md px-3 py-1.5 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-sm border border-border rounded-md px-3 py-1.5 bg-card text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
             value={selectedTopic}
             onChange={(e) => setSelectedTopic(e.target.value)}
           >

@@ -120,7 +120,7 @@ function ThreadsPageInner() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="text-xl font-semibold text-foreground">Threads</h1>
+            <h1 className="text-xl font-semibold text-foreground font-display">Threads</h1>
             <p className="text-sm text-muted-foreground">Browse and triage conversations</p>
           </div>
           <FiltersToolbar availableTopics={availableTopics} onFiltersChange={setFilters} />

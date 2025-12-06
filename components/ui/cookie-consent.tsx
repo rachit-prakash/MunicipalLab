@@ -92,7 +92,7 @@ export default function CookieConsent(): React.JSX.Element | null {
 		<div
 			role="dialog"
 			aria-live="polite"
-			className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70"
+			className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/70"
 		>
 			<div className="mx-auto flex max-w-5xl items-center justify-between gap-4 p-4">
 				<p className="text-sm text-gray-700">
@@ -102,7 +102,7 @@ export default function CookieConsent(): React.JSX.Element | null {
 				<div className="flex items-center gap-2">
 					<button
 						type="button"
-						className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
+						className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm hover:bg-muted"
 						onClick={() => handleChoice("declined")}
 						aria-label="Decline non-essential cookies"
 					>

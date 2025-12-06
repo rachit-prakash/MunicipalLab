@@ -106,8 +106,8 @@ export default function AdminTopicsPage() {
           <div className="px-4 sm:px-6 py-6 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">Topics</h1>
-                <p className="text-sm text-gray-500">Define and organize topics ({activeCount} active)</p>
+                <h1 className="text-2xl font-semibold text-foreground font-display">Topics</h1>
+                <p className="text-sm text-muted-foreground">Define and organize topics ({activeCount} active)</p>
               </div>
               <Button variant="primary" size="md" onClick={addTopic} disabled={loading}>
                 Add topic
@@ -115,10 +115,10 @@ export default function AdminTopicsPage() {
             </div>
 
             {error ? (
-              <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+              <div className="rounded border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
             ) : null}
 
-            <div className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
+            <div className="border border-border rounded-lg bg-card overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow hoverable={false}>
@@ -130,20 +130,20 @@ export default function AdminTopicsPage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-gray-500">
+                      <TableCell colSpan={3} className="text-center text-muted-foreground">
                         Loading…
                       </TableCell>
                     </TableRow>
                   ) : topics.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-gray-500">
+                      <TableCell colSpan={3} className="text-center text-muted-foreground">
                         No topics yet. Click “Add topic” to create one.
                       </TableCell>
                     </TableRow>
                   ) : (
                     topics.map((topic) => (
                       <TableRow key={topic.id}>
-                        <TableCell className="font-medium text-gray-900">
+                        <TableCell className="font-medium text-foreground">
                           {editingId === topic.id ? (
                             <Input
                               value={editName}
@@ -165,7 +165,7 @@ export default function AdminTopicsPage() {
                             className={
                               topic.status === "active"
                                 ? "bg-ok/10 text-ok border border-ok/30"
-                                : "bg-gray-100 text-gray-900"
+                                : "bg-muted text-foreground"
                             }
                           >
                             {topic.status === "active" ? "Active" : "Archived"}
@@ -177,17 +177,17 @@ export default function AdminTopicsPage() {
                               setEditingId(topic.id)
                               setEditName(topic.name)
                             }}
-                            className="text-xs font-medium text-gray-600 hover:text-gray-900"
+                            className="text-xs font-medium text-muted-foreground hover:text-foreground"
                           >
                             Rename
                           </button>
-                          <span className="mx-2 text-gray-300">•</span>
+                          <span className="mx-2 text-border">•</span>
                           <button
                             onClick={() => toggleStatus(topic)}
                             className={
                               topic.status === "active"
                                 ? "text-xs font-medium text-danger hover:text-danger"
-                                : "text-xs font-medium text-gray-600 hover:text-gray-900"
+                                : "text-xs font-medium text-muted-foreground hover:text-foreground"
                             }
                           >
                             {topic.status === "active" ? "Retire" : "Activate"}

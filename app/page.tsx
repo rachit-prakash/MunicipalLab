@@ -892,10 +892,19 @@ export default function Home() {
           -moz-osx-font-smoothing: grayscale;
         }
 
+        :global(.dark) body {
+          background: #0f172a;
+          color: #f8fafc;
+        }
+
         .landing {
           min-height: 100vh;
           background: radial-gradient(ellipse 140% 80% at 50% 0%, #ffffff 0%,rgb(251, 248, 216) 50%, #fffef0 100%);
           overflow-x: hidden;
+        }
+
+        :global(.dark) .landing {
+          background: radial-gradient(ellipse 140% 80% at 50% 0%, #0f172a 0%, #1e293b 50%, #0f172a 100%);
         }
 
         /* Hero Section */
@@ -928,6 +937,10 @@ export default function Home() {
           margin-bottom: 20px;
         }
 
+        :global(.dark) .eyebrow {
+          color: #9ca3af;
+        }
+
         .hero-title {
           font-size: clamp(52px, 8vw, 96px);
           line-height: 1.05;
@@ -940,8 +953,16 @@ export default function Home() {
           color: rgba(26, 26, 26, 0.35);
         }
 
+        :global(.dark) .hero-title .text-light {
+          color: rgba(248, 250, 252, 0.35);
+        }
+
         .hero-title .text-dark {
           color: #1a1a1a;
+        }
+
+        :global(.dark) .hero-title .text-dark {
+          color: #f8fafc;
         }
 
         .hero-desc {
@@ -951,6 +972,10 @@ export default function Home() {
           max-width: 760px;
           margin: 0 auto 36px;
           font-weight: 500;
+        }
+
+        :global(.dark) .hero-desc {
+          color: #e2e8f0;
         }
 
         .cta-group {
@@ -1038,6 +1063,10 @@ export default function Home() {
           will-change: transform, opacity;
         }
 
+        :global(.dark) .floating-text {
+          color: #06a893;
+        }
+
         .floating-dot {
           position: absolute;
           border-radius: 50%;
@@ -1045,6 +1074,11 @@ export default function Home() {
           box-shadow: 0 0 12px rgba(3, 79, 70, 0.3);
           pointer-events: none;
           will-change: transform, opacity;
+        }
+
+        :global(.dark) .floating-dot {
+          background: radial-gradient(circle, #06a893, rgba(6, 168, 147, 0.4));
+          box-shadow: 0 0 12px rgba(6, 168, 147, 0.3);
         }
 
         .hero-visual {
@@ -1093,8 +1127,7 @@ export default function Home() {
         .block {
           height: 180px;
           background: repeating-linear-gradient(45deg,rgb(248, 235, 196), #f8f4e8 14px, #f1ebdc 14px, #f1ebdc 28px);
-          border-radius: 16px;
-          margin-top: 20px;
+          border-radius: 16px;image.png
         }
 
         /* Trust Section */s
@@ -1157,6 +1190,11 @@ export default function Home() {
           font-weight: 600;
         }
 
+        :global(.dark) .split-left .label,
+        :global(.dark) .label {
+          color: #9ca3af;
+        }
+
         .split-left h2 {
           font-size: clamp(36px, 5vw, 56px);
           line-height: 1.1;
@@ -1164,15 +1202,30 @@ export default function Home() {
           font-weight: 500;
         }
 
+        :global(.dark) .split-left h2,
+        :global(.dark) h2 {
+          color: #f8fafc;
+        }
+
         .split-left h2 em {
           font-style: italic;
           color: #034f46;
+        }
+
+        :global(.dark) .split-left h2 em,
+        :global(.dark) .text-accent {
+          color: #06a893;
         }
 
         .split-left p {
           font-size: clamp(17px, 1.8vw, 20px);
           line-height: 1.65;
           color: #4a4a42;
+        }
+
+        :global(.dark) .split-left p,
+        :global(.dark) p {
+          color: #cbd5e1;
         }
 
         .split-right {
@@ -1200,6 +1253,13 @@ export default function Home() {
           position: relative;
         }
 
+        :global(.dark) .card-chaos {
+          background: linear-gradient(135deg, #2d1a1a 0%, #3d2020 50%, #2d1a1a 100%);
+          border: 2px dashed rgba(239, 68, 68, 0.4);
+          box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2), 0 4px 8px rgba(0, 0, 0, 0.3),
+            inset 0 0 100px rgba(239, 68, 68, 0.05);
+        }
+
         .card-chaos::before {
           content: "";
           position: absolute;
@@ -1222,12 +1282,36 @@ export default function Home() {
           pointer-events: none;
         }
 
+        :global(.dark) .card-chaos::before {
+          background-image: repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 10px,
+              rgba(239, 68, 68, 0.05) 10px,
+              rgba(239, 68, 68, 0.05) 20px
+            ),
+            repeating-linear-gradient(
+              -45deg,
+              transparent,
+              transparent 10px,
+              rgba(239, 68, 68, 0.05) 10px,
+              rgba(239, 68, 68, 0.05) 20px
+            );
+        }
+
         .card-calm {
           background: linear-gradient(135deg, #ffffff 0%, #f0f9f8 100%);
           border: 2px solid rgba(3, 79, 70, 0.15);
           box-shadow: 0 20px 60px rgba(3, 79, 70, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9),
             inset 0 0 60px rgba(3, 79, 70, 0.03);
           position: relative;
+        }
+
+        :global(.dark) .card-calm {
+          background: linear-gradient(135deg, #1e293b 0%, #1a3a35 100%);
+          border: 2px solid rgba(6, 168, 147, 0.3);
+          box-shadow: 0 20px 60px rgba(6, 168, 147, 0.15), inset 0 1px 0 rgba(6, 168, 147, 0.1),
+            inset 0 0 60px rgba(6, 168, 147, 0.05);
         }
 
         .card-calm::before {
@@ -1237,6 +1321,10 @@ export default function Home() {
           background: radial-gradient(circle at 50% 0%, rgba(3, 79, 70, 0.03) 0%, transparent 70%);
           border-radius: 20px;
           pointer-events: none;
+        }
+
+        :global(.dark) .card-calm::before {
+          background: radial-gradient(circle at 50% 0%, rgba(6, 168, 147, 0.1) 0%, transparent 70%);
         }
 
         .badge {
@@ -1263,6 +1351,10 @@ export default function Home() {
           background: linear-gradient(135deg, #034f46 0%, #046157 100%);
           color: #fff;
           box-shadow: 0 6px 20px rgba(3, 79, 70, 0.3);
+        }
+
+        :global(.dark) .badge-green {
+          background: linear-gradient(135deg, #06a893 0%, #059669 100%);
         }
 
         @keyframes shake {
@@ -1311,6 +1403,13 @@ export default function Home() {
           transform: rotate(var(--rotation, 0deg));
         }
 
+        :global(.dark) .email-item.chaos {
+          background: rgba(45, 26, 26, 0.95);
+          border: 1.5px solid rgba(239, 68, 68, 0.4);
+          border-left: 4px solid #ef4444;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2), 2px 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
         .email-item.chaos:nth-child(1) {
           --rotation: -1deg;
         }
@@ -1336,9 +1435,20 @@ export default function Home() {
           backdrop-filter: blur(10px);
         }
 
+        :global(.dark) .email-item.calm {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(26, 58, 53, 0.98) 100%);
+          border: 1px solid rgba(6, 168, 147, 0.3);
+          border-left: 4px solid #06a893;
+          box-shadow: 0 3px 12px rgba(6, 168, 147, 0.15), inset 0 1px 0 rgba(6, 168, 147, 0.1);
+        }
+
         .email-item.calm:hover {
           transform: translateX(4px);
           box-shadow: 0 6px 20px rgba(3, 79, 70, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        :global(.dark) .email-item.calm:hover {
+          box-shadow: 0 6px 20px rgba(6, 168, 147, 0.2), inset 0 1px 0 rgba(6, 168, 147, 0.15);
         }
 
         .email-dot {
@@ -1406,9 +1516,17 @@ export default function Home() {
           color: #4a4a4a;
         }
 
+        :global(.dark) .email-item.chaos .email-line {
+          color: #cbd5e1;
+        }
+
         .email-item.calm .email-line {
           color: #1a1a1a;
           font-weight: 600;
+        }
+
+        :global(.dark) .email-item.calm .email-line {
+          color: #f8fafc;
         }
 
         .cursor-blink {
@@ -1550,9 +1668,18 @@ export default function Home() {
           height: 100%;
         }
 
+        :global(.dark) .carousel-card {
+          background: #1e293b;
+          border-color: #475569;
+        }
+
         .carousel-card:hover {
           transform: translateY(-2px);
           border-color: #034f46;
+        }
+
+        :global(.dark) .carousel-card:hover {
+          border-color: #06a893;
         }
 
         .carousel-image-wrapper {
@@ -1566,6 +1693,11 @@ export default function Home() {
           justify-content: center;
           margin-bottom: 14px;
           border: 2px solid #1a1a1a;
+        }
+
+        :global(.dark) .carousel-image-wrapper {
+          background: #0f172a;
+          border-color: #334155;
         }
 
         .carousel-image-wrapper img {
@@ -1586,6 +1718,10 @@ export default function Home() {
           letter-spacing: -0.01em;
         }
 
+        :global(.dark) .carousel-caption h3 {
+          color: #f8fafc;
+        }
+
         .carousel-caption p {
           font-size: 13px;
           line-height: 1.4;
@@ -1594,6 +1730,10 @@ export default function Home() {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+
+        :global(.dark) .carousel-caption p {
+          color: #94a3b8;
         }
 
         @media (max-width: 768px) {
@@ -1676,9 +1816,20 @@ export default function Home() {
           overflow: visible;
         }
 
+        :global(.dark) .step-card {
+          background: #1e293b;
+          border: 2px solid rgba(6, 168, 147, 0.3);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
         .step-card:hover {
           box-shadow: 0 12px 40px rgba(240, 135, 255, 0.2), 0 6px 20px rgba(0, 0, 0, 0.12);
           border-color: rgb(240, 135, 255);
+        }
+
+        :global(.dark) .step-card:hover {
+          box-shadow: 0 12px 40px rgba(6, 168, 147, 0.3), 0 6px 20px rgba(0, 0, 0, 0.3);
+          border-color: #06a893;
         }
 
         .step-icon {
@@ -1732,11 +1883,19 @@ export default function Home() {
           letter-spacing: -0.02em;
         }
 
+        :global(.dark) .step-content h3 {
+          color: #f8fafc;
+        }
+
         .step-content p {
           margin: 0 0 16px;
           color: #4a4a42;
           line-height: 1.65;
           font-size: 16px;
+        }
+
+        :global(.dark) .step-content p {
+          color: #cbd5e1;
         }
 
         .step-time {
@@ -1749,6 +1908,12 @@ export default function Home() {
           color: rgb(180, 60, 200);
           border: 1px solid rgba(240, 135, 255, 0.3);
           letter-spacing: 0.02em;
+        }
+
+        :global(.dark) .step-time {
+          background: linear-gradient(135deg, rgba(6, 168, 147, 0.2) 0%, rgba(6, 168, 147, 0.2) 100%);
+          color: #06a893;
+          border-color: rgba(6, 168, 147, 0.4);
         }
 
         @media (max-width: 768px) {
@@ -1856,10 +2021,18 @@ export default function Home() {
           pointer-events: none;
         }
 
+        :global(.dark) .cta-card::before {
+          background: radial-gradient(circle, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.5) 40%, transparent 70%);
+        }
+
         .highlight-calmer {
           position: relative;
           color: #034f46;
           font-style: italic;
+        }
+
+        :global(.dark) .highlight-calmer {
+          color: #06a893;
         }
 
         .cta-card h2 {
@@ -1873,6 +2046,10 @@ export default function Home() {
           color: #4a4a42;
           margin-bottom: 32px;
           line-height: 1.6;
+        }
+
+        :global(.dark) .cta-card p {
+          color: #cbd5e1;
         }
 
         /* Responsive */
@@ -1922,10 +2099,20 @@ export default function Home() {
           height: 60px;
         }
 
+        :global(.dark) .hero-search-bar {
+          background: #1e293b;
+          border-color: rgba(6, 168, 147, 0.25);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
         .search-icon {
           color: #8d8d83;
           display: flex;
           align-items: center;
+        }
+
+        :global(.dark) .search-icon {
+          color: #94a3b8;
         }
 
         .search-text {
@@ -1934,6 +2121,10 @@ export default function Home() {
           font-weight: 500;
           flex: 1;
           text-align: left;
+        }
+
+        :global(.dark) .search-text {
+          color: #f8fafc;
         }
 
         .hero-search-result {
@@ -1949,6 +2140,12 @@ export default function Home() {
           box-shadow: 0 16px 48px rgba(3, 79, 70, 0.12), 0 4px 12px rgba(3, 79, 70, 0.06);
         }
 
+        :global(.dark) .result-content {
+          background: #1e293b;
+          border-color: rgba(6, 168, 147, 0.2);
+          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
         .result-header {
           display: flex;
           align-items: center;
@@ -1957,6 +2154,10 @@ export default function Home() {
           font-size: 14px;
           font-weight: 500;
           margin-bottom: 16px;
+        }
+
+        :global(.dark) .result-header {
+          color: #94a3b8;
         }
 
         .result-items {
@@ -1975,9 +2176,19 @@ export default function Home() {
           border: 1px solid rgba(3, 79, 70, 0.06);
         }
 
+        :global(.dark) .result-item {
+          background: #0f172a;
+          border-color: rgba(6, 168, 147, 0.15);
+        }
+
         .result-item.urgent {
           background: #fff5f5;
           border-color: rgba(217, 74, 56, 0.1);
+        }
+
+        :global(.dark) .result-item.urgent {
+          background: rgba(217, 74, 56, 0.1);
+          border-color: rgba(217, 74, 56, 0.25);
         }
 
         .result-item-row {
@@ -2005,6 +2216,10 @@ export default function Home() {
           font-size: 15px;
           color: #1a1a1a;
           font-weight: 500;
+        }
+
+        :global(.dark) .item-text {
+          color: #f8fafc;
         }
 
         .tag {

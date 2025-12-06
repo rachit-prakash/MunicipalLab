@@ -8,6 +8,16 @@ import { cn } from "@/lib/utils"
 import { LogIn, Sparkles } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { Spinner } from "@/components/ui/spinner"
+import { EB_Garamond } from "next/font/google"
+import Image from "next/image"
+import { ThemeToggle } from "@/components/theme-toggle"
+
+const garamond = EB_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+})
 
 function SignInContent() {
   const router = useRouter()
@@ -77,69 +87,132 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-sky-50 via-gray-50 to-indigo-50">
-      {/* soft background accents */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-sky-300/20 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-indigo-300/20 blur-3xl" />
+    <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-white via-[rgb(251,248,216)] to-[#fffef0] dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      {/* Theme Toggle - Top Right */}
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle />
       </div>
 
-      <div className="relative mx-4 w-full max-w-md">
-        {/* glowing ring wrapper */}
-        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-sky-400/40 via-blue-500/40 to-indigo-600/40 blur-xl" />
-        <Card className="relative overflow-hidden border-gray-200 bg-white/80 backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl text-gray-900">Welcome to Legaside</CardTitle>
-            <CardDescription className="text-center">
+      {/* Decorative curved SVG paths */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] max-w-[1600px]" viewBox="0 0 1400 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M 0 320 Q 200 180, 400 280 T 800 320 Q 1000 360, 1200 280"
+            className="stroke-primary dark:stroke-primary"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.08"
+          />
+          <path
+            d="M 200 520 Q 400 400, 600 500 T 1000 520 Q 1200 560, 1400 480"
+            className="stroke-primary dark:stroke-primary"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.08"
+          />
+          <path
+            d="M 100 400 Q 350 250, 600 420 Q 850 590, 1100 450 Q 1350 310, 1400 380"
+            className="stroke-primary dark:stroke-primary"
+            strokeWidth="2"
+            fill="none"
+            opacity="0.06"
+          />
+        </svg>
+        {/* Floating dots */}
+        <div className="absolute top-[25%] left-[25%] w-2 h-2 rounded-full bg-primary opacity-20 animate-pulse dark:opacity-30" />
+        <div className="absolute top-[35%] right-[30%] w-2.5 h-2.5 rounded-full bg-primary opacity-15 animate-pulse dark:opacity-25" style={{ animationDelay: "1s" }} />
+        <div className="absolute bottom-[40%] left-[15%] w-3 h-3 rounded-full bg-primary opacity-10 animate-pulse dark:opacity-20" style={{ animationDelay: "2s" }} />
+      </div>
+
+      <div className="relative mx-4 w-full max-w-md z-10">
+        <Card className="relative overflow-hidden border-2 border-primary/15 dark:border-primary/30 bg-white dark:bg-slate-900 shadow-xl rounded-[20px] dark:shadow-primary/10">
+          {/* Subtle gradient overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none rounded-[20px]"
+            style={{
+              background: "radial-gradient(circle at 50% 0%, rgba(3, 79, 70, 0.03) 0%, transparent 70%)"
+            }}
+          />
+          <CardHeader className="relative">
+            <div className="flex justify-center mb-4">
+              <Image
+                src="/logo-icon.png"
+                alt="Legaside Logo"
+                width={64}
+                height={64}
+                className="rounded-xl block dark:hidden"
+                priority
+              />
+              <Image
+                src="/logo-icon-white.png"
+                alt="Legaside Logo"
+                width={64}
+                height={64}
+                className="rounded-xl hidden dark:block"
+                priority
+              />
+            </div>
+            <CardTitle className={cn("text-center text-3xl font-medium text-foreground", garamond.className)} style={{ letterSpacing: "-0.01em" }}>
+              Welcome to Legaside
+            </CardTitle>
+            <CardDescription className="text-center text-base text-muted-foreground">
               Sign in to connect your Gmail and get started
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 relative">
             <Button
               onClick={handleGoogle}
-              variant="secondary"
-              className={cn(
-                "relative w-full h-11 rounded-full text-base font-semibold text-white",
-              )}
+              className="relative w-full h-12 rounded-full text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground border-none transition-all duration-300 hover:translate-y-[-3px] shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
             >
-              <span className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-400 via-blue-600 to-indigo-700" />
-              <span className="pointer-events-none absolute -inset-1 rounded-full bg-blue-500/20 blur-sm" />
-              <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-blue-400/30" />
-              <span className="relative inline-flex items-center gap-2">
-                <LogIn className="h-5 w-5 text-white" />
-                Continue with Google
-              </span>
+              <LogIn className="h-5 w-5 mr-2" />
+              Continue with Google
             </Button>
-            <div className="text-center text-xs text-gray-500">or</div>
+            <div className="text-center text-sm font-medium text-muted-foreground">or</div>
             <Button
               onClick={handleDemo}
-              variant="ghost"
+              variant="outline"
               disabled={enablingDemo}
-              className="group relative w-full h-11 rounded-full text-base font-semibold text-gray-900 bg-transparent overflow-hidden"
+              className="relative w-full h-12 rounded-full text-base font-semibold border-[1.5px] border-primary text-primary bg-transparent hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-300 hover:translate-y-[-2px]"
             >
-              {/* gradient border */}
-              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-sky-400 to-indigo-600 opacity-70" />
-              {/* inner surface */}
-              <span className="absolute inset-[1px] rounded-full bg-white/85 backdrop-blur-sm ring-1 ring-gray-200 transition-colors group-hover:bg-white" />
-              <span className="relative inline-flex items-center justify-center gap-2">
-                {enablingDemo ? (
-                  <>
-                    <Spinner className="size-5 text-gray-600" />
-                    Starting demo…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-5 w-5 text-gray-700" />
-                    Try demo (no Google required)
-                  </>
-                )}
-              </span>
+              {enablingDemo ? (
+                <>
+                  <Spinner className="size-5 mr-2 text-primary" />
+                  Starting demo…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  Try demo (no Google required)
+                </>
+              )}
             </Button>
 
             {checking ? (
-              <p className="text-center text-sm text-gray-500">Checking session…</p>
+              <p className="text-center text-sm text-muted-foreground">Checking session…</p>
             ) : null}
-            {friendlyError ? <p className="text-center text-sm text-danger">{friendlyError}</p> : null}
+            {friendlyError ? <p className="text-center text-sm font-medium text-destructive">{friendlyError}</p> : null}
+
+            <div className="pt-2 text-center text-xs text-muted-foreground">
+              By continuing, you agree to Municipal Labs AI{" "}
+              <a
+                href="https://municipallabs.ai/terms-of-service"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline transition-all text-primary hover:text-primary/80"
+              >
+                Terms of Service
+              </a>
+              {" "}and{" "}
+              <a
+                href="https://municipallabs.ai/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline transition-all text-primary hover:text-primary/80"
+              >
+                Privacy Policy
+              </a>
+              .
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -151,8 +224,8 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <Spinner className="size-6 text-gray-600" />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-[rgb(251,248,216)] to-[#fffef0] dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+          <Spinner className="size-6 text-primary" />
         </div>
       }
     >

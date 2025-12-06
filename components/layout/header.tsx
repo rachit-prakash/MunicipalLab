@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { Search, PanelLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { signOut } from "next-auth/react"
@@ -12,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter()
@@ -104,6 +106,22 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           >
             <PanelLeft className="h-4 w-4" />
           </button>
+          <Link href="/dashboard" className="md:hidden flex items-center">
+            <Image
+              src="/logo-icon.png"
+              alt="Legaside"
+              width={28}
+              height={28}
+              className="h-7 w-7 block dark:hidden"
+            />
+            <Image
+              src="/logo-icon-white.png"
+              alt="Legaside"
+              width={28}
+              height={28}
+              className="h-7 w-7 hidden dark:block"
+            />
+          </Link>
           {!isOnChatbotPage && (
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -119,7 +137,8 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             </div>
           )}
         </div>
-        <div className="ml-4 shrink-0">
+        <div className="ml-4 shrink-0 flex items-center gap-2">
+          <ThemeToggle />
           {authChecked ? (
             profileName ? (
               <DropdownMenu modal={false}>

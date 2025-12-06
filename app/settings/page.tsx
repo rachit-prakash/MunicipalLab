@@ -145,10 +145,10 @@ export default function SettingsPage() {
         </Suspense>
         <main className="mt-16 flex-1 overflow-auto">
           <div className="px-4 sm:px-6 py-6 space-y-8">
-            <section className="rounded-xl border border-border bg-white p-6 shadow-sm space-y-4">
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Timezone</h2>
-                <p className="text-sm text-gray-500">We use this to localize analytics windows.</p>
+                <h2 className="text-lg font-semibold text-foreground font-display">Timezone</h2>
+                <p className="text-sm text-muted-foreground">We use this to localize analytics windows.</p>
               </div>
               <div className="flex flex-col gap-3">
                 <Select value={timezone} onValueChange={setTimezone}>
@@ -164,7 +164,7 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
                 {currentTime && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 sm:max-w-md">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground sm:max-w-md">
                     <Clock className="h-4 w-4" />
                     <span>Current time: {currentTime}</span>
                   </div>
@@ -175,29 +175,29 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               </div>
-              {timezoneMessage ? <p className="text-sm text-gray-600">{timezoneMessage}</p> : null}
+              {timezoneMessage ? <p className="text-sm text-muted-foreground">{timezoneMessage}</p> : null}
             </section>
 
-            <section className="rounded-xl border border-border bg-white p-6 shadow-sm space-y-4">
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Data export</h2>
-                <p className="text-sm text-gray-500">Download a machine-readable copy of your personal data.</p>
+                <h2 className="text-lg font-semibold text-foreground font-display">Data export</h2>
+                <p className="text-sm text-muted-foreground">Download a machine-readable copy of your personal data.</p>
               </div>
               <Button variant="secondary" onClick={handleExport}>
                 Download export
               </Button>
-              {exportStatus ? <p className="text-sm text-gray-600">{exportStatus}</p> : null}
+              {exportStatus ? <p className="text-sm text-muted-foreground">{exportStatus}</p> : null}
             </section>
 
-            <section className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm space-y-4">
+            <section className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 shadow-sm space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-red-700">Delete account</h2>
-                <p className="text-sm text-red-700">This is permanent and removes your Gmail connection plus local data.</p>
+                <h2 className="text-lg font-semibold text-destructive font-display">Delete account</h2>
+                <p className="text-sm text-destructive">This is permanent and removes your Gmail connection plus local data.</p>
               </div>
               <Button variant="destructive" onClick={handleDelete}>
                 Delete my account
               </Button>
-              {deleteStatus ? <p className="text-sm text-red-700">{deleteStatus}</p> : null}
+              {deleteStatus ? <p className="text-sm text-destructive">{deleteStatus}</p> : null}
             </section>
           </div>
         </main>

@@ -230,7 +230,7 @@ export function PolicyIntelligenceHeader() {
         insight: risingInsight.label,
         insightTone: risingInsight.tone,
         extra: risingIssue?.exampleSubjectLine ? (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted-foreground">
             e.g. &quot;
             {risingIssue.exampleSubjectLine.length > 70
               ? `${risingIssue.exampleSubjectLine.slice(0, 70)}...`
@@ -245,7 +245,7 @@ export function PolicyIntelligenceHeader() {
         value: sentimentValue,
         insight: sentimentDelta.label,
         insightTone: sentimentDelta.tone,
-        extra: <p className="text-xs text-gray-400">{sentimentAvg}</p>,
+        extra: <p className="text-xs text-muted-foreground">{sentimentAvg}</p>,
       },
       {
         key: "urgent",
@@ -263,14 +263,14 @@ export function PolicyIntelligenceHeader() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Policy Intelligence</p>
-          <p className="text-base text-gray-600">Decision-grade signals updated live from constituent inboxes</p>
+          <p className="text-base text-muted-foreground">Decision-grade signals updated live from constituent inboxes</p>
         </div>
         <button
           onClick={() => {
             void handleSync()
           }}
           disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 disabled:bg-primary/50 rounded-lg transition-colors"
         >
           {syncing ? (
             <>
@@ -306,7 +306,7 @@ export function PolicyIntelligenceHeader() {
       >
         {loading
           ? Array.from({ length: 4 }).map((_, idx) => (
-              <div key={`insight-skeleton-${idx}`} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div key={`insight-skeleton-${idx}`} className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm">
                 <Skeleton className="h-4 w-24 mb-4" />
                 <Skeleton className="h-8 w-32 mb-3" />
                 <Skeleton className="h-4 w-40" />

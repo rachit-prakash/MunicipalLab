@@ -39,9 +39,9 @@ export function FiltersToolbar({ availableTopics, onFiltersChange }: FiltersTool
   }
 
   return (
-    <div className="sticky top-16 border-b border-gray-200 bg-white px-6 py-4 space-y-4">
+    <div className="sticky top-16 border-b border-border bg-card px-6 py-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Filters</h3>
+        <h3 className="text-sm font-semibold text-foreground">Filters</h3>
         <Button variant="ghost" size="sm" onClick={handleReset}>
           Reset
         </Button>
@@ -50,7 +50,7 @@ export function FiltersToolbar({ availableTopics, onFiltersChange }: FiltersTool
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Type filter */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-gray-600">Type</label>
+          <label className="text-xs font-medium text-muted-foreground">Type</label>
           <Select value={type} onValueChange={handleTypeChange}>
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -65,16 +65,16 @@ export function FiltersToolbar({ availableTopics, onFiltersChange }: FiltersTool
 
         {/* Topic filter */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-gray-600">Topic</label>
+          <label className="text-xs font-medium text-muted-foreground">Topic</label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="flex h-9 w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500"
+                className="flex h-9 w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
               >
                 <span className="truncate text-left">
                   {selectedTopics.length === 0 ? "All topics" : selectedTopics.join(", ")}
                 </span>
-                <span className="text-gray-500">▼</span>
+                <span className="text-muted-foreground">▼</span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64">

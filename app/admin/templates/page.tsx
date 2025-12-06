@@ -97,8 +97,8 @@ export default function AdminTemplatesPage() {
           <div className="px-4 sm:px-6 py-6 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">Templates</h1>
-                <p className="text-sm text-gray-500">Maintain reply templates per topic & stance</p>
+                <h1 className="text-2xl font-semibold text-foreground font-display">Templates</h1>
+                <p className="text-sm text-muted-foreground">Maintain reply templates per topic & stance</p>
               </div>
               <Button variant="primary" size="md" onClick={handleCreate} disabled={loading}>
                 Add template
@@ -106,11 +106,11 @@ export default function AdminTemplatesPage() {
             </div>
 
             {error ? (
-              <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+              <div className="rounded border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
             ) : null}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="col-span-1 md:col-span-2 border border-border rounded-lg bg-white overflow-hidden shadow-sm">
+              <div className="col-span-1 md:col-span-2 border border-border rounded-lg bg-card overflow-hidden shadow-sm">
                 <Table>
                   <TableHeader>
                     <TableRow hoverable={false}>
@@ -123,13 +123,13 @@ export default function AdminTemplatesPage() {
                   <TableBody>
                     {loading ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-gray-500">
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">
                           Loading…
                         </TableCell>
                       </TableRow>
                     ) : templates.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-gray-500">
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">
                           No templates yet. Add one to get started.
                         </TableCell>
                       </TableRow>
@@ -149,7 +149,7 @@ export default function AdminTemplatesPage() {
                           <TableCell className="text-gray-600 hidden sm:table-cell">
                             v{template.version}
                           </TableCell>
-                          <TableCell className="text-xs text-gray-500 hidden sm:table-cell">
+                          <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
                             {formatDate(template.updated_at)}
                           </TableCell>
                         </TableRow>
@@ -160,12 +160,12 @@ export default function AdminTemplatesPage() {
               </div>
 
               {selectedTemplate ? (
-                <div className="border border-border rounded-lg bg-white p-6 shadow-sm h-fit space-y-4">
+                <div className="border border-border rounded-lg bg-card p-6 shadow-sm h-fit space-y-4">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-foreground">
                       Editing {selectedTemplate.topic_name ?? "Uncategorized"} ({selectedTemplate.stance})
                     </p>
-                    <p className="text-xs text-gray-500">Version {selectedTemplate.version}</p>
+                    <p className="text-xs text-muted-foreground">Version {selectedTemplate.version}</p>
                   </div>
                   <Textarea
                     value={draftContent}
@@ -182,7 +182,7 @@ export default function AdminTemplatesPage() {
                   </div>
                 </div>
               ) : (
-                <div className="border border-dashed border-gray-300 rounded-lg p-6 text-gray-500">
+                <div className="border border-dashed border-gray-300 rounded-lg p-6 text-muted-foreground">
                   Select a template to edit its content.
                 </div>
               )}

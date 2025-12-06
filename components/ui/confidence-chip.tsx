@@ -13,9 +13,9 @@ export function ConfidenceChip({ confidence, className }: ConfidenceChipProps) {
   const percentage = Math.round(confidence * 100)
 
   const toneStyles = {
-    ok: "bg-ok/10 text-ok border border-ok/30",
-    warn: "bg-warn/10 text-warn border border-warn/30",
-    danger: "bg-danger/10 text-danger border border-danger/30",
+    ok: "bg-success/10 text-success border border-success/30",
+    warn: "bg-warning/10 text-warning border border-warning/30",
+    danger: "bg-destructive/10 text-destructive border border-destructive/30",
   }
 
   return (

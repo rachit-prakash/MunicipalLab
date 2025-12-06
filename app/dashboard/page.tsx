@@ -61,7 +61,7 @@ export default async function DashboardPage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-foreground font-display">Dashboard</h1>
           <p className="text-sm text-muted-foreground">KPIs and trends at a glance</p>
         </div>
 

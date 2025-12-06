@@ -158,14 +158,15 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex h-full w-full flex-col bg-white overflow-hidden"
+      className="flex h-full w-full flex-col bg-background overflow-hidden"
     >
       {/* Header */}
-      <div className="border-b border-slate-200 p-4">
+      <div className="border-b border-border p-4">
         <Button
           onClick={onNewChat}
           size="sm"
-          className="w-full bg-slate-900 text-white hover:bg-slate-800"
+          variant="primary"
+          className="w-full"
         >
           <Plus className="mr-2 h-4 w-4" />
           New Chat
@@ -176,11 +177,11 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
       <ScrollArea className="flex-1">
         <div className="p-3 w-full max-w-full overflow-hidden">
           {loading ? (
-            <div className="py-8 text-center text-sm text-slate-500">Loading chats...</div>
+            <div className="py-8 text-center text-sm text-muted-foreground">Loading chats...</div>
           ) : sessions.length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-500">
+            <div className="py-10 text-center text-sm text-muted-foreground">
               No chat history yet
-              <div className="mt-1 text-xs text-slate-400">Start a conversation to see it here.</div>
+              <div className="mt-1 text-xs text-muted-foreground">Start a conversation to see it here.</div>
             </div>
           ) : (
             <>
@@ -188,7 +189,7 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
                 if (groupSessions.length === 0) return null
                 return (
                   <div key={group} className="mb-5 w-full max-w-full overflow-hidden">
-                    <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       {group}
                     </div>
                     <AnimatePresence initial={false}>
@@ -200,23 +201,23 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
                           className={cn(
                             'group mt-1 flex items-center gap-2 rounded-md px-3 py-2.5 text-left transition-all cursor-pointer overflow-hidden',
                             currentSessionId === session.id
-                              ? 'bg-slate-100'
-                              : 'hover:bg-slate-50'
+                              ? 'bg-muted'
+                              : 'hover:bg-muted/50'
                           )}
                           whileHover={{ x: 2 }}
                           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                         >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600 transition group-hover:bg-slate-200">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition group-hover:bg-accent">
                             <MessageSquare className="h-4 w-4" />
                           </span>
                           <div className="flex-1 min-w-0 overflow-hidden max-w-[180px]">
                             <p 
-                              className="truncate text-sm font-medium text-slate-700" 
+                              className="truncate text-sm font-medium text-foreground" 
                               title={session.title}
                             >
                               {session.title}
                             </p>
-                            <p className="text-xs text-slate-400 truncate">{formatDate(session.updated_at)}</p>
+                            <p className="text-xs text-muted-foreground truncate">{formatDate(session.updated_at)}</p>
                           </div>
                           <div className="shrink-0">
                             <DropdownMenu>
@@ -227,7 +228,7 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
                                   className="h-6 w-6 p-0 opacity-0 transition group-hover:opacity-100"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <MoreVertical className="h-3 w-3 text-slate-400" />
+                                  <MoreVertical className="h-3 w-3 text-muted-foreground" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">

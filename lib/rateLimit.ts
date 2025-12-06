@@ -72,6 +72,11 @@ export async function checkRateLimit(
   req: NextRequest,
   config: RateLimitConfig
 ): Promise<NextResponse | null> {
+  // Skip rate limiting in development mode
+  if (process.env.NODE_ENV === 'development') {
+    return null; // Allowed
+  }
+
   const identifier = await getIdentifier(req, config);
   const key = `${identifier}:${config.windowMs}`;
   const now = Date.now();

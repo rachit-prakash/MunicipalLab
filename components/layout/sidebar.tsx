@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Playfair_Display } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight, LayoutGrid, Mail, Settings, MessageCircle } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600"] })
 
 export function Sidebar({
   mobileOpen,
@@ -63,7 +61,24 @@ export function Sidebar({
               <SheetTitle>Navigation</SheetTitle>
             </SheetHeader>
             <div className="flex h-full flex-col">
-              <div className="px-6 py-5 flex items-center justify-between flex-shrink-0" />
+              <div className="px-6 py-5 flex items-center justify-between flex-shrink-0">
+                <Link href="/dashboard" className="flex items-center gap-2">
+                  <Image
+                    src="/logo-icon.png"
+                    alt="Legaside"
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 block dark:hidden"
+                  />
+                  <Image
+                    src="/logo-icon-white.png"
+                    alt="Legaside"
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 hidden dark:block"
+                  />
+                </Link>
+              </div>
               <nav className="flex-1 overflow-y-auto px-3 py-6">
                 <div className="space-y-1">
                   {menuItems.map((item) => {
@@ -75,7 +90,7 @@ export function Sidebar({
                         className={cn(
                           "flex items-center gap-3 rounded-[var(--radius)] px-4 py-2.5 text-sm font-medium transition-all duration-200",
                           isActive(item.href)
-                            ? "bg-muted text-foreground border border-border shadow-sm"
+                            ? "bg-accent text-primary shadow-sm"
                             : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}
                         onClick={() => onMobileOpenChange?.(false)}
@@ -84,7 +99,7 @@ export function Sidebar({
                         <div className="flex min-w-0 flex-col">
                           <span className="truncate">{item.label}</span>
                           {item.description && (
-                            <span className="text-xs text-muted-foreground truncate">{item.description}</span>
+                            <span className={cn("text-xs truncate", isActive(item.href) ? "text-primary/70" : "text-muted-foreground")}>{item.description}</span>
                           )}
                         </div>
                       </Link>
@@ -108,9 +123,27 @@ export function Sidebar({
         <div className="flex h-full flex-col">
           {/* Logo and toggle */}
           <div className="px-6 py-5 flex items-center justify-between flex-shrink-0">
+            {!isCollapsed && (
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <Image
+                  src="/logo-icon.png"
+                  alt="Legaside"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 block dark:hidden"
+                />
+                <Image
+                  src="/logo-icon-white.png"
+                  alt="Legaside"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 hidden dark:block"
+                />
+              </Link>
+            )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1.5 hover:bg-muted rounded-[var(--radius)] transition-colors"
+              className="p-1.5 hover:bg-muted rounded-[var(--radius)] transition-colors ml-auto"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? (
@@ -133,7 +166,7 @@ export function Sidebar({
                     className={cn(
                       "flex items-center gap-3 rounded-[var(--radius)] px-4 py-2.5 text-sm font-medium transition-all duration-200",
                       isActive(item.href)
-                        ? "bg-muted text-foreground border border-border shadow-sm"
+                        ? "bg-accent text-primary shadow-sm"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                     title={isCollapsed ? item.label : undefined}
@@ -143,7 +176,7 @@ export function Sidebar({
                       <div className="flex min-w-0 flex-col">
                         <span className="truncate">{item.label}</span>
                         {item.description && (
-                          <span className="text-xs text-muted-foreground truncate">{item.description}</span>
+                          <span className={cn("text-xs truncate", isActive(item.href) ? "text-primary/70" : "text-muted-foreground")}>{item.description}</span>
                         )}
                       </div>
                     )}

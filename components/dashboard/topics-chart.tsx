@@ -9,8 +9,8 @@ interface TopicsChartProps {
 
 export function TopicsChart({ topics }: TopicsChartProps) {
   return (
-    <div className="border border-gray-200 rounded-xl bg-white p-6 shadow-sm hover:shadow-md transition-shadow [&_.recharts-layer]:outline-hidden [&_.recharts-surface]:outline-hidden focus:outline-none focus-visible:outline-none">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4">Top topics</h3>
+    <div className="border border-border rounded-xl bg-card p-6 shadow-sm hover:shadow-md transition-shadow [&_.recharts-layer]:outline-hidden [&_.recharts-surface]:outline-hidden focus:outline-none focus-visible:outline-none">
+      <h3 className="text-sm font-semibold text-foreground mb-4">Top topics</h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={topics} margin={{ left: -20, right: 10, top: 10, bottom: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

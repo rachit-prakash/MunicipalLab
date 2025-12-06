@@ -1,12 +1,28 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import { Figtree, EB_Garamond } from "next/font/google"
 import "./globals.css"
 import CookieConsent from "@/components/ui/cookie-consent"
 import { DemoBanner } from "@/components/ui/demo-banner"
 import { Toaster } from "@/components/ui/toaster"
+import { ThemeProvider } from "@/components/theme-provider"
 
-const inter = Inter({ subsets: ["latin"] })
+// Primary sans-serif font (body text, UI elements)
+const figtree = Figtree({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "600"], 
+  display: "swap",
+  variable: "--font-figtree"
+})
+
+// Display serif font (headings, marketing content)
+const garamond = EB_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-garamond"
+})
 
 export const metadata: Metadata = {
   title: {
@@ -97,12 +113,19 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${inter.className} antialiased`} data-gramm="false">
-        {children}
-        <DemoBanner />
-        <CookieConsent />
-        <Toaster />
+    <html lang="en" suppressHydrationWarning className={`${figtree.variable} ${garamond.variable}`}>
+      <body suppressHydrationWarning className={`${figtree.className} antialiased`} data-gramm="false">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <DemoBanner />
+          <CookieConsent />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

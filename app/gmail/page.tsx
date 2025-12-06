@@ -93,7 +93,7 @@ function GmailInboxInner() {
 								</BreadcrumbItem>
 							</BreadcrumbList>
 						</Breadcrumb>
-						<h1 className="text-xl font-semibold text-foreground">{title}</h1>
+						<h1 className="text-xl font-semibold text-foreground font-display">{title}</h1>
 						<p className="text-sm text-muted-foreground">Latest messages synced into your workspace</p>
 					</div>
 					<div className="px-4 sm:px-6 py-6">
