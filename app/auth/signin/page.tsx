@@ -34,7 +34,7 @@ function SignInContent() {
         const data = await res.json().catch(() => null)
         if (!cancelled) {
           if (data?.user) {
-            router.replace("/gmail")
+            router.replace("/dashboard")
             return
           }
         }
@@ -51,7 +51,7 @@ function SignInContent() {
   }, [router])
 
   const handleGoogle = () => {
-    const callbackUrl = searchParams.get("callbackUrl") || "/gmail"
+    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
     signIn("google", { callbackUrl }).catch(() => {
       setError("Unable to start sign-in. Please try again.")
     })
@@ -77,8 +77,8 @@ function SignInContent() {
         }
         return
       }
-      // Navigate straight to the inbox; API routes will read the demo cookie
-      router.push("/gmail")
+      // Navigate straight to the dashboard; API routes will read the demo cookie
+      router.push("/dashboard")
     } catch {
       setError("Unable to enable demo mode.")
     } finally {

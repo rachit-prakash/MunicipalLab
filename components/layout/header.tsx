@@ -95,9 +95,10 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const isOnChatbotPage = pathname === '/chatbot'
 
   return (
-    <header className="fixed right-0 top-0 z-30 border-b border-border bg-background left-0 md:left-[var(--app-sidebar-width,256px)]">
-      <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+    <header className="fixed right-0 top-0 z-30 border-b border-border bg-background left-0 md:left-0">
+      <div className="flex h-16 items-center justify-between px-2">
         <div className="flex items-center gap-3 flex-1">
+          {/* Mobile menu button */}
           <button
             type="button"
             className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-border"
@@ -106,20 +107,22 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           >
             <PanelLeft className="h-4 w-4" />
           </button>
-          <Link href="/dashboard" className="md:hidden flex items-center">
+          
+          {/* Logo - now always visible on desktop, in top-left */}
+          <Link href="/dashboard" className="flex items-center">
             <Image
               src="/logo-icon.png"
               alt="Legaside"
-              width={28}
-              height={28}
-              className="h-7 w-7 block dark:hidden"
+              width={32}
+              height={32}
+              className="h-8 w-8 block dark:hidden"
             />
             <Image
               src="/logo-icon-white.png"
               alt="Legaside"
-              width={28}
-              height={28}
-              className="h-7 w-7 hidden dark:block"
+              width={32}
+              height={32}
+              className="h-8 w-8 hidden dark:block"
             />
           </Link>
           {!isOnChatbotPage && (

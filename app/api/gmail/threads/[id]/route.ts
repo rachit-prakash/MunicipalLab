@@ -157,23 +157,28 @@ export async function GET(
       };
     });
 
+    // Extract sender_email from the first message (thread initiator)
+    const senderEmail = normalizedMessages[0]?.from_email || null;
+
     const result = await withTenant(tenantId, async (client) => {
       // we upsert the thread to the database.
       // basically what upsert means is that if the thread already exists, we update it. otherwise, we insert it.
 
       const threadResult = await client.query(
-        `INSERT INTO threads (tenant_id, gmail_thread_id, subject, last_message_ts)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO threads (tenant_id, gmail_thread_id, subject, last_message_ts, sender_email)
+         VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (tenant_id, gmail_thread_id)
-         DO UPDATE SET 
+         DO UPDATE SET
            subject = EXCLUDED.subject,
-           last_message_ts = EXCLUDED.last_message_ts
+           last_message_ts = EXCLUDED.last_message_ts,
+           sender_email = COALESCE(EXCLUDED.sender_email, threads.sender_email)
          RETURNING id, gmail_thread_id, subject, last_message_ts`,
         [
           normalizedThread.tenant_id,
           normalizedThread.gmail_thread_id,
           normalizedThread.subject,
           normalizedThread.last_message_ts,
+          senderEmail,
         ]
       );
 

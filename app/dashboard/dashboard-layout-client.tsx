@@ -57,11 +57,11 @@ export function DashboardLayoutClient({
         mobileOpen={mobileOpen} 
         onMobileOpenChange={setMobileOpen} 
       />
-      <div className="flex-1 flex flex-col ml-0 md:ml-[var(--app-sidebar-width,256px)]">
+      <div className="flex-1 flex flex-col">
         <Suspense fallback={<div className="h-16 border-b border-border bg-background" />}>
           <Header onMenuClick={() => setMobileOpen(true)} />
         </Suspense>
-        <main className="mt-16 flex-1 overflow-auto">
+        <main className="mt-16 ml-0 md:ml-[var(--app-sidebar-width,48px)] flex-1 overflow-auto transition-all duration-300 ease-in-out">
           {children}
         </main>
       </div>

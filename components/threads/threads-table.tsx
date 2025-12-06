@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
 import { useMemo, useState } from "react"
+import { ConstituentProfileCard } from "@/components/constituents/profile-card"
 
 interface ThreadsTableProps {
   threads: ThreadRow[]
@@ -66,6 +67,7 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
       <Table className="min-w-0">
         <TableHeader>
           <TableRow hoverable={false}>
+            <TableHead className="hidden md:table-cell w-48">From</TableHead>
             <TableHead
               role="columnheader"
               aria-sort={sortKey === "type" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
@@ -104,6 +106,19 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
               onClick={() => onThreadClick(thread)}
               className="cursor-pointer group border-l-2 border-transparent transition-colors hover:border-accent"
             >
+              <TableCell className="hidden md:table-cell max-w-[200px]">
+                <ConstituentProfileCard email={thread.sender}>
+                  <div className="flex items-start gap-2 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold flex-shrink-0">
+                      {thread.sender ? thread.sender[0].toUpperCase() : "?"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-foreground truncate" title={thread.sender}>{thread.sender}</div>
+                      <div className="text-xs text-muted-foreground truncate" title={thread.subject}>{thread.subject}</div>
+                    </div>
+                  </div>
+                </ConstituentProfileCard>
+              </TableCell>
               <TableCell>
                 <Badge variant="neutral">
                   {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
