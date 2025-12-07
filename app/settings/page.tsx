@@ -139,11 +139,11 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col ml-0 md:ml-[var(--app-sidebar-width,256px)]">
+      <div className="flex-1 flex flex-col">
         <Suspense fallback={null}>
           <Header />
         </Suspense>
-        <main className="mt-16 flex-1 overflow-auto">
+        <main className="mt-16 ml-0 md:ml-12 flex-1 overflow-auto transition-[margin] duration-300">
           <div className="px-4 sm:px-6 py-6 space-y-8">
             <section className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
               <div>

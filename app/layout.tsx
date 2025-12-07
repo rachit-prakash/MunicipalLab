@@ -6,6 +6,7 @@ import CookieConsent from "@/components/ui/cookie-consent"
 import { DemoBanner } from "@/components/ui/demo-banner"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
+import { SidebarProvider } from "@/contexts/sidebar-context"
 
 // Primary sans-serif font (body text, UI elements)
 const figtree = Figtree({ 
@@ -121,10 +122,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <DemoBanner />
-          <CookieConsent />
-          <Toaster />
+          <SidebarProvider>
+            {children}
+            <DemoBanner />
+            <CookieConsent />
+            <Toaster />
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>
