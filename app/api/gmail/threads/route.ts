@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const assigneeId = searchParams.get('assigneeId') || '';
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100); // we cap the limit at 100.
     const cursor = searchParams.get('cursor') || '';
-    const importantOnly = searchParams.get('important') === 'true'; // NEW: Filter for important emails only
+    const folder = searchParams.get('folder') || ''; // NEW: Folder filter
 
     // we query the threads with filters and pagination.
     const result = await withTenant(tenantId, async (client) => {
@@ -57,9 +57,10 @@ export async function GET(request: NextRequest) {
       params.push(`%${userEmail}%`);
       paramIndex++;
 
-      // Full-text search on subject and snippet using ILIKE for case-insensitive search.
+      // Full-text search on subject using ILIKE for case-insensitive search.
+      // Note: Search on message bodies would require joining with messages table
       if (q) {
-        conditions.push(`(subject ILIKE $${paramIndex} OR snippet ILIKE $${paramIndex})`);
+        conditions.push(`subject ILIKE $${paramIndex}`);
         params.push(`%${q}%`);
         paramIndex++;
       }
@@ -85,6 +86,13 @@ export async function GET(request: NextRequest) {
         paramIndex++;
       }
 
+      // we filter by folder using PostgreSQL array containment
+      if (folder) {
+        conditions.push(`$${paramIndex} = ANY(folders)`);
+        params.push(folder);
+        paramIndex++;
+      }
+
       // we use keyset pagination: cursor is the last_message_ts from previous page.
       if (cursor) {
         conditions.push(`last_message_ts < $${paramIndex}`);
@@ -95,40 +103,53 @@ export async function GET(request: NextRequest) {
       const whereClause = conditions.join(' AND ');
 
       // we query the threads with pagination (fetch limit + 1 to determine if there's a next page).
+      // Join with messages to get urgency data from the most recent message
+      // Check if folders column exists (it may not be in newer schemas yet)
+      const hasFolders = await client.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'threads' AND column_name = 'folders'
+      `);
+      const foldersSelect = hasFolders.rows.length > 0
+        ? 't.folders as "folders",'
+        : 'ARRAY[\'inbox\']::text[] as "folders",';
+
       const threadsResult = await client.query(
-        `SELECT 
-          id,
-          COALESCE(subject, '(No subject)') AS subject,
-          COALESCE(sender_email, 'Unknown sender') AS sender,
-          last_message_ts as "receivedAt",
-          type,
-          topic,
-          stance,
-          COALESCE(summary, '(No summary yet)') AS summary,
-          confidence,
-          unread,
-          last_message_ts
-         FROM threads
+        `SELECT
+          t.id,
+          COALESCE(t.subject, '(No subject)') AS subject,
+          COALESCE(t.sender_email, 'Unknown sender') AS sender,
+          t.last_message_ts as "receivedAt",
+          t.type,
+          t.topic,
+          t.stance,
+          COALESCE(t.summary, '(No summary yet)') AS summary,
+          t.confidence,
+          t.unread,
+          t.is_replied as "isReplied",
+          t.last_message_ts,
+          ${foldersSelect}
+          m.urgency_level as "urgencyLevel",
+          m.urgency_reasons as "urgencyReasons",
+          m.sentiment_score as "sentimentScore"
+         FROM threads t
+         LEFT JOIN LATERAL (
+           SELECT urgency_level, urgency_reasons, sentiment_score
+           FROM messages
+           WHERE thread_id = t.id AND is_outbound = false
+           ORDER BY internal_date DESC
+           LIMIT 1
+         ) m ON true
          WHERE ${whereClause}
-         ORDER BY last_message_ts DESC
+         ORDER BY t.last_message_ts DESC
          LIMIT $${paramIndex}`,
         [...params, limit + 1]
       );
 
       const threads = threadsResult.rows;
 
-      // NEW: Apply smart filter to remove newsletters/bots if importantOnly is true
-      let filteredThreads = threads;
-      if (importantOnly) {
-        filteredThreads = threads.filter((thread) => {
-          const filterResult = filterMessage(thread.sender, thread.subject);
-          return filterResult.shouldAnalyze; // Only show emails worth analyzing (real people)
-        });
-      }
-
       // we check if there are more results.
-      const hasMore = filteredThreads.length > limit;
-      const items = hasMore ? filteredThreads.slice(0, limit) : filteredThreads;
+      const hasMore = threads.length > limit;
+      const items = hasMore ? threads.slice(0, limit) : threads;
 
       // we generate the next cursor if there are more results.
       let nextCursor: string | undefined;
@@ -149,6 +170,11 @@ export async function GET(request: NextRequest) {
         summary: thread.summary,
         confidence: thread.confidence,
         unread: thread.unread,
+        isReplied: thread.isReplied || false,
+        folders: thread.folders || ['inbox'], // Default to inbox if no folders
+        urgencyLevel: thread.urgencyLevel,
+        urgencyReasons: thread.urgencyReasons,
+        sentimentScore: thread.sentimentScore ? parseFloat(thread.sentimentScore) : undefined,
       }));
 
       return {
@@ -165,7 +191,7 @@ export async function GET(request: NextRequest) {
         actorUserId: userId,
         action: 'gmail.threads.list',
         requestId: request.headers.get('x-request-id') ?? undefined,
-        payload: { q, status, topicId, assigneeId, limit },
+        payload: { q, status, topicId, assigneeId, limit, folder },
       })
     } catch {}
     return NextResponse.json(result);

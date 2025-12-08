@@ -170,7 +170,7 @@ function SignInContent() {
             <div className="text-center text-sm font-medium text-muted-foreground">or</div>
             <Button
               onClick={handleDemo}
-              variant="outline"
+              variant="secondary"
               disabled={enablingDemo}
               className="relative w-full h-12 rounded-full text-base font-semibold border-[1.5px] border-primary text-primary bg-transparent hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-300 hover:translate-y-[-2px]"
             >

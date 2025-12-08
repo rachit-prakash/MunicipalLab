@@ -29,7 +29,7 @@ export function Sidebar({
 
   const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-    { href: "/threads", label: "Inbox", icon: Mail },
+    { href: "/inbox", label: "Inbox", icon: Mail },
     { href: "/chatbot", label: "Chatbot", icon: MessageCircle },
     { href: "/settings", label: "Settings", icon: Settings },
   ]

@@ -20,7 +20,13 @@
       "Bash(node scripts/check-unknown-senders.js:*)",
       "Bash(node scripts/backfill-sender-emails.js:*)",
       "Bash(node scripts/check-outbound.js:*)",
-      "Bash(node --loader ts-node/esm scripts/check-embeddings-status.ts:*)"
+      "Bash(node --loader ts-node/esm scripts/check-embeddings-status.ts:*)",
+      "Bash(find:*)",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_text_file",
+      "mcp__filesystem__directory_tree",
+      "Bash(pnpm add:*)",
+      "Bash(del C:devlegaside-v0-frontendvercel.json)"
     ],
     "deny": [],
     "ask": []

@@ -4,6 +4,8 @@ export type ThreadType = "CASEWORK" | "CORRESPONDENCE"
 export type Stance = "SUPPORT" | "OPPOSE" | "NEUTRAL"
 export type ReplyMode = "template" | "ai"
 
+export type UrgencyLevel = "low" | "medium" | "high" | "critical"
+
 export interface ThreadRow {
   id: string
   subject: string
@@ -15,6 +17,11 @@ export interface ThreadRow {
   summary: string
   confidence: number // 0.0-1.0
   unread: boolean
+  urgencyLevel?: UrgencyLevel
+  urgencyReasons?: string[]
+  sentimentScore?: number // -1.0 to 1.0
+  folders: string[] // Array of folder IDs this thread belongs to (e.g., ['inbox', 'from-people'])
+  isReplied: boolean // Whether user has replied to this thread
 }
 
 export interface Citation {
