@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
 
 		// In demo mode, use demo messages; otherwise use tenant's real emails
 		if ((demoMode || tenantId) && messages.length > 0) {
+			console.log(`🔍 RAG enabled - demoMode: ${demoMode}, tenantId: ${tenantId}`)
 			try {
 				const lastUserMessage = messages[messages.length - 1]
 				if (lastUserMessage.role === "user") {
@@ -96,6 +97,7 @@ export async function POST(req: NextRequest) {
 
 					// Check if this is an analytics query
 					if (isAnalyticsQuery(userQuery)) {
+						console.log(`📊 Analytics query detected: "${userQuery}"`);
 						// Parse date ranges and filters from query
 						const now = new Date()
 						let startDate: Date | undefined
@@ -156,6 +158,7 @@ export async function POST(req: NextRequest) {
 							})
 						}
 					} else if (isChronologicalQuery(userQuery)) {
+						console.log(`📅 Chronological query detected: "${userQuery}"`);
 						// Determine order (newest or oldest)
 						const orderBy = lowerQuery.includes("oldest") || lowerQuery.includes("first") ? "oldest" : "newest"
 						
@@ -193,7 +196,9 @@ export async function POST(req: NextRequest) {
 							endDate,
 						})
 						ragContext = formatRAGContextForLLM(emailContext)
+						console.log(`✅ Retrieved ${emailContext.messages.length} messages chronologically`);
 					} else {
+						console.log(`🔎 Semantic search query: "${userQuery}"`);
 						// Semantic search
 						let emailContext: RAGContext
 						if (demoMode) {
@@ -209,12 +214,15 @@ export async function POST(req: NextRequest) {
 							})
 						}
 						ragContext = formatRAGContextForLLM(emailContext)
+						console.log(`✅ Retrieved ${emailContext.messages.length} messages, ${emailContext.threads.length} threads via semantic search`);
 					}
 				}
 			} catch (error) {
-				console.error("RAG retrieval error:", error)
+				console.error("❌ RAG retrieval error:", error)
 				// Continue without RAG context if it fails
 			}
+		} else {
+			console.log(`⚠️ RAG disabled - demoMode: ${demoMode}, tenantId: ${tenantId}, messageCount: ${messages.length}`)
 		}
 
 		const system: ChatMessage = {
