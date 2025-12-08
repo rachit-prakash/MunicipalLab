@@ -5,6 +5,7 @@ import { MessageSquare, Plus, Trash2, MoreVertical } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -161,12 +162,12 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
       className="flex h-full w-full flex-col bg-background overflow-hidden"
     >
       {/* Header */}
-      <div className="border-b border-border p-4">
+      <div className="border-b border-border/50 p-4">
         <Button
           onClick={onNewChat}
           size="sm"
           variant="primary"
-          className="w-full"
+          className="w-full rounded-xl shadow-sm hover:shadow-md transition-shadow"
         >
           <Plus className="mr-2 h-4 w-4" />
           New Chat
@@ -177,7 +178,17 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
       <ScrollArea className="flex-1">
         <div className="p-3 w-full max-w-full overflow-hidden">
           {loading ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">Loading chats...</div>
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-2.5">
+                  <Skeleton className="h-8 w-8 rounded-md shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : sessions.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
               No chat history yet
@@ -199,15 +210,15 @@ export function ChatHistorySidebar({ currentSessionId, onSessionSelect, onNewCha
                           layout
                           onClick={() => onSessionSelect(session.id)}
                           className={cn(
-                            'group mt-1 flex items-center gap-2 rounded-md px-3 py-2.5 text-left transition-all cursor-pointer overflow-hidden',
+                            'group mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all cursor-pointer overflow-hidden',
                             currentSessionId === session.id
-                              ? 'bg-muted'
+                              ? 'bg-muted/80 shadow-sm'
                               : 'hover:bg-muted/50'
                           )}
                           whileHover={{ x: 2 }}
                           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                         >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition group-hover:bg-accent">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition group-hover:bg-accent group-hover:scale-105">
                             <MessageSquare className="h-4 w-4" />
                           </span>
                           <div className="flex-1 min-w-0 overflow-hidden max-w-[180px]">
