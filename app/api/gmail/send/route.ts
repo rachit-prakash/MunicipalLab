@@ -7,6 +7,30 @@ import { audit } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check for demo mode first
+    const demoMode = request.cookies.get("demo")?.value === "1"
+
+    if (demoMode) {
+      // Parse request body for demo mode
+      const body = await request.json();
+      const { to, subject, message, threadId } = body;
+
+      // Validate input
+      if (!to || !subject || !message) {
+        return NextResponse.json(
+          { error: 'Missing required fields: to, subject, message' },
+          { status: 400 }
+        );
+      }
+
+      // Return mock success response for demo mode
+      return NextResponse.json({
+        success: true,
+        messageId: `demo-msg-${Date.now()}`,
+        threadId: threadId || `demo-thread-${Date.now()}`,
+      });
+    }
+
     // Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user) {

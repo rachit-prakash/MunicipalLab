@@ -34,6 +34,34 @@ function calculateDelta(current: number, baseline: number): number {
 }
 
 export async function GET(request: NextRequest) {
+  // Check for demo mode first
+  const demoMode = request.cookies.get("demo")?.value === "1"
+  if (demoMode) {
+    // Return demo policy intelligence data
+    const demoData: PolicyInsightsResponse = {
+      newMessagesToday: {
+        count: 87,
+        baselineAvg: 78,
+        deltaPercent: 11.5,
+      },
+      topRisingIssue: {
+        topic: "Transit complaints",
+        deltaPercent: 34,
+        exampleSubjectLine: "Bus route 45 delays affecting commuters",
+      },
+      sentimentShift: {
+        deltaPercent: -12,
+        thisWeekAvg: -0.15,
+        lastWeekAvg: -0.03,
+      },
+      urgentCases: {
+        count: 14,
+        topReasons: ["angry", "emergency keywords"],
+      },
+    }
+    return NextResponse.json(demoData)
+  }
+
   // Check rate limit
   const rateLimitResponse = await checkRateLimit(request, RateLimits.POLICY_INTELLIGENCE)
   if (rateLimitResponse) {

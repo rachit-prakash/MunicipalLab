@@ -126,6 +126,58 @@ function fallbackTopicGrouping(messages: MessageForAnalysis[]): Record<string, M
 }
 
 export async function GET(request: NextRequest) {
+  // Check for demo mode first
+  const demoMode = request.cookies.get("demo")?.value === "1"
+  if (demoMode) {
+    // Return demo rising issues data
+    return NextResponse.json({
+      topRisingIssue: {
+        topic: "Transit complaints",
+        last3DaysCount: 45,
+        previous3DaysCount: 28,
+        deltaPercent: 60.7,
+        thisWeekCount: 45,
+        lastWeekCount: 28,
+        weekOverWeekPercent: 34,
+        exampleSubjects: [
+          "Bus route 45 delays affecting commuters",
+          "Metro system needs improvement",
+          "Public transit concerns - District 3"
+        ],
+      },
+      allIssues: [
+        {
+          topic: "Transit complaints",
+          last3DaysCount: 45,
+          previous3DaysCount: 28,
+          deltaPercent: 60.7,
+          thisWeekCount: 45,
+          lastWeekCount: 28,
+          weekOverWeekPercent: 34,
+          exampleSubjects: [
+            "Bus route 45 delays affecting commuters",
+            "Metro system needs improvement",
+            "Public transit concerns - District 3"
+          ],
+        },
+        {
+          topic: "Housing affordability",
+          last3DaysCount: 32,
+          previous3DaysCount: 25,
+          deltaPercent: 28,
+          thisWeekCount: 32,
+          lastWeekCount: 25,
+          weekOverWeekPercent: 28,
+          exampleSubjects: [
+            "Rising rent prices in downtown",
+            "Need for affordable housing",
+            "Zoning reform request"
+          ],
+        },
+      ],
+    })
+  }
+
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {

@@ -11,6 +11,18 @@ import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
  * GET /api/sync
  */
 export async function GET(request: NextRequest) {
+  // Check for demo mode first - no-op for demo
+  const demoMode = request.cookies.get("demo")?.value === "1"
+  if (demoMode) {
+    return NextResponse.json({
+      success: true,
+      message: "Demo mode - sync simulated",
+      accountCount: 1,
+      timestamp: new Date().toISOString(),
+      demo: true,
+    })
+  }
+
   // Check rate limit
   const rateLimitResponse = await checkRateLimit(request, RateLimits.SYNC)
   if (rateLimitResponse) {

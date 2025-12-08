@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
+import { cookies } from "next/headers"
 import { StanceTrendChart } from "@/components/dashboard/stance-trend-chart"
 import { PolicyIntelligenceHeader } from "@/components/dashboard/policy-intelligence-header"
 import { TopicInsightsPanel } from "@/components/dashboard/topic-insights-panel"
@@ -18,23 +19,36 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 export default async function DashboardPage() {
+  const cookieStore = await cookies()
+  const demoMode = cookieStore.get("demo")?.value === "1"
+
   const session = await getServerSession(authOptions)
-  if (!session?.user) {
+
+  // Allow access if either demo mode is enabled or user has valid session
+  if (!demoMode && !session?.user) {
     redirect("/auth/signin")
   }
 
-  const userId =
-    (session.user as any)?.id ||
-    (session as any)?.token?.sub ||
-    (session.user as any)?.email
+  // For demo mode, use demo tenant; otherwise use user's tenant
+  let tenantId: string | null = null
 
-  if (!userId) {
-    redirect("/auth/signin")
-  }
+  if (demoMode) {
+    // Use demo tenant ID for demo users
+    tenantId = "demo"
+  } else {
+    const userId =
+      (session!.user as any)?.id ||
+      (session as any)?.token?.sub ||
+      (session!.user as any)?.email
 
-  const tenantId = await resolveTenantId(userId)
-  if (!tenantId) {
-    redirect("/auth/signin")
+    if (!userId) {
+      redirect("/auth/signin")
+    }
+
+    tenantId = await resolveTenantId(userId)
+    if (!tenantId) {
+      redirect("/auth/signin")
+    }
   }
 
   const dataset = await getDashboardDataset(tenantId)
