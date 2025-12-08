@@ -33,9 +33,9 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void } = {}) {
     setQuery((prev) => (prev !== current ? current : prev))
   }, [searchParams])
 
-  // Debounced URL update when on the threads page
+  // Debounced URL update when on the inbox page
   useEffect(() => {
-    if (pathname !== "/threads") return
+    if (pathname !== "/inbox") return
     const timeout = setTimeout(() => {
       const params = new URLSearchParams(Array.from(searchParams.entries()))
       if (query) {
@@ -84,8 +84,8 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void } = {}) {
       } else {
         params.delete("q")
       }
-      const url = `/threads${params.toString() ? `?${params.toString()}` : ""}`
-      if (pathname === "/threads") {
+      const url = `/inbox${params.toString() ? `?${params.toString()}` : ""}`
+      if (pathname === "/inbox") {
         router.replace(url, { scroll: false })
       } else {
         router.push(url)
