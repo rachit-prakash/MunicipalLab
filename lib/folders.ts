@@ -1,6 +1,7 @@
 import type { ThreadRow } from "./types"
 
 export type FolderId =
+  | "recommended"
   | "unread"
   | "from-people"
   | "crisis-emergency"
@@ -16,6 +17,23 @@ export interface Folder {
 }
 
 export const folders: Folder[] = [
+  {
+    id: "recommended",
+    name: "Recommended",
+    description: "Most important unread emails requiring your attention - from real people, not yet replied to, with urgency indicators",
+    color: "text-blue-600",
+    filterFn: (thread) => {
+      // Very strict filter: Must be unread, from people, not replied, and have some urgency
+      return (
+        thread.unread === true &&
+        thread.folders.includes("from-people") &&
+        thread.isReplied === false &&
+        (thread.urgencyLevel === "high" ||
+         thread.urgencyLevel === "critical" ||
+         thread.urgencyLevel === "medium")
+      )
+    },
+  },
   {
     id: "unread",
     name: "Unread",

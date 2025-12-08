@@ -22,6 +22,36 @@ export function FolderNav({ selectedFolder, onFolderSelect, threadCounts, onSync
         </h2>
       </div>
       <div className="space-y-0.5 relative">
+        {/* Recommended folder (always first) */}
+        {folders.filter(f => f.id === 'recommended').map((folder) => (
+          <button
+            key={folder.id}
+            onClick={() => onFolderSelect(folder.id)}
+            className={cn(
+              "w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-md transition-colors relative z-10",
+              selectedFolder === folder.id
+                ? "text-accent-foreground"
+                : "text-foreground hover:bg-accent/50"
+            )}
+          >
+            {selectedFolder === folder.id && (
+              <motion.div
+                layoutId="folder-highlight"
+                className="absolute inset-0 bg-accent rounded-md"
+                initial={false}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">{folder.name}</span>
+            {threadCounts?.[folder.id] !== undefined && (
+              <span className="text-xs text-muted-foreground relative z-10">
+                {threadCounts[folder.id]}
+              </span>
+            )}
+          </button>
+        ))}
+
+        {/* All Mail */}
         <button
           onClick={() => onFolderSelect(null)}
           className={cn(
@@ -41,7 +71,9 @@ export function FolderNav({ selectedFolder, onFolderSelect, threadCounts, onSync
           )}
           <span className="relative z-10">All Mail</span>
         </button>
-        {folders.map((folder) => (
+
+        {/* Other folders */}
+        {folders.filter(f => f.id !== 'recommended').map((folder) => (
           <button
             key={folder.id}
             onClick={() => onFolderSelect(folder.id)}
