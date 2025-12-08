@@ -65,3 +65,17 @@ export function formatDate(isoString: string) {
   })
   return formatter.format(date)
 }
+
+export function extractSenderName(sender: string): string {
+  // Remove quotation marks
+  let cleaned = sender.replace(/["']/g, "")
+
+  // Extract name from "Name <email@example.com>" format
+  const match = cleaned.match(/^(.+?)\s*<[^>]+>$/)
+  if (match) {
+    return match[1].trim()
+  }
+
+  // If no email part found, return the cleaned sender as-is
+  return cleaned.trim()
+}

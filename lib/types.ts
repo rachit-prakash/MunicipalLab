@@ -5,7 +5,6 @@ export type Stance = "SUPPORT" | "OPPOSE" | "NEUTRAL"
 export type ReplyMode = "template" | "ai"
 
 export type UrgencyLevel = "low" | "medium" | "high" | "critical"
-export type SenderType = "person" | "automated" | "uncertain"
 
 export interface ThreadRow {
   id: string
@@ -21,7 +20,8 @@ export interface ThreadRow {
   urgencyLevel?: UrgencyLevel
   urgencyReasons?: string[]
   sentimentScore?: number // -1.0 to 1.0
-  senderType?: SenderType // AI-classified sender type
+  folders: string[] // Array of folder IDs this thread belongs to (e.g., ['inbox', 'from-people'])
+  isReplied: boolean // Whether user has replied to this thread
 }
 
 export interface Citation {

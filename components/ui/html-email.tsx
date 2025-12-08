@@ -71,25 +71,55 @@ export function HtmlEmail({ content, className = "" }: HtmlEmailProps) {
 
             // Remove or reset problematic color properties
             if (style.color) {
-              // Check if it's a light color (that would be hard to read in dark mode)
+              // Check if it's a very light color (white or near-white)
               const color = style.color
-              const isLightColor = /^#[cdef][0-9a-f]{5}$/i.test(color) ||
-                                   /rgb\(\s*(?:1[5-9]\d|2[0-4]\d|25[0-5])\s*,\s*(?:1[5-9]\d|2[0-4]\d|25[0-5])\s*,\s*(?:1[5-9]\d|2[0-4]\d|25[0-5])\s*\)/i.test(color)
+              const isVeryLightColor =
+                color.includes('white') ||
+                color.includes('#fff') ||
+                color.includes('#FFF') ||
+                /^#[f]{6}$/i.test(color) ||
+                /rgb\(\s*(?:24[0-9]|25[0-5])\s*,\s*(?:24[0-9]|25[0-5])\s*,\s*(?:24[0-9]|25[0-5])\s*\)/i.test(color)
 
-              if (isLightColor || color.includes('gray') || color.includes('grey')) {
+              // Only remove white/near-white colors, keep gray and other colors for readability
+              if (isVeryLightColor) {
                 style.removeProperty('color')
               }
             }
 
-            // Also check for bgcolor that might cause issues
+            // Remove ALL background colors for consistency
             if (style.backgroundColor) {
-              const bgColor = style.backgroundColor
-              // Remove if it's white or very light
-              if (bgColor.includes('white') || bgColor.includes('fff') ||
-                  /rgb\(\s*(?:2[4-5]\d|25[0-5])\s*,\s*(?:2[4-5]\d|25[0-5])\s*,\s*(?:2[4-5]\d|25[0-5])\s*\)/i.test(bgColor)) {
-                style.removeProperty('background-color')
-              }
+              style.removeProperty('background-color')
             }
+            if (style.background) {
+              style.removeProperty('background')
+            }
+
+            // Remove border styles that make emails look messy
+            if (style.border || style.borderWidth || style.borderColor || style.borderStyle) {
+              style.removeProperty('border')
+              style.removeProperty('border-width')
+              style.removeProperty('border-color')
+              style.removeProperty('border-style')
+              style.removeProperty('border-top')
+              style.removeProperty('border-bottom')
+              style.removeProperty('border-left')
+              style.removeProperty('border-right')
+            }
+          })
+
+          // Remove border and background attributes from all elements
+          const tablesAndCells = tempDiv.querySelectorAll('table, td, th, tr')
+          tablesAndCells.forEach((el) => {
+            el.removeAttribute('border')
+            el.removeAttribute('cellpadding')
+            el.removeAttribute('cellspacing')
+            el.removeAttribute('bgcolor')
+          })
+
+          // Remove bgcolor from all other elements too
+          const allElements = tempDiv.querySelectorAll('[bgcolor]')
+          allElements.forEach((el) => {
+            el.removeAttribute('bgcolor')
           })
 
           sanitized = tempDiv.innerHTML
@@ -131,13 +161,41 @@ export function HtmlEmail({ content, className = "" }: HtmlEmailProps) {
   }
 
   return (
-    <div
-      className={`email-content text-sm leading-relaxed ${className}`}
-      dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
-      style={{
-        wordWrap: 'break-word',
-        overflowWrap: 'break-word',
-      }}
-    />
+    <>
+      <style jsx>{`
+        .email-content :global(table) {
+          border-collapse: collapse !important;
+          border: none !important;
+          background: transparent !important;
+        }
+        .email-content :global(td),
+        .email-content :global(th) {
+          border: none !important;
+          padding: 4px 8px;
+          background: transparent !important;
+        }
+        .email-content :global(tr) {
+          border: none !important;
+          background: transparent !important;
+        }
+        .email-content :global(div),
+        .email-content :global(span),
+        .email-content :global(p) {
+          background: transparent !important;
+        }
+        .email-content :global(img) {
+          max-width: 100%;
+          height: auto;
+        }
+      `}</style>
+      <div
+        className={`email-content text-sm leading-relaxed ${className}`}
+        dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+        style={{
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+        }}
+      />
+    </>
   )
 }

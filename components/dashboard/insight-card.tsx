@@ -12,6 +12,7 @@ export interface InsightCardProps {
   className?: string
   children?: ReactNode
   insightTone?: "up" | "down" | "neutral" | "default"
+  onClick?: () => void
 }
 
 export function InsightCard({
@@ -22,6 +23,7 @@ export function InsightCard({
   className,
   children,
   insightTone = "default",
+  onClick,
 }: InsightCardProps) {
   const prefersReducedMotion = useReducedMotion()
 
@@ -45,9 +47,11 @@ export function InsightCard({
   return (
     <motion.article
       data-slot="insight-card"
+      onClick={onClick}
       className={cn(
         "rounded-[var(--radius)] border border-border bg-card p-5 shadow-sm hover:bg-muted/40 transition duration-300 ease-out",
         "flex flex-col gap-2",
+        onClick && "cursor-pointer",
         className,
       )}
       {...animationProps}

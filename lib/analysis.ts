@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { classifyToFolders, senderTypeToFolders } from "./message-filter"
 
 // basically this is a wrapper around the openai/openrouter api for analyzing messages
 // it takes a message and returns a message analysis
@@ -52,6 +53,21 @@ const SYSTEM_PROMPT = [
   "For sender_type: 'person' = real human, 'automated' = bot/service/team account, 'uncertain' = unclear.",
   "Use sender name, email patterns, content style to classify.",
   "Examples: 'Google Workspace team' = automated, 'John Smith' = person, 'notifications@' = automated.",
+  "",
+  "URGENCY RULES (VERY IMPORTANT):",
+  "- CRITICAL: Life/death emergencies, imminent deportation/eviction, suicide risk, active threats. Extremely rare.",
+  "- HIGH: Time-sensitive casework with near-term deadlines (< 7 days), very angry constituents, urgent legislative matters.",
+  "- MEDIUM: General casework requests, constituent questions needing response, non-emergency issues.",
+  "- LOW: Everything else, especially ALL automated emails.",
+  "",
+  "AUTOMATED EMAILS ARE NEVER URGENT:",
+  "- Service notifications (Google security alerts, Vercel errors, etc.) = LOW",
+  "- Marketing/promotional emails (even with 'urgent' keywords) = LOW",
+  "- Transactional receipts, confirmations, verification codes = LOW",
+  "- Newsletter updates, feature announcements, patches = LOW",
+  "- Bot/team/noreply addresses = LOW",
+  "",
+  "Only real people with time-sensitive needs should be high/critical.",
   "Respond with JSON only. Use null for unknown values.",
 ].join(" ")
 
@@ -216,5 +232,115 @@ function normalizeSenderType(input: unknown): SenderType {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
+}
+
+/**
+ * Unified classification function that returns folder IDs
+ * Uses AI analysis if available and confident, otherwise falls back to rule-based
+ */
+export async function classifyMessageToFolders(
+  message: MessageForAnalysis
+): Promise<string[]> {
+  try {
+    // Try AI analysis first
+    const analysis = await analyzeMessage(message)
+
+    // If AI is confident about sender type, use it
+    if (analysis.senderType !== 'uncertain') {
+      return senderTypeToFolders(analysis.senderType)
+    }
+
+    // AI is uncertain, fall back to rule-based
+    return classifyToFolders(
+      message.from || '',
+      message.subject || undefined,
+      message.body || message.snippet || undefined
+    )
+  } catch (error) {
+    // AI analysis failed, use rule-based classification
+    console.error('AI classification failed, falling back to rules:', error)
+    return classifyToFolders(
+      message.from || '',
+      message.subject || undefined,
+      message.body || message.snippet || undefined
+    )
+  }
+}
+
+/**
+ * Synchronous classification using only rule-based logic
+ * Use this when you need immediate classification without AI
+ */
+export function classifyMessageToFoldersSync(
+  from: string,
+  subject?: string,
+  body?: string,
+  isOutbound?: boolean
+): string[] {
+  return classifyToFolders(from, subject, body, isOutbound)
+}
+
+/**
+ * Generate a concise summary of a message or thread
+ * Uses AI to create a 1-2 sentence summary of the key points
+ */
+export async function generateSummary(
+  message: MessageForAnalysis
+): Promise<string> {
+  const { provider, apiKey, model } = resolveProvider()
+
+  const content = buildContent(message)
+  if (!content.trim()) {
+    throw new Error("Cannot summarize empty message content.")
+  }
+
+  const systemPrompt = "You are a professional email summarizer. Given an email message, generate a concise 1-2 sentence summary that captures the main point or request. Be direct and factual. Return only the summary text, no JSON or extra formatting."
+
+  const url =
+    provider === "openai"
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://openrouter.ai/api/v1/chat/completions"
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  }
+
+  if (provider === "openrouter") {
+    headers["HTTP-Referer"] = process.env.OPENROUTER_REFERRER ?? "https://legaside.app"
+    headers["X-Title"] = "Legaside Summary Generator"
+  }
+
+  const body = JSON.stringify({
+    model,
+    temperature: 0.3,
+    max_tokens: 100,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content },
+    ],
+  })
+
+  const response = await fetch(url, { method: "POST", headers, body })
+  const payload = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    const detail =
+      typeof payload?.error === "string"
+        ? payload.error
+        : payload?.error?.message ?? response.statusText
+    throw new Error(`Summary generator upstream error (${response.status}): ${detail}`)
+  }
+
+  const summary =
+    payload?.choices?.[0]?.message?.content?.trim() ??
+    payload?.choices?.[0]?.delta?.content?.trim() ??
+    ""
+
+  if (!summary) {
+    throw new Error("Summary generator returned empty response")
+  }
+
+  return summary
 }
 

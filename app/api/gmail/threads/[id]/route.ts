@@ -292,6 +292,97 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = (session.user as any).id || (session as any).token?.sub;
+    const { id: threadId } = await params;
+
+    // Get tenant_id for this user
+    const tenantResult = await query(
+      `SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
+
+    if (!tenantResult.rows.length) {
+      return NextResponse.json({ error: 'No tenant found' }, { status: 404 });
+    }
+
+    const tenantId = tenantResult.rows[0].tenant_id;
+
+    // Parse request body
+    const body = await request.json();
+    const { isReplied } = body;
+
+    // Validate input
+    if (typeof isReplied !== 'boolean') {
+      return NextResponse.json(
+        { error: 'isReplied must be a boolean' },
+        { status: 400 }
+      );
+    }
+
+    // Update the thread
+    const result = await withTenant(tenantId, async (client) => {
+      // Support both internal UUID and gmail_thread_id
+      const isUuid = threadId.includes('-');
+      const whereClause = isUuid
+        ? 'tenant_id = $1 AND id = $2'
+        : 'tenant_id = $1 AND gmail_thread_id = $2';
+
+      const updateResult = await client.query(
+        `UPDATE threads
+         SET is_replied = $3, updated_at = NOW()
+         WHERE ${whereClause}
+         RETURNING id, gmail_thread_id, subject, is_replied`,
+        [tenantId, threadId, isReplied]
+      );
+
+      if (updateResult.rows.length === 0) {
+        return null;
+      }
+
+      return updateResult.rows[0];
+    });
+
+    if (!result) {
+      return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
+    }
+
+    // Best-effort audit
+    try {
+      await audit({
+        tenantId,
+        actorUserId: userId,
+        action: 'gmail.thread.update',
+        requestId: request.headers.get('x-request-id') ?? undefined,
+        payload: { id: threadId, isReplied },
+      });
+    } catch {}
+
+    return NextResponse.json({
+      id: result.id,
+      gmail_thread_id: result.gmail_thread_id,
+      subject: result.subject,
+      isReplied: result.is_replied,
+    });
+  } catch (error) {
+    console.error('Error updating thread:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 // we extract the subject from the first message headers.
 function extractSubject(messages: any[]): string {
   if (!messages || messages.length === 0) return '';

@@ -1,14 +1,11 @@
 import type { ThreadRow } from "./types"
-import { filterMessage } from "./message-filter"
 
 export type FolderId =
   | "from-people"
   | "crisis-emergency"
   | "needs-response"
-  | "form-letters"
-  | "vips"
-  | "first-contact"
-  | "deadline"
+  | "replied"
+  | "sent"
 
 export interface Folder {
   id: FolderId
@@ -25,22 +22,13 @@ export const folders: Folder[] = [
     description: "Emails from actual people, excluding newsletters and automated messages",
     color: "text-blue-600",
     filterFn: (thread) => {
-      // Priority 1: Use AI classification if available
-      if (thread.senderType === "person") {
-        return true
-      }
-      if (thread.senderType === "automated") {
-        return false
-      }
-      // Priority 2: Fallback to rule-based filter for unclassified threads
-      const result = filterMessage(thread.sender, thread.subject, thread.summary)
-      return result.shouldAnalyze
+      return thread.folders.includes("from-people")
     },
   },
   {
     id: "crisis-emergency",
-    name: "Crisis/Emergency",
-    description: "Urgent constituent emergencies requiring immediate attention",
+    name: "Urgent Cases",
+    description: "High priority messages requiring immediate attention",
     color: "text-red-600",
     filterFn: (thread) => {
       return (
@@ -54,85 +42,25 @@ export const folders: Folder[] = [
     description: "Unanswered emails that require action",
     color: "text-orange-600",
     filterFn: (thread) => {
-      if (!thread.unread) return false
-
-      // Priority 1: Use AI classification if available
-      if (thread.senderType === "person") return true
-      if (thread.senderType === "automated") return false
-
-      // Priority 2: Fallback to rule-based filter for unclassified threads
-      const fromPeople = filterMessage(thread.sender, thread.subject, thread.summary).shouldAnalyze
-      return fromPeople
+      return thread.unread && thread.folders.includes("from-people") && !thread.isReplied
     },
   },
   {
-    id: "form-letters",
-    name: "Form Letters",
-    description: "Mass emails and organized advocacy campaigns",
-    color: "text-gray-600",
-    filterFn: (thread) => {
-      // Look for indicators of form letters
-      const subject = (thread.subject || "").toLowerCase()
-      const summary = (thread.summary || "").toLowerCase()
-
-      // Common form letter patterns
-      const formLetterIndicators = [
-        "click here to add your name",
-        "sign the petition",
-        "join us in",
-        "add your voice",
-        "take action",
-        "automated message",
-      ]
-
-      return formLetterIndicators.some(
-        (indicator) => subject.includes(indicator) || summary.includes(indicator)
-      )
-    },
-  },
-  {
-    id: "vips",
-    name: "VIPs",
-    description: "Important contacts, major donors, and local officials",
-    color: "text-purple-600",
-    filterFn: (thread) => {
-      // For now, we'll use a simple heuristic
-      // In the future, this should check a VIP list in the database
-      const sender = thread.sender.toLowerCase()
-
-      // Check for government/official email domains
-      const vipDomains = [
-        ".gov",
-        ".mil",
-        "senate.gov",
-        "house.gov",
-        "state.",
-        "city.",
-        "county.",
-      ]
-
-      return vipDomains.some((domain) => sender.includes(domain))
-    },
-  },
-  {
-    id: "first-contact",
-    name: "First Contact",
-    description: "New constituents reaching out for the first time",
+    id: "replied",
+    name: "Replied",
+    description: "Threads you've already responded to",
     color: "text-green-600",
     filterFn: (thread) => {
-      // This is a placeholder - in production, you'd check against a database
-      // to see if this sender has contacted you before
-      // For now, we'll return false (requires database implementation)
-      return false
+      return thread.isReplied === true
     },
   },
   {
-    id: "deadline",
-    name: "Deadline",
-    description: "Time-sensitive matters with approaching deadlines",
-    color: "text-yellow-600",
+    id: "sent",
+    name: "Sent",
+    description: "Messages you've sent",
+    color: "text-purple-600",
     filterFn: (thread) => {
-      return thread.urgencyReasons?.includes("deadline") || false
+      return thread.folders?.includes("sent") || false
     },
   },
 ]

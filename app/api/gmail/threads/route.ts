@@ -86,6 +86,13 @@ export async function GET(request: NextRequest) {
         paramIndex++;
       }
 
+      // we filter by folder using PostgreSQL array containment
+      if (folder) {
+        conditions.push(`$${paramIndex} = ANY(folders)`);
+        params.push(folder);
+        paramIndex++;
+      }
+
       // we use keyset pagination: cursor is the last_message_ts from previous page.
       if (cursor) {
         conditions.push(`last_message_ts < $${paramIndex}`);
@@ -97,14 +104,14 @@ export async function GET(request: NextRequest) {
 
       // we query the threads with pagination (fetch limit + 1 to determine if there's a next page).
       // Join with messages to get urgency data from the most recent message
-      // Check if sender_type column exists (it may not be in older schemas)
-      const hasSenderType = await client.query(`
+      // Check if folders column exists (it may not be in newer schemas yet)
+      const hasFolders = await client.query(`
         SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'threads' AND column_name = 'sender_type'
+        WHERE table_name = 'threads' AND column_name = 'folders'
       `);
-      const senderTypeSelect = hasSenderType.rows.length > 0
-        ? 't.sender_type as "senderType",'
-        : 'NULL as "senderType",';
+      const foldersSelect = hasFolders.rows.length > 0
+        ? 't.folders as "folders",'
+        : 'ARRAY[\'inbox\']::text[] as "folders",';
 
       const threadsResult = await client.query(
         `SELECT
@@ -118,8 +125,9 @@ export async function GET(request: NextRequest) {
           COALESCE(t.summary, '(No summary yet)') AS summary,
           t.confidence,
           t.unread,
+          t.is_replied as "isReplied",
           t.last_message_ts,
-          ${senderTypeSelect}
+          ${foldersSelect}
           m.urgency_level as "urgencyLevel",
           m.urgency_reasons as "urgencyReasons",
           m.sentiment_score as "sentimentScore"
@@ -139,18 +147,9 @@ export async function GET(request: NextRequest) {
 
       const threads = threadsResult.rows;
 
-      // NEW: Apply folder filter if specified
-      let filteredThreads = threads;
-      if (folder) {
-        // Import folder filtering logic (we'll do client-side filtering for now)
-        // In production, you might want to move some of this to SQL for performance
-        const { getThreadsInFolder } = await import('@/lib/folders');
-        filteredThreads = getThreadsInFolder(threads, folder as any);
-      }
-
       // we check if there are more results.
-      const hasMore = filteredThreads.length > limit;
-      const items = hasMore ? filteredThreads.slice(0, limit) : filteredThreads;
+      const hasMore = threads.length > limit;
+      const items = hasMore ? threads.slice(0, limit) : threads;
 
       // we generate the next cursor if there are more results.
       let nextCursor: string | undefined;
@@ -171,7 +170,8 @@ export async function GET(request: NextRequest) {
         summary: thread.summary,
         confidence: thread.confidence,
         unread: thread.unread,
-        senderType: thread.senderType,
+        isReplied: thread.isReplied || false,
+        folders: thread.folders || ['inbox'], // Default to inbox if no folders
         urgencyLevel: thread.urgencyLevel,
         urgencyReasons: thread.urgencyReasons,
         sentimentScore: thread.sentimentScore ? parseFloat(thread.sentimentScore) : undefined,

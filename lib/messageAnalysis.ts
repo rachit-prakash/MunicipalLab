@@ -1,5 +1,6 @@
 import { withTenant } from "@/lib/db"
 import type { MessageAnalysis, MessageForAnalysis } from "@/lib/analysis"
+import { senderTypeToFolders } from "@/lib/message-filter"
 
 export type PersistAnalysisInput = {
   tenantId: string
@@ -34,6 +35,9 @@ export async function persistMessageAnalysis({
       : 0.75
   const senderType = analysis.senderType ?? "uncertain"
 
+  // Convert AI senderType to folder IDs
+  const folders = senderTypeToFolders(senderType)
+
   await withTenant(tenantId, async (client) => {
     await client.query(
       `UPDATE messages
@@ -45,17 +49,39 @@ export async function persistMessageAnalysis({
       [sentimentScore, urgencyLevel, urgencyReasons, messageId],
     )
 
-    await client.query(
-      `UPDATE threads
-       SET topic = COALESCE($1, topic),
-           sender_email = COALESCE($2, sender_email),
-           summary = COALESCE($3, summary),
-           confidence = COALESCE($4, confidence),
-           sender_type = COALESCE($5, sender_type),
-           updated_at = NOW()
-       WHERE id = $6`,
-      [topic, fromEmail, summary, confidence, senderType, threadId],
-    )
+    // Check if folders column exists (for backwards compatibility)
+    const hasFolders = await client.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'threads' AND column_name = 'folders'
+    `)
+
+    if (hasFolders.rows.length > 0) {
+      // New schema with folders column
+      await client.query(
+        `UPDATE threads
+         SET topic = COALESCE($1, topic),
+             sender_email = COALESCE($2, sender_email),
+             summary = COALESCE($3, summary),
+             confidence = COALESCE($4, confidence),
+             folders = $5,
+             updated_at = NOW()
+         WHERE id = $6`,
+        [topic, fromEmail, summary, confidence, folders, threadId],
+      )
+    } else {
+      // Old schema with sender_type column (fallback)
+      await client.query(
+        `UPDATE threads
+         SET topic = COALESCE($1, topic),
+             sender_email = COALESCE($2, sender_email),
+             summary = COALESCE($3, summary),
+             confidence = COALESCE($4, confidence),
+             sender_type = COALESCE($5, sender_type),
+             updated_at = NOW()
+         WHERE id = $6`,
+        [topic, fromEmail, summary, confidence, senderType, threadId],
+      )
+    }
   })
 }
 

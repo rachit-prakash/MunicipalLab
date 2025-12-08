@@ -196,20 +196,12 @@ export async function GET(request: NextRequest) {
         top_reasons: string[] | null
       }>(
         `
-          WITH bounds AS (
-            SELECT
-              (date_trunc('week', timezone($1, now())) AT TIME ZONE $1) AS this_week_start,
-              ((date_trunc('week', timezone($1, now())) + interval '7 day') AT TIME ZONE $1) AS this_week_end
-          ),
-          urgent_messages AS (
+          WITH urgent_messages AS (
             SELECT m.*
-            FROM bounds
-            JOIN messages m
-              ON m.tenant_id = $2
-             AND m.is_outbound = false
-             AND m.urgency_level IN ('high', 'critical')
-             AND timezone($1, m.internal_date) >= bounds.this_week_start
-             AND timezone($1, m.internal_date) < bounds.this_week_end
+            FROM messages m
+            WHERE m.tenant_id = $1
+              AND m.is_outbound = false
+              AND m.urgency_level IN ('high', 'critical')
           )
           SELECT
             (SELECT COUNT(*) FROM urgent_messages)::int AS count,
@@ -231,7 +223,7 @@ export async function GET(request: NextRequest) {
               ARRAY[]::text[]
             ) AS top_reasons;
         `,
-        [timezone, tenantId],
+        [tenantId],
       )
 
       const [todayRow, baselineRow, topIssueRow, sentimentRow, urgentRow] = await Promise.all([

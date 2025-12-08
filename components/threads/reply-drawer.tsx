@@ -4,10 +4,9 @@ import { useState, useEffect } from "react"
 import type { ThreadRow } from "@/lib/types"
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter, DrawerTitle } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 import { X, Copy, Check, ChevronDown, ChevronUp, Sparkles, FileText, Send, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { ConstituentProfileCard } from "@/components/constituents/profile-card"
@@ -56,6 +55,7 @@ export function ReplyDrawer({ thread, onClose }: ReplyDrawerProps) {
   const [draftText, setDraftText] = useState("")
   const [copied, setCopied] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [showThreadHistory, setShowThreadHistory] = useState(false)
   const [showCitations, setShowCitations] = useState(true)
   const [threadData, setThreadData] = useState<ThreadData | null>(null)
@@ -113,18 +113,52 @@ export function ReplyDrawer({ thread, onClose }: ReplyDrawerProps) {
     toast({ title: "Copied to clipboard", description: "Draft reply has been copied." })
   }
 
-  const handleMarkReplied = () => {
-    toast({ title: "Reply recorded", description: "This thread has been marked as replied." })
-    onClose()
+  const handleMarkReplied = async () => {
+    try {
+      const response = await fetch(`/api/gmail/threads/${thread.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isReplied: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark as replied');
+      }
+
+      toast({
+        title: "Reply recorded",
+        description: "This thread has been marked as replied."
+      });
+
+      onClose();
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, isReplied: true }
+      }));
+    } catch (error) {
+      console.error('Error marking as replied:', error);
+      toast({
+        title: "Error",
+        description: "Could not mark thread as replied. Please try again.",
+        variant: "destructive"
+      });
+    }
   }
 
   const handleGenerate = async () => {
     setIsGenerating(true)
     // Simulate AI generation
     await new Promise(resolve => setTimeout(resolve, 1500))
-    const aiDraft = `Dear ${thread.sender.split("@")[0]},
 
-Thank you for taking the time to contact our office regarding ${thread.topic.toLowerCase()}. We appreciate you sharing your perspective on this important issue.
+    const topicText = thread.topic ? `regarding ${thread.topic.toLowerCase()}` : "your message";
+    const senderName = thread.sender.split("@")[0] || "there";
+
+    const aiDraft = `Dear ${senderName},
+
+Thank you for taking the time to contact our office ${topicText}. We appreciate you sharing your perspective on this important issue.
 
 Your feedback is valuable and helps us better understand the concerns and priorities of our constituents. We take your input seriously as we work to address the challenges facing our community.
 
@@ -137,6 +171,71 @@ ${thread.stance === "SUPPORT"
 If you have any additional questions or would like to discuss this further, please don't hesitate to reach out to our office.`
     setDraftText(aiDraft)
     setIsGenerating(false)
+  }
+
+  const handleSend = async () => {
+    if (!draftText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please write a message before sending.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      // Get the first message's gmail_message_id for threading
+      const firstMessage = threadData?.messages?.[0];
+      const inReplyTo = firstMessage?.id;
+      const references = firstMessage?.id;
+
+      const response = await fetch('/api/gmail/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: thread.sender,
+          subject: thread.subject.startsWith('Re:') ? thread.subject : `Re: ${thread.subject}`,
+          message: draftText,
+          threadId: threadData?.thread?.gmail_thread_id,
+          inReplyTo,
+          references,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send email');
+      }
+
+      toast({
+        title: "Email sent!",
+        description: "Your reply has been sent successfully."
+      });
+
+      // Refresh the thread to show the new message
+      await fetchThread(true);
+
+      // Close the drawer
+      onClose();
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, isReplied: true }
+      }));
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast({
+        title: "Send failed",
+        description: error instanceof Error ? error.message : "Could not send email. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
   }
 
   const citations = [
@@ -170,26 +269,6 @@ If you have any additional questions or would like to discuss this further, plea
               <DrawerTitle className="text-xl font-semibold text-foreground mb-2">
                 {thread.subject}
               </DrawerTitle>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <Badge variant="neutral" className="text-xs">
-                  {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
-                </Badge>
-                <Badge variant="neutral" className={getTopicBadgeClasses(thread.topic)}>
-                  {thread.topic}
-                </Badge>
-                {thread.urgencyLevel && thread.urgencyLevel !== "low" && (
-                  <Badge
-                    variant="destructive"
-                    className={
-                      thread.urgencyLevel === "critical" ? "bg-red-600" :
-                      thread.urgencyLevel === "high" ? "bg-orange-600" :
-                      "bg-yellow-600"
-                    }
-                  >
-                    {thread.urgencyLevel}
-                  </Badge>
-                )}
-              </div>
               <div className="text-sm text-muted-foreground">
                 {formatDate(thread.receivedAt)}
               </div>
@@ -246,7 +325,7 @@ If you have any additional questions or would like to discuss this further, plea
                   </div>
                 </div>
 
-                <div className="prose prose-sm max-w-none text-foreground">
+                <div className="prose prose-sm max-w-none text-foreground max-h-[300px] overflow-y-auto">
                   {originalMessage?.body ? (
                     <HtmlEmail content={originalMessage.body} />
                   ) : (
@@ -404,9 +483,13 @@ If you have any additional questions or would like to discuss this further, plea
                 <Button variant="secondary" onClick={handleMarkReplied}>
                   Mark as Replied
                 </Button>
-                <Button variant="primary">
+                <Button
+                  variant="primary"
+                  onClick={handleSend}
+                  disabled={isSending || !draftText.trim()}
+                >
                   <Send className="h-4 w-4 mr-2" />
-                  Send Reply
+                  {isSending ? "Sending..." : "Send Reply"}
                 </Button>
               </div>
             </div>

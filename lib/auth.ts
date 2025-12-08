@@ -8,7 +8,7 @@ const scopes = [
   "openid",
   "email",
   "profile",
-  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/gmail.modify",
 ].join(" ")
 // basically the scopes that we will be requesting from the user. Guess which one is sensitive ;).
 
