@@ -1,32 +1,29 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LayoutGrid, Mail, Settings, MessageCircle } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useSidebar } from "@/contexts/sidebar-context"
 
 export function Sidebar({
-  mobileOpen,
-  onMobileOpenChange,
+  mobileOpen: mobileOpenProp,
+  onMobileOpenChange: onMobileOpenChangeProp,
 }: {
   mobileOpen?: boolean
   onMobileOpenChange?: (open: boolean) => void
-}) {
+} = {}) {
   const pathname = usePathname()
+  const { isOpen: contextIsOpen, setIsOpen: setContextIsOpen } = useSidebar()
   const [isHovered, setIsHovered] = useState(false)
 
-  // Update the CSS variable for the main content margin
-  useEffect(() => {
-    try {
-      const width = isHovered ? "140px" : "48px"
-      document.documentElement.style.setProperty("--app-sidebar-width", width)
-    } catch {
-      // ignore
-    }
-  }, [isHovered])
+  // Use context state if props are not provided (new behavior)
+  // Otherwise use props (backward compatibility)
+  const mobileOpen = mobileOpenProp ?? contextIsOpen
+  const onMobileOpenChange = onMobileOpenChangeProp ?? setContextIsOpen
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/")
 
@@ -80,7 +77,6 @@ export function Sidebar({
                             ? "bg-accent text-primary shadow-sm"
                             : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}
-                        onClick={() => onMobileOpenChange?.(false)}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate">{item.label}</span>
@@ -95,11 +91,11 @@ export function Sidebar({
         </Sheet>
       </div>
 
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar - overlay style */}
       <aside
         className={cn(
-          "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r border-border bg-background overflow-hidden hidden md:block transition-[width] duration-300 ease-in-out",
-          isHovered ? "w-[140px]" : "w-12",
+          "fixed left-0 top-16 z-50 h-[calc(100vh-4rem)] border-r border-border bg-background overflow-hidden hidden md:block transition-[width] duration-300 ease-in-out shadow-lg",
+          isHovered ? "w-[240px]" : "w-12",
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

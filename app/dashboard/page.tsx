@@ -17,8 +17,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { DashboardKPIs } from "@/components/dashboard/kpis"
-
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
@@ -40,9 +38,6 @@ export default async function DashboardPage() {
   }
 
   const dataset = await getDashboardDataset(tenantId)
-  const total = dataset.topTopics.reduce((sum, t) => sum + (t.count || 0), 0)
-  const topTopic = dataset.topTopics[0]?.topic ?? "Top topic share"
-  const topShare = total > 0 ? Math.min(100, Math.round((dataset.topTopics[0]?.count || 0) * 100 / total)) : 0
 
   return (
     <DashboardLayoutClient>
@@ -64,8 +59,6 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-semibold text-foreground font-display">Dashboard</h1>
           <p className="text-sm text-muted-foreground">KPIs and trends at a glance</p>
         </div>
-
-        <DashboardKPIs total={total} secondaryLabel={topTopic} secondaryPct={topShare} />
 
         <PolicyIntelligenceHeader />
 

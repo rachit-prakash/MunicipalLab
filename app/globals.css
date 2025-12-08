@@ -71,53 +71,53 @@
 }
 
 .dark {
-  /* Dark mode: neutral slate with a lighter green accent */
-  --background: #0f172a;            /* slate-900 */
-  --foreground: #f8fafc;            /* slate-50 */
-  --card: #0f172a;
+  /* Dark mode: Grayish dark palette with good contrast */
+  --background: #1a1a1a;            /* dark charcoal gray */
+  --foreground: #e5e5e5;            /* soft white for easy reading */
+  --card: #242424;                  /* slightly lighter gray for cards */
   --card-foreground: var(--foreground);
-  --popover: #0f172a;
+  --popover: #242424;
   --popover-foreground: var(--foreground);
-  --primary: #06a893;               /* lighter teal-green for dark mode */
-  --primary-foreground: #0b1220;    /* dark text on light accent */
-  --secondary: #111827;             /* gray-900 */
+  --primary: #10b981;               /* vibrant emerald green that pops */
+  --primary-foreground: #000000;    /* black text on bright accent */
+  --secondary: #2a2a2a;             /* medium dark gray for secondary surfaces */
   --secondary-foreground: var(--foreground);
-  --muted: #111827;
-  --muted-foreground: #9ca3af;      /* gray-400 */
-  --accent: #1f2937;                /* gray-800 */
+  --muted: #2a2a2a;                 /* medium dark gray for muted areas */
+  --muted-foreground: #a3a3a3;      /* lighter neutral gray for secondary text */
+  --accent: #333333;                /* medium gray for accents */
   --accent-foreground: var(--foreground);
-  --success: #34d399;               /* emerald-400 */
-  --success-foreground: #0b1220;
-  --warning: #f59e0b;               /* amber-500 */
-  --warning-foreground: #0b1220;
-  --info: #60a5fa;                  /* blue-400 */
-  --info-foreground: #0b1220;
-  --destructive: #ef4444;           /* red-500 */
-  --destructive-foreground: #0b1220;
-  --border: #1f2937;                /* gray-800 */
-  --input: #0f172a;
-  --ring: #06a893;                  /* green ring for consistency */
+  --success: #22c55e;               /* bright green */
+  --success-foreground: #000000;
+  --warning: #f59e0b;               /* bright amber */
+  --warning-foreground: #000000;
+  --info: #3b82f6;                  /* bright blue */
+  --info-foreground: #ffffff;
+  --destructive: #ef4444;           /* bright red */
+  --destructive-foreground: #ffffff;
+  --border: #333333;                /* subtle border on dark */
+  --input: #242424;                 /* dark input backgrounds */
+  --ring: #10b981;                  /* green ring for consistency */
   /* Text selection */
-  --selection: #374151;            /* gray-700 */
-  --selection-foreground: #f9fafb; /* gray-50 */
-  --chart-1: #06a893;              /* lighter green */
-  --chart-2: #64748b;              /* slate-500 */
-  --chart-3: #9ca3af;              /* gray-400 */
-  --chart-4: #94a3b8;              /* slate-400 */
-  --chart-5: #cbd5e1;              /* slate-300 */
-  --sidebar: #0f172a;
+  --selection: #2a2a2a;             /* dark selection */
+  --selection-foreground: #10b981;  /* green selected text */
+  --chart-1: #10b981;               /* vibrant green */
+  --chart-2: #3b82f6;               /* blue */
+  --chart-3: #8b5cf6;               /* purple */
+  --chart-4: #ec4899;               /* pink */
+  --chart-5: #f59e0b;               /* amber */
+  --sidebar: #1a1a1a;               /* dark charcoal sidebar */
   --sidebar-foreground: var(--foreground);
-  --sidebar-primary: #06a893;
-  --sidebar-primary-foreground: #0b1220;
-  --sidebar-accent: #111827;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #2a2a2a;
   --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: #1f2937;
-  --sidebar-ring: #06a893;
+  --sidebar-border: #333333;
+  --sidebar-ring: #10b981;
 
   /* Scrollbars (dark) */
-  --scrollbar-track: #0f172a;       /* slate-900 */
-  --scrollbar-thumb: rgba(6, 168, 147, 0.3);
-  --scrollbar-thumb-hover: rgba(6, 168, 147, 0.5);
+  --scrollbar-track: #1a1a1a;       /* dark gray track */
+  --scrollbar-thumb: rgba(16, 185, 129, 0.4);
+  --scrollbar-thumb-hover: rgba(16, 185, 129, 0.6);
 }
 
 @theme inline {

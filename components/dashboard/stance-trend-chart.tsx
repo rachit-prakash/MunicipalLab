@@ -272,9 +272,11 @@ export function StanceTrendChart({ trendsByTopic, defaultTopic }: StanceTrendCha
               fill="#8884d8"
               dataKey="value"
               animationDuration={800}
+              stroke="hsl(var(--card))"
+              strokeWidth={2}
             >
               {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell key={`cell-${index}`} fill={entry.color} stroke="hsl(var(--card))" />
               ))}
             </Pie>
             <Tooltip

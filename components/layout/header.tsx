@@ -14,8 +14,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useSidebar } from "@/contexts/sidebar-context"
 
-export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
+export function Header({ onMenuClick }: { onMenuClick?: () => void } = {}) {
+  const { toggle: toggleSidebar } = useSidebar()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -103,7 +105,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             type="button"
             className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-border"
             aria-label="Open menu"
-            onClick={onMenuClick}
+            onClick={onMenuClick ?? toggleSidebar}
           >
             <PanelLeft className="h-4 w-4" />
           </button>

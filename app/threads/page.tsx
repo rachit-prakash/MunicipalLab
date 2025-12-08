@@ -85,11 +85,11 @@ function ThreadsPageInner() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar mobileOpen={mobileNavOpen} onMobileOpenChange={setMobileNavOpen} />
-      <div className="flex-1 flex flex-col ml-0 md:ml-[var(--app-sidebar-width,256px)]">
+      <div className="flex-1 flex flex-col">
         <Suspense fallback={null}>
           <Header onMenuClick={() => setMobileNavOpen(true)} />
         </Suspense>
-        <main className="mt-16 flex-1 overflow-auto">
+        <main className="mt-16 ml-0 md:ml-12 flex-1 overflow-auto transition-[margin] duration-300">
           <div className="px-4 sm:px-6 pt-6">
             <Breadcrumb>
               <BreadcrumbList>
@@ -166,3 +166,5 @@ export default function ThreadsPage() {
     </Suspense>
   )
 }
+
+

@@ -61,7 +61,7 @@ export function DashboardLayoutClient({
         <Suspense fallback={<div className="h-16 border-b border-border bg-background" />}>
           <Header onMenuClick={() => setMobileOpen(true)} />
         </Suspense>
-        <main className="mt-16 ml-0 md:ml-[var(--app-sidebar-width,48px)] flex-1 overflow-auto transition-all duration-300 ease-in-out">
+        <main className="mt-16 ml-0 md:ml-12 flex-1 overflow-auto transition-[margin] duration-300">
           {children}
         </main>
       </div>
