@@ -1,0 +1,48 @@
+# Cursor Guide
+
+This file is for future models to quickly orient themselves in the **MunicipalLabs-CRM** workspace before editing. Read the referenced docs and the code before making changes.
+
+## Snapshot
+- **Purpose:** Gmail-backed CRM for municipal teams (inbox triage, reply workflow, analytics, admin).  
+- **Stack:** Next.js 16 App Router + React 19 + TypeScript, NextAuth (Google OAuth), PostgreSQL multi-tenant, Tailwind/shadcn-style UI, `pnpm` first.
+- **Key data sources:** Gmail API data (proxied via `/api/gmail/*` routes) and PostgreSQL (with `lib/db.ts` handling pooling and `app.tenant_id`).
+
+## Essential Docs
+1. `docs/README.md` – master index; start here.
+2. `docs/SETUP.md` – full install + verification steps.
+3. `docs/ENVIRONMENT.md` – every env var has a purpose; keep secrets out of git (`NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID/SECRET`, `DATABASE_URL`).
+4. `docs/DATABASE_SETUP.md` & `docs/QUICK_FIX.md` – Postgres setup + quick failsafe.
+5. `docs/OAUTH_SETUP.md` – Google Cloud screenshots, scopes, redirect URIs, and common OAuth errors.
+6. `docs/TROUBLESHOOTING.md` & `docs/SCHEMA.md` – use them when debugging or documenting a change.
+
+## Layout of the Code
+- `app/` – Next.js App Router. Layout is driven from `app/layout.tsx`, routing includes `/dashboard`, `/threads`, `/gmail`, `/admin`, and many nested API folders.
+- `components/` – shared UI pieces: `layout/*` (sidebar/header), `dashboard/*`, `chatbot/*`, `threads/*`, and a `ui/` library mirroring shadcn/radix components.
+- `lib/` – backend helpers: `lib/auth.ts` (NextAuth + Gmail scopes), `lib/db.ts` (tenant-aware pool), `lib/googleTokens.ts`, `lib/rbac.ts`, `lib/tokenVault.ts`, etc.
+- `styles/` – global CSS, Tailwind is configured via `postcss.config.mjs` and `tailwindcss`.
+- `scripts/` – utility scripts; e.g. `scripts/validate-db-url.js`.
+- `docs/` – documentation for setup, schema, troubleshooting, etc.
+
+## Running & Validating
+- `pnpm install` (or `npm install`) – prefer `pnpm`.
+- `pnpm dev` – starts Next.js dev server on `http://localhost:3000`.
+- `pnpm build` / `pnpm start` – production pipeline.
+- `pnpm lint` – ESLint check; run after edits.
+- Keep `.env.local` with `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `DATABASE_URL`.
+- Postgres must be reachable; use `DATABASE_URL` per docs.
+- Restart the dev server after env changes, OAuth setup, or schema migrations.
+
+## Developer Notes for Models
+- Always double-check the docs listed above before changing setup, env, or OAuth behavior.
+- When updating UI, see `components/ui/` for reusable primitives and follow existing class-variance patterns.
+- API endpoints live under `app/api/` and rely on NextAuth sessions; follow the `lib/auth.ts` guard logic when adding new routes.
+- Multi-tenancy: `lib/db.ts` calls `SET LOCAL app.tenant_id` before queries—do not bypass without understanding tenant isolation.
+- Avoid committing secrets or `.env.local`. Mention in PR notes if additional env vars are introduced.
+- After edits, run `pnpm lint`. If something touches database logic, note whether migrations/schema docs need updates.
+- Keep README/docs consistent—if you add a new setup step, document it as well.
+
+## Reporting & Communication
+- Use `.cursor` guide to remind future agents to be encouraging and explain simply (18-year-old friendly).
+- Mention manual steps (OAuth console, Postgres) explicitly in docs if you touch related code.
+- For big changes, describe how to verify (steps, endpoints) in `docs/` and reference tests or manual flows.
+
