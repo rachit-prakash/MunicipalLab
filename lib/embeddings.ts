@@ -72,7 +72,9 @@ export async function generateEmbeddingsBatch(
 	}
 
 	// Truncate texts if too long
-	const maxChars = 30000
+	// OpenAI has 8192 token limit for embeddings. We'll use 2000 chars per text to be safe
+	// This allows ~10 emails per batch (2000 chars ≈ 500 tokens, 10 * 500 = 5000 tokens)
+	const maxChars = 2000
 	const truncatedTexts = texts.map((text) => (text.length > maxChars ? text.slice(0, maxChars) : text))
 
 	const response = await fetch("https://api.openai.com/v1/embeddings", {

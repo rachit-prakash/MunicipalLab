@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     // Convert demo messages to threads
     const demoThreads = demoMessages.map((msg, idx) => {
-      const topics = ["Ukraine Aid & Support", "Gaza Ceasefire & Humanitarian Access", "Healthcare & Affordability", "Housing & Zoning", "Climate Resilience"]
+      const topics = ["Ukraine Aid & Support", "Gaza Ceasefire", "Healthcare & Affordability", "Housing & Zoning", "Climate Resilience"]
       const stances = ["support", "oppose", "neutral"]
       const types = ["constituent-email", "advocacy-group", "lobbyist"]
 

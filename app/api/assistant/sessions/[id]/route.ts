@@ -9,6 +9,25 @@ import { withTenant } from "@/lib/db"
 import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+	const { id: sessionId } = await params
+
+	// Check for demo mode first
+	const demoMode = req.cookies.get("demo")?.value === "1"
+	if (demoMode) {
+		// Return empty messages for demo sessions
+		return new Response(JSON.stringify({
+			session: {
+				id: sessionId,
+				title: "Demo Chat",
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			},
+			messages: []
+		}), {
+			headers: { "content-type": "application/json" },
+		})
+	}
+
 	// Check rate limit
 	const rateLimitResponse = await checkRateLimit(req, RateLimits.CHATBOT)
 	if (rateLimitResponse) {
@@ -16,8 +35,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 	}
 
 	try {
-		const { id: sessionId } = await params
-
 		// Get user info
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 		const userId = (token as any)?.appUserId as string | undefined
@@ -78,6 +95,34 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+	const { id: sessionId } = await params
+
+	// Check for demo mode first
+	const demoMode = req.cookies.get("demo")?.value === "1"
+	if (demoMode) {
+		// Return mock message for demo mode (not persisted)
+		const body = await req.json().catch(() => ({}))
+		const { role, content } = body
+
+		if (!role || !content) {
+			return new Response(JSON.stringify({ error: "role and content required" }), {
+				status: 400,
+				headers: { "content-type": "application/json" },
+			})
+		}
+
+		return new Response(JSON.stringify({
+			message: {
+				id: `demo-msg-${Date.now()}`,
+				role,
+				content,
+				created_at: new Date().toISOString(),
+			}
+		}), {
+			headers: { "content-type": "application/json" },
+		})
+	}
+
 	// Check rate limit
 	const rateLimitResponse = await checkRateLimit(req, RateLimits.CHATBOT)
 	if (rateLimitResponse) {
@@ -85,8 +130,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 	}
 
 	try {
-		const { id: sessionId } = await params
-
 		// Get user info
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 		const userId = (token as any)?.appUserId as string | undefined
@@ -162,9 +205,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-	try {
-		const { id: sessionId } = await params
+	const { id: sessionId } = await params
 
+	// Check for demo mode first
+	const demoMode = req.cookies.get("demo")?.value === "1"
+	if (demoMode) {
+		// Return success for demo mode (nothing to delete)
+		return new Response(JSON.stringify({ success: true }), {
+			headers: { "content-type": "application/json" },
+		})
+	}
+
+	try {
 		// Get user info
 		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 		const userId = (token as any)?.appUserId as string | undefined
