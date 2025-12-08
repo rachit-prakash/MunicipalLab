@@ -660,7 +660,7 @@ export default function ChatbotPage() {
                     ) : m.role === 'assistant' ? (
                       <Markdown>{m.content}</Markdown>
                     ) : (
-                      <div className="whitespace-pre-wrap">{m.content}</div>
+                      <div className="whitespace-pre-wrap !text-foreground">{m.content}</div>
                     )}
                   </motion.div>
                   {/* Timestamp */}
@@ -713,7 +713,7 @@ export default function ChatbotPage() {
               placeholder="Ask a question about your data..."
               disabled={sending}
               rows={1}
-              className="min-h-[52px] max-h-[200px] flex-1 resize-none rounded-3xl border border-border/50 bg-background px-5 py-3.5 text-sm text-gray-900 dark:text-white placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 shadow-sm"
+              className="min-h-[52px] max-h-[200px] flex-1 resize-none rounded-3xl border border-border/50 bg-background px-5 py-3.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 shadow-sm"
             />
             <Button
               type="submit"
