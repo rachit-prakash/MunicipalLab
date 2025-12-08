@@ -2,9 +2,49 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { audit } from "@/lib/audit"
 import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
-import { retrieveEmailContext, formatRAGContextForLLM, getEmailAnalytics, isAnalyticsQuery, isChronologicalQuery, retrieveEmailsChronologically } from "@/lib/rag"
+import { retrieveEmailContext, formatRAGContextForLLM, getEmailAnalytics, isAnalyticsQuery, isChronologicalQuery, retrieveEmailsChronologically, type RAGContext } from "@/lib/rag"
+import { demoMessages } from "@/lib/demo"
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string }
+
+// Simple keyword-based search for demo mode (no embeddings needed)
+function searchDemoMessages(query: string, limit: number = 5): RAGContext {
+	const lowerQuery = query.toLowerCase()
+	const queryTerms = lowerQuery.split(/\s+/).filter(t => t.length > 2)
+
+	// Score each message by keyword matches
+	const scored = demoMessages.map(msg => {
+		let score = 0
+		const searchText = `${msg.subject} ${msg.snippet} ${msg.from}`.toLowerCase()
+
+		queryTerms.forEach(term => {
+			if (searchText.includes(term)) score += 1
+		})
+
+		return { msg, score }
+	}).filter(item => item.score > 0)
+
+	// Sort by score descending
+	scored.sort((a, b) => b.score - a.score)
+
+	// Return top matches
+	const messages = scored.slice(0, limit).map(item => ({
+		id: item.msg.id,
+		thread_id: item.msg.threadId,
+		from_email: item.msg.from,
+		snippet: item.msg.snippet,
+		body_redacted: item.msg.snippet,
+		internal_date: new Date(item.msg.date),
+		similarity: item.score / queryTerms.length, // Normalize to 0-1 range
+	}))
+
+	return {
+		messages,
+		threads: [],
+		query,
+		totalResults: messages.length,
+	}
+}
 
 export async function POST(req: NextRequest) {
 	// Check rate limit
@@ -33,9 +73,12 @@ export async function POST(req: NextRequest) {
 			})
 		}
 
-		// Get user info for tenant-specific RAG
+		// Check for demo mode
+		const demoMode = req.cookies.get("demo")?.value === "1"
+
+		// Get user info for tenant-specific RAG (skip in demo mode)
 		// The JWT token stores appUserId (UUID) and tenantId directly from the auth flow
-		const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+		const token = demoMode ? null : await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
 		const userId = (token as any)?.appUserId as string | undefined
 		const tenantId = (token as any)?.tenantId as string | undefined
 
@@ -43,7 +86,8 @@ export async function POST(req: NextRequest) {
 		let ragContext = ""
 		let analyticsData = null
 
-		if (tenantId && messages.length > 0) {
+		// In demo mode, use demo messages; otherwise use tenant's real emails
+		if ((demoMode || tenantId) && messages.length > 0) {
 			try {
 				const lastUserMessage = messages[messages.length - 1]
 				if (lastUserMessage.role === "user") {
@@ -151,11 +195,19 @@ export async function POST(req: NextRequest) {
 						ragContext = formatRAGContextForLLM(emailContext)
 					} else {
 						// Semantic search
-						const emailContext = await retrieveEmailContext(userQuery, tenantId, {
-							maxMessages: 5,
-							maxThreads: 3,
-							minSimilarity: 0.5,
-						})
+						let emailContext: RAGContext
+						if (demoMode) {
+							// Use simple keyword search for demo messages (no embeddings)
+							emailContext = searchDemoMessages(userQuery, 5)
+						} else {
+							// Note: Using 0.3 threshold because emails are truncated to 2000 chars for embeddings
+							// Higher threshold (0.5) would filter out too many relevant results
+							emailContext = await retrieveEmailContext(userQuery, tenantId!, {
+								maxMessages: 5,
+								maxThreads: 3,
+								minSimilarity: 0.3,
+							})
+						}
 						ragContext = formatRAGContextForLLM(emailContext)
 					}
 				}

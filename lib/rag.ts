@@ -51,7 +51,7 @@ export async function retrieveEmailContext(
 	const {
 		maxMessages = 5,
 		maxThreads = 3,
-		minSimilarity = 0.5,
+		minSimilarity = 0.3, // Lower threshold because emails are truncated to 2000 chars
 		includeMessages = true,
 		includeThreads = true,
 	} = options

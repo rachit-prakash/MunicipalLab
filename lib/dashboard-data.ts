@@ -42,7 +42,7 @@ function getDemoDashboardDataset(days = 30, topicLimit = 5): DashboardDataset {
   // Demo topics based on demo message data
   const topTopics: TopicCount[] = [
     { topic: "Ukraine Aid & Support", count: 28 },
-    { topic: "Gaza Ceasefire & Humanitarian Access", count: 24 },
+    { topic: "Gaza Ceasefire", count: 24 },
     { topic: "Healthcare & Affordability", count: 18 },
     { topic: "Housing & Zoning", count: 15 },
     { topic: "Climate Resilience", count: 12 },

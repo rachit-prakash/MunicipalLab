@@ -5,6 +5,7 @@ import {
   isMessageEligibleForAnalysis,
   persistMessageAnalysis,
 } from "@/lib/messageAnalysis";
+import { generateMessageEmbedding, generateThreadEmbedding } from "@/lib/sync-embeddings";
 
 /**
  * Sync all Gmail accounts for a user
@@ -535,6 +536,17 @@ async function fetchAndUpsertMessage(
       fromEmail: upsertResult.fromEmail,
       analysis,
     })
+
+    // Generate embedding for the message (for RAG semantic search)
+    await generateMessageEmbedding(tenantId, upsertResult.messageId, {
+      subject: upsertResult.subject,
+      from_email: upsertResult.fromEmail,
+      to_email: upsertResult.toEmails,
+      body_redacted: upsertResult.body,
+      snippet: upsertResult.snippet,
+      sentiment_score: analysis.sentimentScore,
+      urgency_level: analysis.urgencyLevel,
+    })
   } catch (error) {
     console.error(
       `Message analysis failed for ${messageId} (tenant ${tenantId}):`,
@@ -570,6 +582,25 @@ async function fetchAndUpsertMessage(
       })
 
       console.log(`Generated summary for thread ${upsertResult.threadId}`)
+
+      // Generate embedding for the thread (for RAG semantic search)
+      // Get thread data including topic and stance for better embeddings
+      const threadData = await withTenant(tenantId, async (client) => {
+        const result = await client.query(
+          `SELECT subject, topic, stance FROM threads WHERE id = $1`,
+          [upsertResult.threadId]
+        )
+        return result.rows[0]
+      })
+
+      if (threadData) {
+        await generateThreadEmbedding(tenantId, upsertResult.threadId, {
+          subject: threadData.subject,
+          summary: summary,
+          topic: threadData.topic,
+          stance: threadData.stance,
+        })
+      }
     }
   } catch (error) {
     console.error(

@@ -136,7 +136,7 @@ export function StanceTrendChart({ trendsByTopic, defaultTopic }: StanceTrendCha
           {/* Topic Selector */}
           {topicKeys.length > 1 && (
             <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-              <SelectTrigger className="w-[140px] h-8 text-sm">
+              <SelectTrigger className="w-full sm:w-[280px] h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -193,10 +193,23 @@ export function StanceTrendChart({ trendsByTopic, defaultTopic }: StanceTrendCha
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
+                border: "2px solid hsl(var(--border))",
                 borderRadius: "8px",
+                padding: "8px 12px",
                 fontSize: "12px",
-                color: "hsl(var(--popover-foreground))"
+                color: "hsl(var(--popover-foreground))",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                fontFamily: "inherit"
+              }}
+              labelStyle={{
+                color: "hsl(var(--popover-foreground))",
+                fontWeight: 600,
+                marginBottom: "4px",
+                fontSize: "12px"
+              }}
+              itemStyle={{
+                color: "hsl(var(--popover-foreground))",
+                padding: "2px 0"
               }}
             />
             <Legend 
@@ -247,10 +260,23 @@ export function StanceTrendChart({ trendsByTopic, defaultTopic }: StanceTrendCha
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
+                border: "2px solid hsl(var(--border))",
                 borderRadius: "8px",
+                padding: "8px 12px",
                 fontSize: "12px",
-                color: "hsl(var(--popover-foreground))"
+                color: "hsl(var(--popover-foreground))",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                fontFamily: "inherit"
+              }}
+              labelStyle={{
+                color: "hsl(var(--popover-foreground))",
+                fontWeight: 600,
+                marginBottom: "4px",
+                fontSize: "12px"
+              }}
+              itemStyle={{
+                color: "hsl(var(--popover-foreground))",
+                padding: "2px 0"
               }}
             />
             <Legend 
@@ -266,26 +292,39 @@ export function StanceTrendChart({ trendsByTopic, defaultTopic }: StanceTrendCha
               data={pieData}
               cx="50%"
               cy="50%"
-              labelLine={false}
-              label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+              labelLine={true}
+              label={({ name, value, percent }) => `${name} ${value} (${(percent * 100).toFixed(0)}%)`}
               outerRadius={120}
               fill="#8884d8"
               dataKey="value"
               animationDuration={800}
-              stroke="hsl(var(--card))"
-              strokeWidth={2}
+              stroke="none"
+              strokeWidth={0}
             >
               {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} stroke="hsl(var(--card))" />
+                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
               ))}
             </Pie>
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
+                border: "2px solid hsl(var(--border))",
                 borderRadius: "8px",
+                padding: "8px 12px",
                 fontSize: "12px",
-                color: "hsl(var(--popover-foreground))"
+                color: "hsl(var(--popover-foreground))",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                fontFamily: "inherit"
+              }}
+              labelStyle={{
+                color: "hsl(var(--popover-foreground))",
+                fontWeight: 600,
+                marginBottom: "4px",
+                fontSize: "12px"
+              }}
+              itemStyle={{
+                color: "hsl(var(--popover-foreground))",
+                padding: "2px 0"
               }}
             />
             <Legend 
