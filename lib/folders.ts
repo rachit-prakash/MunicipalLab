@@ -1,6 +1,7 @@
 import type { ThreadRow } from "./types"
 
 export type FolderId =
+  | "unread"
   | "from-people"
   | "crisis-emergency"
   | "needs-response"
@@ -16,10 +17,19 @@ export interface Folder {
 
 export const folders: Folder[] = [
   {
+    id: "unread",
+    name: "Unread",
+    description: "All unread messages",
+    color: "text-gray-600",
+    filterFn: (thread) => {
+      return thread.unread === true
+    },
+  },
+  {
     id: "from-people",
     name: "From People",
     description: "Emails from actual people, excluding newsletters and automated messages",
-    color: "text-blue-600",
+    color: "text-purple-600",
     filterFn: (thread) => {
       return thread.folders.includes("from-people")
     },

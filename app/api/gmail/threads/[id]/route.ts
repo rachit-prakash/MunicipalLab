@@ -330,7 +330,7 @@ export async function PATCH(
     if (demoMode) {
       // Parse request body for demo mode
       const body = await request.json();
-      const { isReplied } = body;
+      const { isReplied, unread } = body;
 
       // Return mock success response for demo mode
       return NextResponse.json({
@@ -338,6 +338,7 @@ export async function PATCH(
         gmail_thread_id: threadId,
         subject: "Demo Thread",
         isReplied: isReplied,
+        unread: unread,
       });
     }
 
@@ -363,12 +364,27 @@ export async function PATCH(
 
     // Parse request body
     const body = await request.json();
-    const { isReplied } = body;
+    const { isReplied, unread } = body;
 
     // Validate input
-    if (typeof isReplied !== 'boolean') {
+    if (isReplied !== undefined && typeof isReplied !== 'boolean') {
       return NextResponse.json(
         { error: 'isReplied must be a boolean' },
+        { status: 400 }
+      );
+    }
+
+    if (unread !== undefined && typeof unread !== 'boolean') {
+      return NextResponse.json(
+        { error: 'unread must be a boolean' },
+        { status: 400 }
+      );
+    }
+
+    // At least one field must be provided
+    if (isReplied === undefined && unread === undefined) {
+      return NextResponse.json(
+        { error: 'Either isReplied or unread must be provided' },
         { status: 400 }
       );
     }
@@ -381,12 +397,29 @@ export async function PATCH(
         ? 'tenant_id = $1 AND id = $2'
         : 'tenant_id = $1 AND gmail_thread_id = $2';
 
+      // Build dynamic SET clause
+      const updates: string[] = ['updated_at = NOW()'];
+      const values: any[] = [tenantId, threadId];
+      let paramIndex = 3;
+
+      if (isReplied !== undefined) {
+        updates.push(`is_replied = $${paramIndex}`);
+        values.push(isReplied);
+        paramIndex++;
+      }
+
+      if (unread !== undefined) {
+        updates.push(`unread = $${paramIndex}`);
+        values.push(unread);
+        paramIndex++;
+      }
+
       const updateResult = await client.query(
         `UPDATE threads
-         SET is_replied = $3, updated_at = NOW()
+         SET ${updates.join(', ')}
          WHERE ${whereClause}
-         RETURNING id, gmail_thread_id, subject, is_replied`,
-        [tenantId, threadId, isReplied]
+         RETURNING id, gmail_thread_id, subject, is_replied, unread`,
+        values
       );
 
       if (updateResult.rows.length === 0) {
@@ -398,6 +431,35 @@ export async function PATCH(
 
     if (!result) {
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
+    }
+
+    // If unread status was changed, sync with Gmail API
+    if (unread !== undefined) {
+      try {
+        const accessToken = await getAccessToken(tenantId, userId);
+        const gmailThreadId = result.gmail_thread_id;
+
+        // Use Gmail API to modify the UNREAD label
+        const modifyUrl = `https://gmail.googleapis.com/gmail/v1/users/me/threads/${gmailThreadId}/modify`;
+
+        const modifyBody = unread
+          ? { addLabelIds: ['UNREAD'] }
+          : { removeLabelIds: ['UNREAD'] };
+
+        await fetch(modifyUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(modifyBody),
+        });
+
+        console.log(`Successfully ${unread ? 'marked' : 'unmarked'} thread ${gmailThreadId} as unread in Gmail`);
+      } catch (error) {
+        console.error('Failed to sync unread status with Gmail:', error);
+        // Continue even if Gmail sync fails - database is updated
+      }
     }
 
     // Best-effort audit
@@ -416,6 +478,7 @@ export async function PATCH(
       gmail_thread_id: result.gmail_thread_id,
       subject: result.subject,
       isReplied: result.is_replied,
+      unread: result.unread,
     });
   } catch (error) {
     console.error('Error updating thread:', error);

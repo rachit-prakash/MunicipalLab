@@ -301,6 +301,7 @@ async function fetchAndUpsertMessage(
   const msgData = (await msgResponse.json()) as {
     id: string
     threadId: string
+    labelIds?: string[]
     internalDate?: string
     snippet?: string
     payload?: {
@@ -333,6 +334,10 @@ async function fetchAndUpsertMessage(
   const threadType = detectCasework(`${subject}\n${snippet}`)
     ? "CASEWORK"
     : "CORRESPONDENCE"
+
+  // Check if message has UNREAD label from Gmail
+  // If labelIds is missing, default to read (false) since most emails are read
+  const isUnread = msgData.labelIds?.includes("UNREAD") ?? false
 
   // Classify thread immediately using rule-based logic (sync, no AI)
   const folders = classifyMessageToFoldersSync(
@@ -375,10 +380,7 @@ async function fetchAndUpsertMessage(
             type = COALESCE(EXCLUDED.type, threads.type),
             folders = COALESCE(EXCLUDED.folders, threads.folders),
             gmail_account_id = COALESCE(EXCLUDED.gmail_account_id, threads.gmail_account_id),
-            unread = CASE
-              WHEN EXCLUDED.unread THEN true
-              ELSE threads.unread
-            END,
+            unread = EXCLUDED.unread,
             last_message_ts = GREATEST(threads.last_message_ts, EXCLUDED.last_message_ts),
             updated_at = NOW()
           RETURNING id`,
@@ -390,7 +392,7 @@ async function fetchAndUpsertMessage(
           fromEmail,
           snippet || subject,
           threadType,
-          !isOutbound,
+          isUnread,
           folders,
           accountId,
         ],
@@ -418,10 +420,7 @@ async function fetchAndUpsertMessage(
             summary = COALESCE(EXCLUDED.summary, threads.summary),
             type = COALESCE(EXCLUDED.type, threads.type),
             gmail_account_id = COALESCE(EXCLUDED.gmail_account_id, threads.gmail_account_id),
-            unread = CASE
-              WHEN EXCLUDED.unread THEN true
-              ELSE threads.unread
-            END,
+            unread = EXCLUDED.unread,
             last_message_ts = GREATEST(threads.last_message_ts, EXCLUDED.last_message_ts),
             updated_at = NOW()
           RETURNING id`,
@@ -433,7 +432,7 @@ async function fetchAndUpsertMessage(
           fromEmail,
           snippet || subject,
           threadType,
-          !isOutbound,
+          isUnread,
           accountId,
         ],
       )
