@@ -262,7 +262,7 @@ export function PolicyIntelligenceHeader() {
     <section className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Policy Intelligence</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Policy Intelligence</p>
           <p className="text-base text-muted-foreground">Decision-grade signals updated live from constituent inboxes</p>
         </div>
         <button
@@ -291,9 +291,13 @@ export function PolicyIntelligenceHeader() {
         </button>
       </div>
 
-      {error ? <div className="text-sm text-red-600 border border-red-100 bg-red-50 rounded-lg px-3 py-2">{error}</div> : null}
+      {error ? <div className="text-sm text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 rounded-lg px-3 py-2">{error}</div> : null}
       {syncMessage ? (
-        <div className={`text-sm border rounded-lg px-3 py-2 ${syncMessage.includes('✓') ? 'text-green-600 border-green-100 bg-green-50' : 'text-amber-600 border-amber-100 bg-amber-50'}`}>
+        <div className={`text-sm border rounded-lg px-3 py-2 ${
+          syncMessage.includes('✓') 
+            ? 'text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/50' 
+            : 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50'
+        }`}>
           {syncMessage}
         </div>
       ) : null}

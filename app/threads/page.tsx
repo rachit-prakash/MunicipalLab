@@ -149,7 +149,11 @@ function ThreadsPageInner() {
               ) : error ? (
                 <div className="text-sm text-destructive">{error}</div>
               ) : threads ? (
-                <ThreadsTable threads={filteredThreads} onThreadClick={setSelectedThread} />
+                <ThreadsTable 
+                  key={selectedFolder || 'all'} 
+                  threads={filteredThreads} 
+                  onThreadClick={setSelectedThread} 
+                />
               ) : null}
             </div>
           </main>

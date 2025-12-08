@@ -32,6 +32,7 @@ export async function persistMessageAnalysis({
     typeof analysis.confidence === "number"
       ? clamp(analysis.confidence, 0, 1)
       : 0.75
+  const senderType = analysis.senderType ?? "uncertain"
 
   await withTenant(tenantId, async (client) => {
     await client.query(
@@ -50,9 +51,10 @@ export async function persistMessageAnalysis({
            sender_email = COALESCE($2, sender_email),
            summary = COALESCE($3, summary),
            confidence = COALESCE($4, confidence),
+           sender_type = COALESCE($5, sender_type),
            updated_at = NOW()
-       WHERE id = $5`,
-      [topic, fromEmail, summary, confidence, threadId],
+       WHERE id = $6`,
+      [topic, fromEmail, summary, confidence, senderType, threadId],
     )
   })
 }

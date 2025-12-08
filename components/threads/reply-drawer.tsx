@@ -1,20 +1,41 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { ThreadRow } from "@/lib/types"
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter, DrawerTitle } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
-import { X, Copy, Check } from "lucide-react"
+import { X, Copy, Check, ChevronDown, ChevronUp, Sparkles, FileText, Send, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { ConstituentProfileCard } from "@/components/constituents/profile-card"
+import { HtmlEmail } from "@/components/ui/html-email"
+import { decodeHtmlEntities } from "@/lib/html-decode"
+
 interface ReplyDrawerProps {
   thread: ThreadRow
   onClose: () => void
+}
+
+interface Message {
+  id: string
+  from: string
+  date: string
+  snippet: string
+  body?: string
+  isOutbound?: boolean
+}
+
+interface ThreadData {
+  thread: {
+    id: string
+    gmail_thread_id: string
+    subject: string
+    last_message_ts: string
+  }
+  messages: Message[]
 }
 
 // Sample templates
@@ -33,12 +54,46 @@ const templates = {
 
 export function ReplyDrawer({ thread, onClose }: ReplyDrawerProps) {
   const [draftText, setDraftText] = useState("")
-  const [selectedTemplate, setSelectedTemplate] = useState("")
   const [copied, setCopied] = useState(false)
-  const [markedSent, setMarkedSent] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [showThreadHistory, setShowThreadHistory] = useState(false)
+  const [showCitations, setShowCitations] = useState(true)
+  const [threadData, setThreadData] = useState<ThreadData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
 
-  // Intentionally omit stance and confidence indicators from the modal header per design
+  // Fetch full thread data
+  const fetchThread = async (refresh = false) => {
+    try {
+      if (refresh) setRefreshing(true)
+      else setLoading(true)
+
+      const url = refresh
+        ? `/api/gmail/threads/${thread.id}?refresh=true`
+        : `/api/gmail/threads/${thread.id}`
+      const res = await fetch(url)
+      if (res.ok) {
+        const data = await res.json()
+        setThreadData(data)
+        if (refresh) {
+          toast({ title: "Refreshed", description: "Message content updated from Gmail." })
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch thread:", error)
+      if (refresh) {
+        toast({ title: "Refresh failed", description: "Could not refresh message content.", variant: "destructive" })
+      }
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchThread()
+  }, [thread.id])
 
   const templateOptions = templates[thread.topic as keyof typeof templates] || {
     SUPPORT: "Thank you for your message...",
@@ -47,173 +102,314 @@ export function ReplyDrawer({ thread, onClose }: ReplyDrawerProps) {
   }
 
   const handleSelectTemplate = (stance: string) => {
-    setSelectedTemplate(templateOptions[stance as keyof typeof templateOptions] || templateOptions.GENERIC)
-    setDraftText(templateOptions[stance as keyof typeof templateOptions] || templateOptions.GENERIC)
+    const template = templateOptions[stance as keyof typeof templateOptions] || templateOptions.GENERIC
+    setDraftText(template)
   }
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(draftText || selectedTemplate)
+    await navigator.clipboard.writeText(draftText)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+    toast({ title: "Copied to clipboard", description: "Draft reply has been copied." })
   }
 
   const handleMarkReplied = () => {
-    setMarkedSent(true)
-    toast({ title: "Reply recorded", description: "A reply was marked and a thread was created." })
+    toast({ title: "Reply recorded", description: "This thread has been marked as replied." })
     onClose()
   }
 
-  const handleGenerate = () => {
-    const aiDraft = `Thank you for your message regarding ${thread.topic.toLowerCase()}. We appreciate you taking the time to share your perspective on this important issue. Your feedback helps us better understand constituent concerns and priorities.`
+  const handleGenerate = async () => {
+    setIsGenerating(true)
+    // Simulate AI generation
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    const aiDraft = `Dear ${thread.sender.split("@")[0]},
+
+Thank you for taking the time to contact our office regarding ${thread.topic.toLowerCase()}. We appreciate you sharing your perspective on this important issue.
+
+Your feedback is valuable and helps us better understand the concerns and priorities of our constituents. We take your input seriously as we work to address the challenges facing our community.
+
+${thread.stance === "SUPPORT"
+  ? "We're grateful for your support on this matter and will continue working to advance this important cause."
+  : thread.stance === "OPPOSE"
+  ? "We understand your concerns and respect your perspective. We will carefully consider all viewpoints as we move forward."
+  : "We will carefully review your comments and take them into account in our ongoing work on this issue."}
+
+If you have any additional questions or would like to discuss this further, please don't hesitate to reach out to our office.`
     setDraftText(aiDraft)
+    setIsGenerating(false)
   }
 
   const citations = [
     {
       title: "Healthcare.gov - Policy Overview",
       url: "https://healthcare.gov",
-      snippet: "Overview of current healthcare policies...",
+      snippet: "Comprehensive overview of current healthcare policies and programs available to constituents.",
     },
     {
-      title: "Congressional Research Service",
-      url: "https://crs.gov",
-      snippet: "Recent analysis of healthcare reform...",
+      title: "Congressional Research Service - Healthcare Reform Analysis",
+      url: "https://crs.gov/healthcare-2024",
+      snippet: "Recent analysis of proposed healthcare reform legislation and its potential impact.",
+    },
+    {
+      title: "Office Policy Brief - Healthcare Access",
+      url: "#",
+      snippet: "Internal policy position on improving healthcare access and affordability.",
     },
   ]
 
-  const needsReview = (thread.confidence || 0) < 0.75
+  const originalMessage = threadData?.messages?.[0]
+  const threadHistory = threadData?.messages?.slice(1) || []
 
   return (
     <Drawer open={true} onOpenChange={onClose}>
-      <DrawerContent>
-        {/* Header with thread info */}
-        <DrawerHeader>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <DrawerTitle className="text-xl font-semibold text-ink-900">{thread.subject}</DrawerTitle>
-              <div className="text-sm text-ink-500 mt-1">
-                From:{" "}
-                <ConstituentProfileCard email={thread.sender}>
-                  <span className="font-medium hover:text-primary transition-colors truncate max-w-md inline-block align-bottom">{thread.sender}</span>
-                </ConstituentProfileCard>
+      <DrawerContent className="max-w-[70vw]">
+        {/* Header */}
+        <DrawerHeader className="border-b">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <DrawerTitle className="text-xl font-semibold text-foreground mb-2">
+                {thread.subject}
+              </DrawerTitle>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <Badge variant="neutral" className="text-xs">
+                  {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
+                </Badge>
+                <Badge variant="neutral" className={getTopicBadgeClasses(thread.topic)}>
+                  {thread.topic}
+                </Badge>
+                {thread.urgencyLevel && thread.urgencyLevel !== "low" && (
+                  <Badge
+                    variant="destructive"
+                    className={
+                      thread.urgencyLevel === "critical" ? "bg-red-600" :
+                      thread.urgencyLevel === "high" ? "bg-orange-600" :
+                      "bg-yellow-600"
+                    }
+                  >
+                    {thread.urgencyLevel}
+                  </Badge>
+                )}
               </div>
-              <p className="text-xs text-ink-400">{formatDate(thread.receivedAt)}</p>
+              <div className="text-sm text-muted-foreground">
+                {formatDate(thread.receivedAt)}
+              </div>
             </div>
             <DrawerClose asChild>
-              <button className="p-2 hover:bg-subtle rounded transition-colors">
-                <X className="h-5 w-5 text-ink-600" />
+              <button className="p-2 hover:bg-accent rounded-lg transition-colors">
+                <X className="h-5 w-5" />
               </button>
             </DrawerClose>
           </div>
-
-          {/* Badges row (stance and confidence removed) */}
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="solid" className="bg-ink-100 text-ink-900">
-              {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
-            </Badge>
-            <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
-          </div>
         </DrawerHeader>
 
-        {/* Tabs for Template and AI Draft */}
-        <DrawerBody>
-          <Tabs defaultValue="template">
-            <TabsList className="w-full justify-start">
-              <TabsTrigger value="template">Template</TabsTrigger>
-              <TabsTrigger value="ai-draft">AI Draft</TabsTrigger>
-            </TabsList>
+        <DrawerBody className="space-y-6">
+          {/* Original Email Content */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                Original Email
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fetchThread(true)}
+                disabled={refreshing}
+                title="Refresh message content from Gmail"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
 
-            {/* Template Tab */}
-            <TabsContent value="template" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-ink-600">Select template</label>
-                <Select onValueChange={handleSelectTemplate}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose topic × stance" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SUPPORT">Support template</SelectItem>
-                    <SelectItem value="OPPOSE">Oppose template</SelectItem>
-                    <SelectItem value="GENERIC">Generic template</SelectItem>
-                  </SelectContent>
-                </Select>
+            {loading ? (
+              <div className="bg-muted/30 rounded-lg p-4 animate-pulse">
+                <div className="h-4 bg-muted rounded w-3/4 mb-3"></div>
+                <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                <div className="h-4 bg-muted rounded w-5/6"></div>
               </div>
-
-              {selectedTemplate && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-ink-600">Template output</label>
-                  <Textarea value={selectedTemplate} readOnly className="min-h-32" />
-                </div>
-              )}
-            </TabsContent>
-
-            {/* AI Draft Tab */}
-            <TabsContent value="ai-draft" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Button onClick={handleGenerate} className="w-full">
-                  Generate
-                </Button>
-              </div>
-
-              {draftText && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-ink-600">AI draft</label>
-                    <Textarea value={draftText} onChange={(e) => setDraftText(e.target.value)} className="min-h-32" />
+            ) : (
+              <div className="bg-muted/30 rounded-lg p-4 border border-border">
+                <div className="flex items-start gap-3 mb-3 pb-3 border-b border-border">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold flex-shrink-0">
+                    {thread.sender[0].toUpperCase()}
                   </div>
-
-                  {/* Needs review removed for now */}
-
-                  {/* Citations panel */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-ink-600">Citations</label>
-                    <div className="border border-border rounded-lg p-3 space-y-2 bg-subtle overflow-y-auto max-h-32">
-                      {citations.map((citation, i) => (
-                        <div key={i} className="text-xs font-mono text-ink-600">
-                          <div className="font-medium">{citation.title}</div>
-                          <div className="text-ink-500 truncate">{citation.snippet}</div>
-                        </div>
-                      ))}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground">
+                      <ConstituentProfileCard email={thread.sender}>
+                        <span className="hover:text-primary transition-colors cursor-pointer">
+                          {thread.sender}
+                        </span>
+                      </ConstituentProfileCard>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {originalMessage?.date ? formatDate(originalMessage.date) : formatDate(thread.receivedAt)}
                     </div>
                   </div>
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
+                </div>
 
-          {/* Editable draft */}
-          {(selectedTemplate || draftText) && (
-            <div className="space-y-2 mt-6 border-t border-border pt-6">
-              <label className="text-xs font-medium text-ink-600">Edit draft</label>
-              <Textarea
-                value={draftText || selectedTemplate}
-                onChange={(e) => setDraftText(e.target.value)}
-                className="min-h-32"
-              />
-              <div className="text-xs text-ink-400">Last edited just now</div>
+                <div className="prose prose-sm max-w-none text-foreground">
+                  {originalMessage?.body ? (
+                    <HtmlEmail content={originalMessage.body} />
+                  ) : (
+                    <p className="text-muted-foreground italic">
+                      {thread.summary || "Email content not available"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Thread History */}
+            {threadHistory.length > 0 && (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowThreadHistory(!showThreadHistory)}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showThreadHistory ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {showThreadHistory ? "Hide" : "Show"} thread history ({threadHistory.length} {threadHistory.length === 1 ? "message" : "messages"})
+                </button>
+
+                {showThreadHistory && (
+                  <div className="mt-3 space-y-3">
+                    {threadHistory.map((msg, idx) => (
+                      <div key={msg.id || idx} className="bg-muted/20 rounded-lg p-4 border border-border/50">
+                        <div className="flex items-center gap-2 mb-2 text-sm">
+                          <span className={msg.isOutbound ? "text-primary font-medium" : "text-foreground font-medium"}>
+                            {msg.isOutbound ? "You" : msg.from}
+                          </span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-muted-foreground">{formatDate(msg.date)}</span>
+                        </div>
+                        <div className="prose prose-sm max-w-none text-foreground">
+                          {msg.body ? (
+                            <HtmlEmail content={msg.body} />
+                          ) : (
+                            <p className="text-muted-foreground italic">
+                              Message content not available
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* Reply Composition */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                Your Reply
+              </h3>
+              <Button
+                onClick={handleGenerate}
+                variant="secondary"
+                disabled={isGenerating}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isGenerating ? "Generating..." : "Generate AI Reply"}
+              </Button>
             </div>
+
+            <Textarea
+              value={draftText}
+              onChange={(e) => setDraftText(e.target.value)}
+              placeholder="Type your reply here, or use AI to get started..."
+              className="min-h-[300px] font-mono text-sm text-white dark:text-white"
+            />
+
+            <div className="flex items-center justify-between mt-2">
+              <div className="text-xs text-muted-foreground">
+                {draftText.length > 0 && (
+                  <>
+                    {draftText.split(/\s+/).filter(w => w).length} words · {draftText.length} characters
+                  </>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Last edited just now
+              </div>
+            </div>
+          </section>
+
+          {/* Citations */}
+          {draftText && (
+            <section>
+              <button
+                onClick={() => setShowCitations(!showCitations)}
+                className="flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wide mb-3 hover:text-primary transition-colors"
+              >
+                {showCitations ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                Citations & References ({citations.length})
+              </button>
+
+              {showCitations && (
+                <div className="space-y-3">
+                  {citations.map((citation, i) => (
+                    <div key={i} className="bg-muted/30 rounded-lg p-4 border border-border hover:border-primary/50 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className="text-xs font-mono text-muted-foreground mt-0.5">
+                          [{i + 1}]
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm text-foreground mb-1">
+                            {citation.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground mb-2">
+                            {citation.snippet}
+                          </div>
+                          {citation.url !== "#" && (
+                            <a
+                              href={citation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline"
+                            >
+                              {citation.url}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           )}
         </DrawerBody>
 
-        {/* Footer with actions */}
-        {(selectedTemplate || draftText) && (
+        {/* Footer */}
+        {draftText && (
           <DrawerFooter>
-            <Button variant="secondary" size="md" onClick={handleCopy}>
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </>
-              )}
-            </Button>
-            <Button variant="secondary" size="md" onClick={handleMarkReplied}>
-              Mark replied
-            </Button>
+            <div className="flex items-center justify-between w-full">
+              <div className="text-sm text-muted-foreground">
+                Ready to send or copy your reply
+              </div>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={handleCopy}>
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy to Clipboard
+                    </>
+                  )}
+                </Button>
+                <Button variant="secondary" onClick={handleMarkReplied}>
+                  Mark as Replied
+                </Button>
+                <Button variant="primary">
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Reply
+                </Button>
+              </div>
+            </div>
           </DrawerFooter>
         )}
       </DrawerContent>

@@ -1,8 +1,15 @@
 /**
  * Smart Message Filter
  *
- * Pre-filters emails before AI analysis to save API costs.
- * Only analyzes emails from real people that matter.
+ * Two-stage classification system:
+ * 1. Rule-based filtering (this file): Fast, catches obvious cases
+ * 2. AI classification (lib/analysis.ts): Handles edge cases with high accuracy
+ *
+ * This filter provides quick classification for clear cases. For ambiguous cases
+ * (low confidence < 0.7), the AI classifier in analysis.ts makes the final decision.
+ * The AI result (senderType) is stored in the database and takes priority in folders.ts.
+ *
+ * This hybrid approach balances speed, cost, and accuracy.
  */
 
 export type MessageType =

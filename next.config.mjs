@@ -17,7 +17,7 @@ const nextConfig = {
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-    ].join("; ")
+    ].join("; ");
 
     return [
       {
@@ -29,13 +29,24 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "no-referrer" },
           {
             key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), payment=()",
+            value: "camera=(), microphone=(), geolocation=(), payment=()",
           },
         ],
       },
-    ]
+    ];
   },
-}
+  async rewrites() {
+    return [
+      {
+        source: "/inbox",
+        destination: "/threads",
+      },
+      {
+        source: "/inbox/:path*",
+        destination: "/threads/:path*",
+      },
+    ];
+  },
+};
 
-export default nextConfig
+export default nextConfig;

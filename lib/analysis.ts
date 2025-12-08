@@ -17,12 +17,15 @@ export type MessageForAnalysis = {
   to?: string[] | null
 }
 
+export type SenderType = "person" | "automated" | "uncertain"
+
 export type MessageAnalysis = {
   sentimentScore: number | null
   urgencyLevel: "low" | "medium" | "high" | "critical"
   urgencyReasons: string[]
   topic: string | null
   confidence: number | null
+  senderType: SenderType
 }
 
 const ANALYSIS_SCHEMA = z.object({
@@ -34,13 +37,21 @@ const ANALYSIS_SCHEMA = z.object({
   urgency_reasons: z.array(z.string().min(1)).optional(),
   topic: z.string().min(2).max(120).optional(),
   confidence: z.coerce.number().min(0).max(1).nullable().optional(),
+  sender_type: z
+    .enum(["person", "automated", "uncertain"])
+    .or(z.string())
+    .optional(),
 })
 
 const SYSTEM_PROMPT = [
   "You are a policy intelligence analyzer for constituent emails.",
   "Given subject/body text, return ONLY minified JSON with keys:",
   "{ sentiment_score (-1..1), urgency_level (low|medium|high|critical),",
-  "urgency_reasons (string array), topic (short title), confidence (0..1) }.",
+  "urgency_reasons (string array), topic (short title), confidence (0..1),",
+  "sender_type (person|automated|uncertain) }.",
+  "For sender_type: 'person' = real human, 'automated' = bot/service/team account, 'uncertain' = unclear.",
+  "Use sender name, email patterns, content style to classify.",
+  "Examples: 'Google Workspace team' = automated, 'John Smith' = person, 'notifications@' = automated.",
   "Respond with JSON only. Use null for unknown values.",
 ].join(" ")
 
@@ -108,7 +119,7 @@ export async function analyzeMessage(
     )
   }
 
-  const { sentiment_score, urgency_level, urgency_reasons, topic, confidence } =
+  const { sentiment_score, urgency_level, urgency_reasons, topic, confidence, sender_type } =
     normalized.data
 
   return {
@@ -122,6 +133,7 @@ export async function analyzeMessage(
     topic: topic?.trim() || null,
     confidence:
       typeof confidence === "number" ? clamp(confidence, 0, 1) : null,
+    senderType: normalizeSenderType(sender_type),
   }
 }
 
@@ -187,6 +199,18 @@ function normalizeUrgencyLevel(input: unknown): MessageAnalysis["urgencyLevel"] 
       return value
     default:
       return "low"
+  }
+}
+
+function normalizeSenderType(input: unknown): SenderType {
+  const value = String(input ?? "").toLowerCase()
+  switch (value) {
+    case "person":
+    case "automated":
+    case "uncertain":
+      return value
+    default:
+      return "uncertain"
   }
 }
 

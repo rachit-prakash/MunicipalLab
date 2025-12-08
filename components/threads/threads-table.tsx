@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
+import { decodeHtmlEntities } from "@/lib/html-decode"
 import { useMemo, useState } from "react"
 import { ConstituentProfileCard } from "@/components/constituents/profile-card"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface ThreadsTableProps {
   threads: ThreadRow[]
@@ -100,53 +102,65 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {visible.map((thread) => (
-            <TableRow
-              key={thread.id}
-              onClick={() => onThreadClick(thread)}
-              className="cursor-pointer group border-l-2 border-transparent transition-colors hover:border-accent"
-            >
-              <TableCell className="hidden md:table-cell max-w-[200px]">
-                <ConstituentProfileCard email={thread.sender}>
-                  <div className="flex items-start gap-2 min-w-0">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold flex-shrink-0">
-                      {thread.sender ? thread.sender[0].toUpperCase() : "?"}
+          <AnimatePresence mode="popLayout">
+            {visible.map((thread, index) => (
+              <motion.tr
+                key={thread.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 26,
+                  delay: index * 0.03, // Stagger effect
+                }}
+                layout
+                onClick={() => onThreadClick(thread)}
+                className="cursor-pointer group border-l-2 border-transparent transition-colors hover:border-accent"
+              >
+                <TableCell className="hidden md:table-cell max-w-[200px]">
+                  <ConstituentProfileCard email={thread.sender}>
+                    <div className="flex items-start gap-2 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold flex-shrink-0">
+                        {thread.sender ? thread.sender[0].toUpperCase() : "?"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-foreground truncate" title={decodeHtmlEntities(thread.sender)}>{decodeHtmlEntities(thread.sender)}</div>
+                        <div className="text-xs text-muted-foreground truncate" title={decodeHtmlEntities(thread.subject)}>{decodeHtmlEntities(thread.subject)}</div>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-foreground truncate" title={thread.sender}>{thread.sender}</div>
-                      <div className="text-xs text-muted-foreground truncate" title={thread.subject}>{thread.subject}</div>
-                    </div>
+                  </ConstituentProfileCard>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="neutral">
+                    {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
+                </TableCell>
+                <TableCell className="max-w-xs truncate text-muted-foreground hidden sm:table-cell" title={decodeHtmlEntities(thread.summary)}>
+                  {decodeHtmlEntities(thread.summary)}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{formatDate(thread.receivedAt)}</TableCell>
+                <TableCell className="w-36 hidden sm:table-cell">
+                  <div className="flex justify-end opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onThreadClick(thread)
+                      }}
+                    >
+                      Suggest Reply
+                    </Button>
                   </div>
-                </ConstituentProfileCard>
-              </TableCell>
-              <TableCell>
-                <Badge variant="neutral">
-                  {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
-              </TableCell>
-              <TableCell className="max-w-xs truncate text-muted-foreground hidden sm:table-cell" title={thread.summary}>
-                {thread.summary}
-              </TableCell>
-              <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{formatDate(thread.receivedAt)}</TableCell>
-              <TableCell className="w-36 hidden sm:table-cell">
-                <div className="flex justify-end opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onThreadClick(thread)
-                    }}
-                  >
-                    Suggest Reply
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </TableBody>
       </Table>
       <div className="mt-4 flex items-center justify-end gap-2 px-4">
