@@ -5,6 +5,7 @@ export async function POST(req: NextRequest) {
   if (consent !== "accepted") {
     return NextResponse.json({ error: "Consent required" }, { status: 403 })
   }
+
   const res = NextResponse.json({ ok: true })
   res.cookies.set({
     name: "demo",

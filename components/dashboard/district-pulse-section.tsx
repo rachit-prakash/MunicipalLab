@@ -157,11 +157,11 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
           </CardHeader>
           <CardContent className="mt-4 space-y-4">
             {data.priorityCases.data.map((priority) => (
-              <div key={priority.title} className="rounded-lg border border-warning/30 bg-warning/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-warning-foreground">{priority.category}</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">{`“${priority.title}”`}</p>
+              <div key={priority.title} className="rounded-lg border border-warning/40 bg-warning/15 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-warning dark:text-warning">{priority.category}</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">{`"${priority.title}"`}</p>
                 <p className="text-sm text-muted-foreground">{priority.detail}</p>
-                <p className="mt-2 text-xs font-medium text-warning-foreground">{priority.insight}</p>
+                <p className="mt-2 text-xs font-medium text-warning dark:text-warning">{priority.insight}</p>
               </div>
             ))}
           </CardContent>
@@ -179,10 +179,10 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
           </CardHeader>
           <CardContent className="mt-4 space-y-3">
             {data.negativeTriggers.data.map((trigger) => (
-              <div key={trigger.phrase} className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3">
-                <p className="text-sm font-semibold text-foreground">“{trigger.phrase}”</p>
-                <p className="text-xs text-destructive">Avg sentiment: {formatSentiment(trigger.avgSentiment)}</p>
-                <p className="text-xs text-destructive">{trigger.mentions} emails this week</p>
+              <div key={trigger.phrase} className="rounded-lg bg-destructive/15 border border-destructive/30 px-4 py-3">
+                <p className="text-sm font-semibold text-foreground">"{trigger.phrase}"</p>
+                <p className="text-xs text-destructive dark:text-destructive">Avg sentiment: {formatSentiment(trigger.avgSentiment)}</p>
+                <p className="text-xs text-destructive dark:text-destructive">{trigger.mentions} emails this week</p>
               </div>
             ))}
           </CardContent>
@@ -200,10 +200,10 @@ export function DistrictPulseSection({ data = districtPulseSnapshot }: DistrictP
           </CardHeader>
           <CardContent className="mt-4 space-y-3">
             {data.positiveTriggers.data.map((trigger) => (
-              <div key={trigger.phrase} className="rounded-lg bg-success/10 border border-success/20 px-4 py-3">
-                <p className="text-sm font-semibold text-foreground">“{trigger.phrase}”</p>
-                <p className="text-xs text-success">Avg sentiment: {formatSentiment(trigger.avgSentiment)}</p>
-                <p className="text-xs text-success">{trigger.mentions} emails this week</p>
+              <div key={trigger.phrase} className="rounded-lg bg-success/15 border border-success/30 px-4 py-3">
+                <p className="text-sm font-semibold text-foreground">"{trigger.phrase}"</p>
+                <p className="text-xs text-success dark:text-success">Avg sentiment: {formatSentiment(trigger.avgSentiment)}</p>
+                <p className="text-xs text-success dark:text-success">{trigger.mentions} emails this week</p>
               </div>
             ))}
           </CardContent>

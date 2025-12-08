@@ -1,6 +1,9 @@
 /**
  * Quick migration runner
- * Reads and executes the constituent profiles migration
+ * Reads and executes a specified migration
+ *
+ * Usage: node scripts/run-migration.js <migration-name>
+ * Example: node scripts/run-migration.js switch-to-folders-array
  */
 
 const { Pool } = require('pg');
@@ -24,6 +27,23 @@ if (fs.existsSync(envPath)) {
 }
 
 async function runMigration() {
+  // Get migration name from command line args
+  const migrationName = process.argv[2];
+
+  if (!migrationName) {
+    console.error('❌ Error: Migration name required');
+    console.error('');
+    console.error('Usage: node scripts/run-migration.js <migration-name>');
+    console.error('');
+    console.error('Available migrations:');
+    const migrationsDir = path.join(__dirname, 'migrations');
+    const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql'));
+    files.forEach(file => {
+      console.error(`  - ${file.replace('.sql', '')}`);
+    });
+    process.exit(1);
+  }
+
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
@@ -42,23 +62,30 @@ async function runMigration() {
 
   try {
     // Read the migration SQL file
-    const sqlPath = path.join(__dirname, 'migrations', 'add-constituent-profiles.sql');
+    const filename = migrationName.endsWith('.sql') ? migrationName : `${migrationName}.sql`;
+    const sqlPath = path.join(__dirname, 'migrations', filename);
+
+    if (!fs.existsSync(sqlPath)) {
+      console.error(`❌ Migration file not found: ${filename}`);
+      console.error('');
+      console.error('Available migrations:');
+      const migrationsDir = path.join(__dirname, 'migrations');
+      const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql'));
+      files.forEach(file => {
+        console.error(`  - ${file.replace('.sql', '')}`);
+      });
+      process.exit(1);
+    }
+
     const sql = fs.readFileSync(sqlPath, 'utf8');
 
-    console.log('📄 Running migration: add-constituent-profiles.sql');
+    console.log(`📄 Running migration: ${filename}`);
+    console.log('');
 
     // Execute the migration
     await pool.query(sql);
 
     console.log('✅ Migration completed successfully!');
-    console.log('');
-    console.log('🎉 constituent_profiles table has been created');
-    console.log('📊 Indexes have been created for fast lookups');
-    console.log('');
-    console.log('Next steps:');
-    console.log('1. Run: pnpm tsx scripts/build-constituent-profiles.ts');
-    console.log('2. Start dev server: pnpm dev');
-    console.log('3. Go to /threads and hover on emails!');
 
   } catch (error) {
     console.error('❌ Migration failed:', error.message);

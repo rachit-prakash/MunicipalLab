@@ -8,7 +8,7 @@ const scopes = [
   "openid",
   "email",
   "profile",
-  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/gmail.modify",
 ].join(" ")
 // basically the scopes that we will be requesting from the user. Guess which one is sensitive ;).
 
@@ -77,13 +77,14 @@ export const authOptions: NextAuthOptions = {
           (token as any).email
         const displayName = (profile as any)?.name ?? null
 
-        // 1) Ensure there is a default tenant (shared for now)
+        // 1) Create a unique tenant per user (using email as tenant name for uniqueness)
+        // This ensures proper tenant isolation - each user has their own data
         const tenantResult = await query(
           `INSERT INTO tenants (name)
            VALUES ($1)
            ON CONFLICT (name) DO NOTHING
            RETURNING id`,
-          ["default"],
+          [email], // Use email as unique tenant identifier
         )
 
         let tenantId: string
@@ -92,7 +93,7 @@ export const authOptions: NextAuthOptions = {
         } else {
           const existingTenant = await query(
             `SELECT id FROM tenants WHERE name = $1 LIMIT 1`,
-            ["default"],
+            [email],
           )
           tenantId = existingTenant.rows[0].id
         }
@@ -128,7 +129,7 @@ export const authOptions: NextAuthOptions = {
               await client.query(
                 `INSERT INTO gmail_accounts (user_id, tenant_id, email, encrypted_refresh_token)
                  VALUES ($1, $2, $3, $4)
-                 ON CONFLICT (user_id)
+                 ON CONFLICT (user_id, email)
                  DO UPDATE SET
                    encrypted_refresh_token = EXCLUDED.encrypted_refresh_token,
                    updated_at = now()`,
@@ -186,6 +187,8 @@ export const authOptions: NextAuthOptions = {
       // expose our internal app user ID to the client if needed
       ;(session.user as any).id =
         (token as any).appUserId ?? (token as any).sub ?? null
+      // expose tenant ID to prevent redirect loops
+      ;(session.user as any).tenantId = (token as any).tenantId ?? null
       return session
     },
   },

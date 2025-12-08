@@ -2,11 +2,14 @@
 
 import type { ThreadRow } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { formatDate, getTopicBadgeClasses } from "@/lib/utils"
+import { formatDate, extractSenderName } from "@/lib/utils"
+import { decodeHtmlEntities } from "@/lib/html-decode"
 import { useMemo, useState } from "react"
 import { ConstituentProfileCard } from "@/components/constituents/profile-card"
+import { motion, AnimatePresence } from "framer-motion"
+import { Check, X, Eye, EyeOff } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface ThreadsTableProps {
   threads: ThreadRow[]
@@ -14,26 +17,157 @@ interface ThreadsTableProps {
 }
 
 export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
-  const [sortKey, setSortKey] = useState<"type" | "topic" | "receivedAt">("receivedAt")
+  const [sortKey, setSortKey] = useState<"receivedAt">("receivedAt")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [page, setPage] = useState(1)
   const pageSize = 25
+  const { toast } = useToast()
+
+  const handleMarkReplied = async (thread: ThreadRow, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+
+    try {
+      const response = await fetch(`/api/gmail/threads/${thread.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isReplied: true }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to mark as replied')
+      }
+
+      toast({
+        title: "Marked as replied",
+        description: "This thread has been marked as replied."
+      })
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, isReplied: true }
+      }))
+    } catch (error) {
+      console.error('Error marking as replied:', error)
+      toast({
+        title: "Error",
+        description: "Could not mark thread as replied.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleMarkUnreplied = async (thread: ThreadRow, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+
+    try {
+      const response = await fetch(`/api/gmail/threads/${thread.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isReplied: false }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to mark as unreplied')
+      }
+
+      toast({
+        title: "Marked as unreplied",
+        description: "This thread has been marked as unreplied."
+      })
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, isReplied: false }
+      }))
+    } catch (error) {
+      console.error('Error marking as unreplied:', error)
+      toast({
+        title: "Error",
+        description: "Could not mark thread as unreplied.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleMarkRead = async (thread: ThreadRow, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+
+    try {
+      const response = await fetch(`/api/gmail/threads/${thread.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ unread: false }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to mark as read')
+      }
+
+      toast({
+        title: "Marked as read",
+        description: "This thread has been marked as read."
+      })
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, unread: false }
+      }))
+    } catch (error) {
+      console.error('Error marking as read:', error)
+      toast({
+        title: "Error",
+        description: "Could not mark thread as read.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleMarkUnread = async (thread: ThreadRow, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+
+    try {
+      const response = await fetch(`/api/gmail/threads/${thread.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ unread: true }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to mark as unread')
+      }
+
+      toast({
+        title: "Marked as unread",
+        description: "This thread has been marked as unread."
+      })
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, unread: true }
+      }))
+    } catch (error) {
+      console.error('Error marking as unread:', error)
+      toast({
+        title: "Error",
+        description: "Could not mark thread as unread.",
+        variant: "destructive"
+      })
+    }
+  }
 
   const sorted = useMemo(() => {
     const copy = [...threads]
     copy.sort((a, b) => {
-      let av: string | number = ""
-      let bv: string | number = ""
-      if (sortKey === "type") {
-        av = a.type
-        bv = b.type
-      } else if (sortKey === "topic") {
-        av = a.topic ?? ""
-        bv = b.topic ?? ""
-      } else {
-        av = new Date(a.receivedAt).getTime()
-        bv = new Date(b.receivedAt).getTime()
-      }
+      const av = new Date(a.receivedAt).getTime()
+      const bv = new Date(b.receivedAt).getTime()
       if (av < bv) return sortDir === "asc" ? -1 : 1
       if (av > bv) return sortDir === "asc" ? 1 : -1
       return 0
@@ -47,7 +181,7 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
   const end = start + pageSize
   const visible = sorted.slice(start, end)
 
-  function toggleSort(key: "type" | "topic" | "receivedAt") {
+  function toggleSort(key: "receivedAt") {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"))
     } else {
@@ -63,29 +197,11 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto -mx-4 md:mx-0">
+    <div className="overflow-x-auto -mx-6">
       <Table className="min-w-0">
         <TableHeader>
           <TableRow hoverable={false}>
             <TableHead className="hidden md:table-cell w-48">From</TableHead>
-            <TableHead
-              role="columnheader"
-              aria-sort={sortKey === "type" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-              className="cursor-pointer select-none"
-              onClick={() => toggleSort("type")}
-              title="Sort by type"
-            >
-              Type
-            </TableHead>
-            <TableHead
-              role="columnheader"
-              aria-sort={sortKey === "topic" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-              className="cursor-pointer select-none"
-              onClick={() => toggleSort("topic")}
-              title="Sort by topic"
-            >
-              Topic
-            </TableHead>
             <TableHead className="max-w-xs hidden sm:table-cell">Summary</TableHead>
             <TableHead
               role="columnheader"
@@ -96,57 +212,92 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
             >
               Received
             </TableHead>
-            <TableHead className="w-36 text-right hidden sm:table-cell">Action</TableHead>
+            <TableHead className="w-32 text-right hidden sm:table-cell">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {visible.map((thread) => (
-            <TableRow
-              key={thread.id}
-              onClick={() => onThreadClick(thread)}
-              className="cursor-pointer group border-l-2 border-transparent transition-colors hover:border-accent"
-            >
-              <TableCell className="hidden md:table-cell max-w-[200px]">
-                <ConstituentProfileCard email={thread.sender}>
-                  <div className="flex items-start gap-2 min-w-0">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold flex-shrink-0">
-                      {thread.sender ? thread.sender[0].toUpperCase() : "?"}
+          <AnimatePresence mode="popLayout">
+            {visible.map((thread, index) => (
+              <motion.tr
+                key={thread.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 26,
+                  delay: index * 0.03, // Stagger effect
+                }}
+                layout
+                onClick={() => onThreadClick(thread)}
+                className={`cursor-pointer group border-l-4 transition-all duration-100 hover:border-accent ${
+                  thread.unread
+                    ? 'border-gray-400 bg-gray-100 dark:bg-gray-800/40'
+                    : 'border-transparent'
+                }`}
+              >
+                <TableCell className="hidden md:table-cell max-w-[200px]">
+                  <ConstituentProfileCard email={thread.sender}>
+                    <div className="min-w-0">
+                      <div className={`text-sm truncate transition-all duration-100 ${thread.unread ? 'font-bold text-gray-900 dark:text-gray-100' : 'font-medium text-foreground'}`} title={extractSenderName(decodeHtmlEntities(thread.sender))}>{extractSenderName(decodeHtmlEntities(thread.sender))}</div>
+                      <div className={`text-xs truncate transition-all duration-100 ${thread.unread ? 'font-semibold text-gray-700 dark:text-gray-300' : 'text-muted-foreground'}`} title={decodeHtmlEntities(thread.subject)}>{decodeHtmlEntities(thread.subject)}</div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-foreground truncate" title={thread.sender}>{thread.sender}</div>
-                      <div className="text-xs text-muted-foreground truncate" title={thread.subject}>{thread.subject}</div>
-                    </div>
+                  </ConstituentProfileCard>
+                </TableCell>
+                <TableCell className={`max-w-xs truncate hidden sm:table-cell transition-all duration-100 ${thread.unread ? 'font-semibold text-gray-800 dark:text-gray-200' : 'text-muted-foreground'}`} title={decodeHtmlEntities(thread.summary)}>
+                  {decodeHtmlEntities(thread.summary)}
+                </TableCell>
+                <TableCell className={`text-xs hidden sm:table-cell transition-all duration-100 ${thread.unread ? 'font-semibold text-gray-800 dark:text-gray-200' : 'text-muted-foreground'}`}>{formatDate(thread.receivedAt)}</TableCell>
+                <TableCell className="w-32 hidden sm:table-cell">
+                  <div className="flex justify-end gap-1">
+                    {thread.unread ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto h-8 w-8 p-0"
+                        onClick={(e) => handleMarkRead(thread, e)}
+                        title="Mark as read"
+                      >
+                        <EyeOff className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto h-8 w-8 p-0"
+                        onClick={(e) => handleMarkUnread(thread, e)}
+                        title="Mark as unread"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {!thread.isReplied ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto h-8 w-8 p-0"
+                        onClick={(e) => handleMarkReplied(thread, e)}
+                        title="Mark as replied"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto h-8 w-8 p-0"
+                        onClick={(e) => handleMarkUnreplied(thread, e)}
+                        title="Mark as unreplied"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                </ConstituentProfileCard>
-              </TableCell>
-              <TableCell>
-                <Badge variant="neutral">
-                  {thread.type === "CASEWORK" ? "Casework" : "Correspondence"}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="solid" className={getTopicBadgeClasses(thread.topic)}>{thread.topic}</Badge>
-              </TableCell>
-              <TableCell className="max-w-xs truncate text-muted-foreground hidden sm:table-cell" title={thread.summary}>
-                {thread.summary}
-              </TableCell>
-              <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{formatDate(thread.receivedAt)}</TableCell>
-              <TableCell className="w-36 hidden sm:table-cell">
-                <div className="flex justify-end opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onThreadClick(thread)
-                    }}
-                  >
-                    Suggest Reply
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </TableBody>
       </Table>
       <div className="mt-4 flex items-center justify-end gap-2 px-4">

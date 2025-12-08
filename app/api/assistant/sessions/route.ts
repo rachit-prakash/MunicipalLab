@@ -9,6 +9,15 @@ import { withTenant } from "@/lib/db"
 import { checkRateLimit, RateLimits } from "@/lib/rateLimit"
 
 export async function GET(req: NextRequest) {
+	// Check for demo mode first
+	const demoMode = req.cookies.get("demo")?.value === "1"
+	if (demoMode) {
+		// Return empty sessions for demo mode (no persistent history)
+		return new Response(JSON.stringify({ sessions: [] }), {
+			headers: { "content-type": "application/json" },
+		})
+	}
+
 	// Check rate limit
 	const rateLimitResponse = await checkRateLimit(req, RateLimits.CHATBOT)
 	if (rateLimitResponse) {
@@ -56,6 +65,24 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+	// Check for demo mode first
+	const demoMode = req.cookies.get("demo")?.value === "1"
+	if (demoMode) {
+		// Return a mock session for demo mode (not persisted)
+		const body = await req.json().catch(() => ({}))
+		const { title } = body
+		return new Response(JSON.stringify({
+			session: {
+				id: `demo-${Date.now()}`,
+				title: title || "New Chat",
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			}
+		}), {
+			headers: { "content-type": "application/json" },
+		})
+	}
+
 	// Check rate limit
 	const rateLimitResponse = await checkRateLimit(req, RateLimits.CHATBOT)
 	if (rateLimitResponse) {

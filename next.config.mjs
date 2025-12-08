@@ -9,15 +9,15 @@ const nextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://plausible.io",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.openai.com https://openrouter.ai https://vitals.vercel-insights.com",
+      "connect-src 'self' https://api.openai.com https://openrouter.ai https://vitals.vercel-insights.com https://plausible.io",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-    ].join("; ")
+    ].join("; ");
 
     return [
       {
@@ -29,13 +29,24 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "no-referrer" },
           {
             key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), payment=()",
+            value: "camera=(), microphone=(), geolocation=(), payment=()",
           },
         ],
       },
-    ]
+    ];
   },
-}
+  async rewrites() {
+    return [
+      {
+        source: "/inbox",
+        destination: "/threads",
+      },
+      {
+        source: "/inbox/:path*",
+        destination: "/threads/:path*",
+      },
+    ];
+  },
+};
 
-export default nextConfig
+export default nextConfig;

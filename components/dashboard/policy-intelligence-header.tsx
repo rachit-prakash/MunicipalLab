@@ -2,6 +2,7 @@
 
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
 import { InsightCard } from "@/components/dashboard/insight-card"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -15,6 +16,7 @@ type InsightCardSpec = {
   insight: string
   insightTone?: InsightTone
   extra?: ReactNode
+  onClick?: () => void
 }
 
 const placeholderCards: InsightCardSpec[] = [
@@ -91,6 +93,7 @@ function formatSignedPercent(value: number | null | undefined) {
 }
 
 export function PolicyIntelligenceHeader() {
+  const router = useRouter()
   const [data, setData] = useState<PolicyInsightsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -102,17 +105,39 @@ export function PolicyIntelligenceHeader() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch("/api/policy-intelligence", {
-          method: "GET",
-          cache: "no-store",
-          signal,
-        })
-        if (!res.ok) {
-          const message = await res.text().catch(() => res.statusText)
+        const [policyRes, risingIssuesRes] = await Promise.all([
+          fetch("/api/policy-intelligence", {
+            method: "GET",
+            cache: "no-store",
+            signal,
+          }),
+          fetch("/api/rising-issues/last-3-days", {
+            method: "GET",
+            cache: "no-store",
+            signal,
+          })
+        ])
+
+        if (!policyRes.ok) {
+          const message = await policyRes.text().catch(() => policyRes.statusText)
           throw new Error(message || "Failed to load insights")
         }
-        const payload = (await res.json()) as PolicyInsightsResponse
-        setData(payload)
+
+        const policyData = (await policyRes.json()) as PolicyInsightsResponse
+
+        // If rising issues endpoint succeeds, use it to update the top rising issue
+        if (risingIssuesRes.ok) {
+          const risingData = await risingIssuesRes.json()
+          if (risingData.topRisingIssue) {
+            policyData.topRisingIssue = {
+              topic: risingData.topRisingIssue.topic,
+              deltaPercent: risingData.topRisingIssue.weekOverWeekPercent,
+              exampleSubjectLine: risingData.topRisingIssue.exampleSubjects?.[0] ?? null,
+            }
+          }
+        }
+
+        setData(policyData)
       } catch (err: any) {
         if (err?.name === "AbortError") return
         setError(err?.message ?? "Unable to load insights")
@@ -253,16 +278,17 @@ export function PolicyIntelligenceHeader() {
         value: `${data.urgentCases.count} urgent`,
         insight: urgentReasons,
         insightTone: "neutral",
+        onClick: () => router.push("/threads?folder=crisis-emergency"),
       },
     ]
     return cardList
-  }, [data])
+  }, [data, router])
 
   return (
     <section className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Policy Intelligence</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Policy Intelligence</p>
           <p className="text-base text-muted-foreground">Decision-grade signals updated live from constituent inboxes</p>
         </div>
         <button
@@ -291,9 +317,13 @@ export function PolicyIntelligenceHeader() {
         </button>
       </div>
 
-      {error ? <div className="text-sm text-red-600 border border-red-100 bg-red-50 rounded-lg px-3 py-2">{error}</div> : null}
+      {error ? <div className="text-sm text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 rounded-lg px-3 py-2">{error}</div> : null}
       {syncMessage ? (
-        <div className={`text-sm border rounded-lg px-3 py-2 ${syncMessage.includes('✓') ? 'text-green-600 border-green-100 bg-green-50' : 'text-amber-600 border-amber-100 bg-amber-50'}`}>
+        <div className={`text-sm border rounded-lg px-3 py-2 ${
+          syncMessage.includes('✓') 
+            ? 'text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/50' 
+            : 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50'
+        }`}>
           {syncMessage}
         </div>
       ) : null}
@@ -320,6 +350,7 @@ export function PolicyIntelligenceHeader() {
                 insight={card.insight}
                 insightTone={card.insightTone ?? "default"}
                 delay={0.05 * idx}
+                onClick={card.onClick}
               >
                 {card.extra}
               </InsightCard>

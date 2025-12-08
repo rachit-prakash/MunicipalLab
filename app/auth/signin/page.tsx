@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -69,12 +70,7 @@ function SignInContent() {
       setEnablingDemo(true)
       const res = await fetch("/api/demo/enable", { method: "POST" })
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        if (res.status === 403) {
-          setError("Cookie consent is required to enable demo mode. Please accept cookies and try again.")
-        } else {
-          setError("Unable to enable demo mode.")
-        }
+        setError("Unable to enable demo mode.")
         return
       }
       // Navigate straight to the dashboard; API routes will read the demo cookie
@@ -134,7 +130,7 @@ function SignInContent() {
             }}
           />
           <CardHeader className="relative">
-            <div className="flex justify-center mb-4">
+            <Link href="/" className="flex justify-center mb-4 cursor-pointer hover:opacity-80 transition-opacity">
               <Image
                 src="/logo-icon.png"
                 alt="Legaside Logo"
@@ -151,7 +147,7 @@ function SignInContent() {
                 className="rounded-xl hidden dark:block"
                 priority
               />
-            </div>
+            </Link>
             <CardTitle className={cn("text-center text-3xl font-medium text-foreground", garamond.className)} style={{ letterSpacing: "-0.01em" }}>
               Welcome to Legaside
             </CardTitle>
@@ -170,7 +166,7 @@ function SignInContent() {
             <div className="text-center text-sm font-medium text-muted-foreground">or</div>
             <Button
               onClick={handleDemo}
-              variant="outline"
+              variant="secondary"
               disabled={enablingDemo}
               className="relative w-full h-12 rounded-full text-base font-semibold border-[1.5px] border-primary text-primary bg-transparent hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-300 hover:translate-y-[-2px]"
             >

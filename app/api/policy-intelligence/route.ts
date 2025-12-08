@@ -34,6 +34,34 @@ function calculateDelta(current: number, baseline: number): number {
 }
 
 export async function GET(request: NextRequest) {
+  // Check for demo mode first
+  const demoMode = request.cookies.get("demo")?.value === "1"
+  if (demoMode) {
+    // Return demo policy intelligence data
+    const demoData: PolicyInsightsResponse = {
+      newMessagesToday: {
+        count: 87,
+        baselineAvg: 78,
+        deltaPercent: 11.5,
+      },
+      topRisingIssue: {
+        topic: "Transit complaints",
+        deltaPercent: 34,
+        exampleSubjectLine: "Bus route 45 delays affecting commuters",
+      },
+      sentimentShift: {
+        deltaPercent: -12,
+        thisWeekAvg: -0.15,
+        lastWeekAvg: -0.03,
+      },
+      urgentCases: {
+        count: 14,
+        topReasons: ["angry", "emergency keywords"],
+      },
+    }
+    return NextResponse.json(demoData)
+  }
+
   // Check rate limit
   const rateLimitResponse = await checkRateLimit(request, RateLimits.POLICY_INTELLIGENCE)
   if (rateLimitResponse) {
@@ -196,20 +224,12 @@ export async function GET(request: NextRequest) {
         top_reasons: string[] | null
       }>(
         `
-          WITH bounds AS (
-            SELECT
-              (date_trunc('week', timezone($1, now())) AT TIME ZONE $1) AS this_week_start,
-              ((date_trunc('week', timezone($1, now())) + interval '7 day') AT TIME ZONE $1) AS this_week_end
-          ),
-          urgent_messages AS (
+          WITH urgent_messages AS (
             SELECT m.*
-            FROM bounds
-            JOIN messages m
-              ON m.tenant_id = $2
-             AND m.is_outbound = false
-             AND m.urgency_level IN ('high', 'critical')
-             AND timezone($1, m.internal_date) >= bounds.this_week_start
-             AND timezone($1, m.internal_date) < bounds.this_week_end
+            FROM messages m
+            WHERE m.tenant_id = $1
+              AND m.is_outbound = false
+              AND m.urgency_level IN ('high', 'critical')
           )
           SELECT
             (SELECT COUNT(*) FROM urgent_messages)::int AS count,
@@ -231,7 +251,7 @@ export async function GET(request: NextRequest) {
               ARRAY[]::text[]
             ) AS top_reasons;
         `,
-        [timezone, tenantId],
+        [tenantId],
       )
 
       const [todayRow, baselineRow, topIssueRow, sentimentRow, urgentRow] = await Promise.all([

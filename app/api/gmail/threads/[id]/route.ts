@@ -8,9 +8,36 @@ import { audit } from '@/lib/audit';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check for demo mode first
+    const demoMode = request.cookies.get("demo")?.value === "1"
+    const { id: threadId } = await params;
+
+    if (demoMode) {
+      // Return mock thread data for demo mode
+      return NextResponse.json({
+        thread: {
+          id: threadId,
+          gmail_thread_id: threadId,
+          subject: "Demo Thread Subject",
+          last_message_ts: new Date().toISOString(),
+        },
+        messages: [
+          {
+            id: `msg-${threadId}-1`,
+            gmail_message_id: `msg-${threadId}-1`,
+            from: "constituent@example.com",
+            date: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            snippet: "This is a demo message...",
+            body: "This is the full body of the demo message. Thank you for your service!",
+            isOutbound: false,
+          },
+        ],
+      });
+    }
+
     // gets the session for the tenantId and userId
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -19,7 +46,6 @@ export async function GET(
 
     const userId = (session.user as any).id || (session as any).token?.sub;
     // from my experience, some sessions don't have an id, so we use the sub as a fallback.
-    const threadId = params.id;
 
     // gets the tenantId for this user
     const tenantResult = await query(
@@ -35,10 +61,17 @@ export async function GET(
 
     // if the thread doesnt exist in the database, we return a 404 error.
     const existingThread = await withTenant(tenantId, async (client) => {
+      // Support both internal UUID and gmail_thread_id
+      // Check if threadId is a UUID (has dashes) or gmail_thread_id (no dashes)
+      const isUuid = threadId.includes('-');
+      const whereClause = isUuid
+        ? 'tenant_id = $1 AND id = $2'
+        : 'tenant_id = $1 AND gmail_thread_id = $2';
+
       const threadResult = await client.query(
         `SELECT id, gmail_thread_id, subject, last_message_ts
          FROM threads
-         WHERE tenant_id = $1 AND gmail_thread_id = $2
+         WHERE ${whereClause}
          LIMIT 1`,
         [tenantId, threadId]
       );
@@ -51,7 +84,7 @@ export async function GET(
 
       // gets the messages for this thread
       const messagesResult = await client.query(
-        `SELECT id, gmail_message_id, from_email, internal_date, snippet
+        `SELECT id, gmail_message_id, from_email, internal_date, snippet, body_redacted, is_outbound
          FROM messages
          WHERE tenant_id = $1 AND thread_id = $2
          ORDER BY internal_date ASC`,
@@ -64,8 +97,11 @@ export async function GET(
       };
     });
 
-    // if the thread exists in the database, we return it. otherwise, we fetch it from Gmail.
-    if (existingThread) {
+    // Check if refresh is requested (bypasses database cache)
+    const refresh = request.nextUrl.searchParams.get('refresh') === 'true';
+
+    // if the thread exists in the database AND no refresh requested, we return it.
+    if (existingThread && !refresh) {
       // best-effort audit
       try {
         await audit({
@@ -76,6 +112,27 @@ export async function GET(
           payload: { source: 'db', id: threadId },
         })
       } catch {}
+      const formattedMessages = existingThread.messages.map((msg: any) => ({
+        id: msg.id,
+        gmail_message_id: msg.gmail_message_id,
+        from: msg.from_email,
+        date: msg.internal_date,
+        snippet: msg.snippet,
+        body: msg.body_redacted,
+        isOutbound: msg.is_outbound,
+      }));
+
+      // Debug logging for Supabase messages
+      if (existingThread.messages.some((m: any) => m.from_email?.toLowerCase().includes('supabase'))) {
+        console.log('[DEBUG] Supabase message detected');
+        const supabaseMsg = formattedMessages.find((m: any) => m.from?.toLowerCase().includes('supabase'));
+        if (supabaseMsg) {
+          console.log(`[DEBUG] Body length: ${supabaseMsg.body?.length || 0} chars`);
+          console.log(`[DEBUG] Snippet length: ${supabaseMsg.snippet?.length || 0} chars`);
+          console.log(`[DEBUG] Body preview: ${supabaseMsg.body?.substring(0, 100)}...`);
+        }
+      }
+
       return NextResponse.json({
         thread: {
           id: existingThread.id,
@@ -83,13 +140,7 @@ export async function GET(
           subject: existingThread.subject,
           last_message_ts: existingThread.last_message_ts,
         },
-        messages: existingThread.messages.map((msg: any) => ({
-          id: msg.id,
-          gmail_message_id: msg.gmail_message_id,
-          from: msg.from_email,
-          date: msg.internal_date,
-          snippet: msg.snippet,
-        })),
+        messages: formattedMessages,
       });
     }
 
@@ -102,8 +153,19 @@ export async function GET(
       );
     }
 
+    // If we got here with a UUID, we need to fetch the gmail_thread_id first
+    const isUuid = threadId.includes('-');
+    let gmailThreadId = threadId;
+
+    if (isUuid && existingThread) {
+      gmailThreadId = existingThread.thread.gmail_thread_id;
+    } else if (isUuid && !existingThread) {
+      // UUID but not in DB - can't fetch from Gmail
+      return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
+    }
+
     const gmailResponse = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}?format=full`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/threads/${gmailThreadId}?format=full`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -200,7 +262,7 @@ export async function GET(
             internal_date = EXCLUDED.internal_date,
             snippet = EXCLUDED.snippet,
             body_redacted = EXCLUDED.body_redacted
-          RETURNING id, gmail_message_id, from_email, internal_date, snippet`,
+          RETURNING id, gmail_message_id, from_email, internal_date, snippet, body_redacted, is_outbound`,
           [
             tenantId,
             thread.id,
@@ -243,10 +305,183 @@ export async function GET(
         from: msg.from_email,
         date: msg.internal_date,
         snippet: msg.snippet,
+        body: msg.body_redacted,
+        isOutbound: msg.is_outbound,
       })),
     });
   } catch (error) {
     console.error('Error fetching thread:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check for demo mode first
+    const demoMode = request.cookies.get("demo")?.value === "1"
+    const { id: threadId } = await params;
+
+    if (demoMode) {
+      // Parse request body for demo mode
+      const body = await request.json();
+      const { isReplied, unread } = body;
+
+      // Return mock success response for demo mode
+      return NextResponse.json({
+        id: threadId,
+        gmail_thread_id: threadId,
+        subject: "Demo Thread",
+        isReplied: isReplied,
+        unread: unread,
+      });
+    }
+
+    // Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = (session.user as any).id || (session as any).token?.sub;
+
+    // Get tenant_id for this user
+    const tenantResult = await query(
+      `SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
+
+    if (!tenantResult.rows.length) {
+      return NextResponse.json({ error: 'No tenant found' }, { status: 404 });
+    }
+
+    const tenantId = tenantResult.rows[0].tenant_id;
+
+    // Parse request body
+    const body = await request.json();
+    const { isReplied, unread } = body;
+
+    // Validate input
+    if (isReplied !== undefined && typeof isReplied !== 'boolean') {
+      return NextResponse.json(
+        { error: 'isReplied must be a boolean' },
+        { status: 400 }
+      );
+    }
+
+    if (unread !== undefined && typeof unread !== 'boolean') {
+      return NextResponse.json(
+        { error: 'unread must be a boolean' },
+        { status: 400 }
+      );
+    }
+
+    // At least one field must be provided
+    if (isReplied === undefined && unread === undefined) {
+      return NextResponse.json(
+        { error: 'Either isReplied or unread must be provided' },
+        { status: 400 }
+      );
+    }
+
+    // Update the thread
+    const result = await withTenant(tenantId, async (client) => {
+      // Support both internal UUID and gmail_thread_id
+      const isUuid = threadId.includes('-');
+      const whereClause = isUuid
+        ? 'tenant_id = $1 AND id = $2'
+        : 'tenant_id = $1 AND gmail_thread_id = $2';
+
+      // Build dynamic SET clause
+      const updates: string[] = ['updated_at = NOW()'];
+      const values: any[] = [tenantId, threadId];
+      let paramIndex = 3;
+
+      if (isReplied !== undefined) {
+        updates.push(`is_replied = $${paramIndex}`);
+        values.push(isReplied);
+        paramIndex++;
+      }
+
+      if (unread !== undefined) {
+        updates.push(`unread = $${paramIndex}`);
+        values.push(unread);
+        paramIndex++;
+      }
+
+      const updateResult = await client.query(
+        `UPDATE threads
+         SET ${updates.join(', ')}
+         WHERE ${whereClause}
+         RETURNING id, gmail_thread_id, subject, is_replied, unread`,
+        values
+      );
+
+      if (updateResult.rows.length === 0) {
+        return null;
+      }
+
+      return updateResult.rows[0];
+    });
+
+    if (!result) {
+      return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
+    }
+
+    // If unread status was changed, sync with Gmail API
+    if (unread !== undefined) {
+      try {
+        const accessToken = await getAccessToken(tenantId, userId);
+        const gmailThreadId = result.gmail_thread_id;
+
+        // Use Gmail API to modify the UNREAD label
+        const modifyUrl = `https://gmail.googleapis.com/gmail/v1/users/me/threads/${gmailThreadId}/modify`;
+
+        const modifyBody = unread
+          ? { addLabelIds: ['UNREAD'] }
+          : { removeLabelIds: ['UNREAD'] };
+
+        await fetch(modifyUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(modifyBody),
+        });
+
+        console.log(`Successfully ${unread ? 'marked' : 'unmarked'} thread ${gmailThreadId} as unread in Gmail`);
+      } catch (error) {
+        console.error('Failed to sync unread status with Gmail:', error);
+        // Continue even if Gmail sync fails - database is updated
+      }
+    }
+
+    // Best-effort audit
+    try {
+      await audit({
+        tenantId,
+        actorUserId: userId,
+        action: 'gmail.thread.update',
+        requestId: request.headers.get('x-request-id') ?? undefined,
+        payload: { id: threadId, isReplied },
+      });
+    } catch {}
+
+    return NextResponse.json({
+      id: result.id,
+      gmail_thread_id: result.gmail_thread_id,
+      subject: result.subject,
+      isReplied: result.is_replied,
+      unread: result.unread,
+    });
+  } catch (error) {
+    console.error('Error updating thread:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -270,27 +505,111 @@ function extractLastMessageTimestamp(messages: any[]): Date {
 }
 
 // we extract the email body from the Gmail payload.
+// Gmail messages can have deeply nested multipart structures with multiple text parts.
+// We need to find the ACTUAL message body, not a preview/snippet.
 function extractBody(payload: any): string {
-  // we check for direct body data.
+  // Simple message with direct body
   if (payload.body?.data) {
-    return Buffer.from(payload.body.data, 'base64').toString('utf-8');
+    return decodeBase64Url(payload.body.data);
   }
-  
-  // we check for text/plain parts.
-  if (payload.parts) {
-    for (const part of payload.parts) {
-      if (part.mimeType === 'text/plain' && part.body?.data) {
-        return Buffer.from(part.body.data, 'base64').toString('utf-8');
-      }
-    }
-    // we check for text/html parts.
-    for (const part of payload.parts) {
-      if (part.mimeType === 'text/html' && part.body?.data) {
-        return Buffer.from(part.body.data, 'base64').toString('utf-8');
-      }
-    }
+
+  if (!payload.parts) {
+    return '';
   }
-  
-  // if we don't find any body data, we return an empty string.
+
+  // Strategy: The real message body is typically inside multipart/alternative.
+  // Some emails have a short preview text/plain BEFORE the multipart/alternative container.
+  // We need to prioritize content from multipart/alternative and pick the largest part.
+
+  // Step 1: Look for multipart/alternative (contains the actual message body)
+  const alternativePart = findPartByMimeType(payload.parts, 'multipart/alternative');
+  if (alternativePart?.parts) {
+    // Prefer HTML from alternative (usually more complete), fallback to plain
+    const htmlFromAlt = getLargestTextPart(alternativePart.parts, 'text/html');
+    if (htmlFromAlt) return htmlFromAlt;
+
+    const plainFromAlt = getLargestTextPart(alternativePart.parts, 'text/plain');
+    if (plainFromAlt) return plainFromAlt;
+  }
+
+  // Step 2: Check multipart/related (often wraps multipart/alternative with inline images)
+  const relatedPart = findPartByMimeType(payload.parts, 'multipart/related');
+  if (relatedPart?.parts) {
+    const altInRelated = findPartByMimeType(relatedPart.parts, 'multipart/alternative');
+    if (altInRelated?.parts) {
+      const htmlFromAlt = getLargestTextPart(altInRelated.parts, 'text/html');
+      if (htmlFromAlt) return htmlFromAlt;
+
+      const plainFromAlt = getLargestTextPart(altInRelated.parts, 'text/plain');
+      if (plainFromAlt) return plainFromAlt;
+    }
+
+    // Direct text parts in related
+    const htmlFromRelated = getLargestTextPart(relatedPart.parts, 'text/html');
+    if (htmlFromRelated) return htmlFromRelated;
+
+    const plainFromRelated = getLargestTextPart(relatedPart.parts, 'text/plain');
+    if (plainFromRelated) return plainFromRelated;
+  }
+
+  // Step 3: Fallback - collect ALL text parts recursively and return the largest
+  // This handles edge cases and non-standard structures
+  const allHtmlParts = collectAllParts(payload.parts, 'text/html');
+  if (allHtmlParts.length > 0) {
+    const largest = allHtmlParts.sort((a, b) => (b.body?.size || 0) - (a.body?.size || 0))[0];
+    if (largest.body?.data) return decodeBase64Url(largest.body.data);
+  }
+
+  const allPlainParts = collectAllParts(payload.parts, 'text/plain');
+  if (allPlainParts.length > 0) {
+    const largest = allPlainParts.sort((a, b) => (b.body?.size || 0) - (a.body?.size || 0))[0];
+    if (largest.body?.data) return decodeBase64Url(largest.body.data);
+  }
+
   return '';
+}
+
+// Gmail uses base64url encoding (RFC 4648), not standard base64
+function decodeBase64Url(data: string): string {
+  // Convert base64url to standard base64
+  const base64 = data.replace(/-/g, '+').replace(/_/g, '/');
+  return Buffer.from(base64, 'base64').toString('utf-8');
+}
+
+// Find a part by its MIME type (returns the part object, not decoded content)
+function findPartByMimeType(parts: any[], mimeType: string): any | null {
+  for (const part of parts) {
+    if (part.mimeType === mimeType) {
+      return part;
+    }
+    if (part.parts) {
+      const found = findPartByMimeType(part.parts, mimeType);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// Get the largest text part of a specific type from a parts array (non-recursive)
+function getLargestTextPart(parts: any[], mimeType: string): string | null {
+  const matching = parts.filter(p => p.mimeType === mimeType && p.body?.data);
+  if (matching.length === 0) return null;
+
+  // Sort by size descending and return the largest
+  const largest = matching.sort((a, b) => (b.body?.size || 0) - (a.body?.size || 0))[0];
+  return decodeBase64Url(largest.body.data);
+}
+
+// Recursively collect ALL parts of a specific MIME type
+function collectAllParts(parts: any[], mimeType: string): any[] {
+  let results: any[] = [];
+  for (const part of parts) {
+    if (part.mimeType === mimeType && part.body?.data) {
+      results.push(part);
+    }
+    if (part.parts) {
+      results = results.concat(collectAllParts(part.parts, mimeType));
+    }
+  }
+  return results;
 }

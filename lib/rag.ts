@@ -51,7 +51,7 @@ export async function retrieveEmailContext(
 	const {
 		maxMessages = 5,
 		maxThreads = 3,
-		minSimilarity = 0.5,
+		minSimilarity = 0.3, // Lower threshold because emails are truncated to 2000 chars
 		includeMessages = true,
 		includeThreads = true,
 	} = options
@@ -353,6 +353,12 @@ export function isChronologicalQuery(query: string): boolean {
 	]
 
 	const lowerQuery = query.toLowerCase()
+
+	// Check for pattern like "last N emails" or "last N messages"
+	if (/last\s+\d+\s+(email|message)/i.test(query)) {
+		return true
+	}
+
 	return chronologicalKeywords.some((keyword) => lowerQuery.includes(keyword))
 }
 
