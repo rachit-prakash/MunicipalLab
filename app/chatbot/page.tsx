@@ -113,7 +113,7 @@ function SuggestedPrompts({ onPromptClick }: { onPromptClick: (prompt: string) =
               <prompt.icon className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground group-hover:text-foreground/90 transition-colors">
+              <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-white/90 transition-colors">
                 {prompt.text}
               </p>
             </div>
@@ -713,7 +713,7 @@ export default function ChatbotPage() {
               placeholder="Ask a question about your data..."
               disabled={sending}
               rows={1}
-              className="min-h-[52px] max-h-[200px] flex-1 resize-none rounded-3xl border border-border/50 bg-background px-5 py-3.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 shadow-sm"
+              className="min-h-[52px] max-h-[200px] flex-1 resize-none rounded-3xl border border-border/50 bg-background px-5 py-3.5 text-sm text-gray-900 dark:text-white placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 shadow-sm"
             />
             <Button
               type="submit"

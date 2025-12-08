@@ -117,8 +117,8 @@ async function bootstrapSync(
   userEmail: string,
   accountId: string
 ): Promise<void> {
-  // Fetch a small window of recent messages (e.g., last 10 messages)
-  const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10`;
+  // Fetch recent messages (100 messages for initial sync)
+  const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=100`;
 
   const listResponse = await fetchWithRetry(listUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
