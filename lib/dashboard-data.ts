@@ -24,11 +24,53 @@ export async function getDashboardDataset(
   days = 30,
   topicLimit = 5,
 ): Promise<DashboardDataset> {
+  // Return demo data for demo tenant
+  if (tenantId === "demo") {
+    return getDemoDashboardDataset(days, topicLimit)
+  }
+
   const topTopics = await getTopTopics(tenantId, days, topicLimit)
   const trendTopics = topTopics.slice(0, 3).map((t) => t.topic)
   const trendsByTopic = trendTopics.length
     ? await getTrendSeries(tenantId, trendTopics, days)
     : {}
+
+  return { topTopics, trendsByTopic }
+}
+
+function getDemoDashboardDataset(days = 30, topicLimit = 5): DashboardDataset {
+  // Demo topics based on demo message data
+  const topTopics: TopicCount[] = [
+    { topic: "Ukraine Aid & Support", count: 28 },
+    { topic: "Gaza Ceasefire & Humanitarian Access", count: 24 },
+    { topic: "Healthcare & Affordability", count: 18 },
+    { topic: "Housing & Zoning", count: 15 },
+    { topic: "Climate Resilience", count: 12 },
+  ].slice(0, topicLimit)
+
+  // Generate trend data for top 3 topics
+  const trendTopics = topTopics.slice(0, 3).map((t) => t.topic)
+  const trendsByTopic: TrendsByTopic = {}
+  const labels = buildDateLabels(days)
+
+  for (const topic of trendTopics) {
+    const trends: TrendPoint[] = []
+    for (let i = 0; i < labels.length; i++) {
+      // Create varied but realistic sentiment distributions
+      const dayOffset = i / labels.length
+      const support = Math.floor(10 + Math.random() * 15 + dayOffset * 5)
+      const oppose = Math.floor(5 + Math.random() * 10 + (1 - dayOffset) * 3)
+      const neutral = Math.floor(3 + Math.random() * 8)
+
+      trends.push({
+        date: labels[i],
+        support,
+        oppose,
+        neutral,
+      })
+    }
+    trendsByTopic[topic] = trends
+  }
 
   return { topTopics, trendsByTopic }
 }

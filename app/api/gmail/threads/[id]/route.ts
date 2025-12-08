@@ -11,6 +11,33 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check for demo mode first
+    const demoMode = request.cookies.get("demo")?.value === "1"
+    const { id: threadId } = await params;
+
+    if (demoMode) {
+      // Return mock thread data for demo mode
+      return NextResponse.json({
+        thread: {
+          id: threadId,
+          gmail_thread_id: threadId,
+          subject: "Demo Thread Subject",
+          last_message_ts: new Date().toISOString(),
+        },
+        messages: [
+          {
+            id: `msg-${threadId}-1`,
+            gmail_message_id: `msg-${threadId}-1`,
+            from: "constituent@example.com",
+            date: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            snippet: "This is a demo message...",
+            body: "This is the full body of the demo message. Thank you for your service!",
+            isOutbound: false,
+          },
+        ],
+      });
+    }
+
     // gets the session for the tenantId and userId
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -19,7 +46,6 @@ export async function GET(
 
     const userId = (session.user as any).id || (session as any).token?.sub;
     // from my experience, some sessions don't have an id, so we use the sub as a fallback.
-    const { id: threadId } = await params;
 
     // gets the tenantId for this user
     const tenantResult = await query(
@@ -297,6 +323,24 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check for demo mode first
+    const demoMode = request.cookies.get("demo")?.value === "1"
+    const { id: threadId } = await params;
+
+    if (demoMode) {
+      // Parse request body for demo mode
+      const body = await request.json();
+      const { isReplied } = body;
+
+      // Return mock success response for demo mode
+      return NextResponse.json({
+        id: threadId,
+        gmail_thread_id: threadId,
+        subject: "Demo Thread",
+        isReplied: isReplied,
+      });
+    }
+
     // Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -304,7 +348,6 @@ export async function PATCH(
     }
 
     const userId = (session.user as any).id || (session as any).token?.sub;
-    const { id: threadId } = await params;
 
     // Get tenant_id for this user
     const tenantResult = await query(

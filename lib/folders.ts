@@ -5,7 +5,6 @@ export type FolderId =
   | "crisis-emergency"
   | "needs-response"
   | "replied"
-  | "sent"
 
 export interface Folder {
   id: FolderId
@@ -52,15 +51,6 @@ export const folders: Folder[] = [
     color: "text-green-600",
     filterFn: (thread) => {
       return thread.isReplied === true
-    },
-  },
-  {
-    id: "sent",
-    name: "Sent",
-    description: "Messages you've sent",
-    color: "text-purple-600",
-    filterFn: (thread) => {
-      return thread.folders?.includes("sent") || false
     },
   },
 ]

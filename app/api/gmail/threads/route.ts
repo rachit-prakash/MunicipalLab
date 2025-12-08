@@ -5,8 +5,64 @@ import { withTenant, query } from '@/lib/db';
 import { audit } from '@/lib/audit';
 import { checkRateLimit, RateLimits } from '@/lib/rateLimit';
 import { filterMessage } from '@/lib/message-filter';
+import { demoMessages } from '@/lib/demo';
 
 export async function GET(request: NextRequest) {
+  // Check for demo mode first
+  const demoMode = request.cookies.get("demo")?.value === "1"
+  if (demoMode) {
+    // Get folder filter from query params
+    const searchParams = request.nextUrl.searchParams;
+    const folder = searchParams.get('folder') || '';
+
+    // Convert demo messages to threads
+    const demoThreads = demoMessages.map((msg, idx) => {
+      const topics = ["Ukraine Aid & Support", "Gaza Ceasefire & Humanitarian Access", "Healthcare & Affordability", "Housing & Zoning", "Climate Resilience"]
+      const stances = ["support", "oppose", "neutral"]
+      const types = ["constituent-email", "advocacy-group", "lobbyist"]
+
+      // Calculate folders based on thread characteristics
+      const folders = ['inbox']
+      const isUrgent = idx < 14 // 14 urgent to match dashboard
+      const isReplied = idx % 5 === 0 // Every 5th is replied (23 total)
+      const needsResponse = idx % 3 === 0 && !isReplied // Every 3rd that's not replied
+      const isFromPerson = types[idx % types.length] === 'constituent-email' // ~38 from people
+
+      if (isUrgent) folders.push('crisis-emergency')
+      if (isReplied) folders.push('replied')
+      if (needsResponse) folders.push('needs-response')
+      if (isFromPerson) folders.push('from-people')
+
+      return {
+        id: msg.threadId,
+        subject: msg.subject,
+        sender: msg.from,
+        receivedAt: msg.date,
+        type: types[idx % types.length],
+        topic: topics[idx % topics.length],
+        stance: stances[idx % stances.length],
+        summary: msg.snippet,
+        confidence: 0.85 + (Math.random() * 0.15),
+        unread: idx < 20, // First 20 are unread
+        isReplied: isReplied,
+        folders: folders,
+        urgencyLevel: isUrgent ? 'high' : (idx < 30 ? 'medium' : 'low'),
+        urgencyReasons: isUrgent ? ['time-sensitive', 'urgent-request'] : [],
+        sentimentScore: (Math.random() * 2) - 1, // Random between -1 and 1
+      }
+    })
+
+    // Filter by folder if specified
+    const filteredThreads = folder
+      ? demoThreads.filter(thread => thread.folders.includes(folder))
+      : demoThreads
+
+    return NextResponse.json({
+      items: filteredThreads,
+      nextCursor: undefined,
+    })
+  }
+
   // Check rate limit
   const rateLimitResponse = await checkRateLimit(request, RateLimits.GMAIL_THREADS)
   if (rateLimitResponse) {
