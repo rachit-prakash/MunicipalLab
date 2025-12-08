@@ -100,12 +100,12 @@ function ThreadsPageInner() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Threads</BreadcrumbPage>
+                  <BreadcrumbPage>Inbox</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-semibold text-foreground font-display">Threads</h1>
+              <h1 className="text-xl font-semibold text-foreground font-display">Inbox</h1>
               <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg">
                 <button
                   onClick={() => setImportantOnly(true)}
@@ -135,7 +135,7 @@ function ThreadsPageInner() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Spinner className="size-4" />
-                  <span>Loading threads…</span>
+                  <span>Loading inbox…</span>
                 </div>
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-full" />
