@@ -353,6 +353,12 @@ export function isChronologicalQuery(query: string): boolean {
 	]
 
 	const lowerQuery = query.toLowerCase()
+
+	// Check for pattern like "last N emails" or "last N messages"
+	if (/last\s+\d+\s+(email|message)/i.test(query)) {
+		return true
+	}
+
 	return chronologicalKeywords.some((keyword) => lowerQuery.includes(keyword))
 }
 

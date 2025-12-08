@@ -9,11 +9,11 @@ const nextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://plausible.io",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.openai.com https://openrouter.ai https://vitals.vercel-insights.com",
+      "connect-src 'self' https://api.openai.com https://openrouter.ai https://vitals.vercel-insights.com https://plausible.io",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

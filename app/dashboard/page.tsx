@@ -23,9 +23,12 @@ export default async function DashboardPage() {
   const demoMode = cookieStore.get("demo")?.value === "1"
 
   const session = await getServerSession(authOptions)
+  console.log("🔍 Dashboard - Session user:", session?.user)
+  console.log("🔍 Dashboard - Demo mode:", demoMode)
 
   // Allow access if either demo mode is enabled or user has valid session
   if (!demoMode && !session?.user) {
+    console.log("❌ Dashboard - No session, redirecting to signin")
     redirect("/auth/signin")
   }
 
@@ -35,23 +38,38 @@ export default async function DashboardPage() {
   if (demoMode) {
     // Use demo tenant ID for demo users
     tenantId = "demo"
+    console.log("✅ Dashboard - Using demo tenant")
   } else {
-    const userId =
-      (session!.user as any)?.id ||
-      (session as any)?.token?.sub ||
-      (session!.user as any)?.email
+    // First, try to get tenant ID from the session (stored during sign-in)
+    tenantId = (session!.user as any)?.tenantId || null
+    console.log("🔍 Dashboard - Tenant ID from session:", tenantId)
 
-    if (!userId) {
-      redirect("/auth/signin")
-    }
-
-    tenantId = await resolveTenantId(userId)
+    // Fallback: if not in session, try to resolve from database
     if (!tenantId) {
-      redirect("/auth/signin")
+      const userId =
+        (session!.user as any)?.id ||
+        (session as any)?.token?.sub ||
+        (session!.user as any)?.email
+
+      console.log("🔍 Dashboard - Resolving tenant for user:", userId)
+
+      if (!userId) {
+        console.log("❌ Dashboard - No user ID found, redirecting to signin")
+        redirect("/auth/signin")
+      }
+
+      tenantId = await resolveTenantId(userId)
+      console.log("🔍 Dashboard - Tenant ID from database:", tenantId)
+      if (!tenantId) {
+        console.log("❌ Dashboard - No tenant ID found, redirecting to signin")
+        redirect("/auth/signin")
+      }
     }
   }
 
+  console.log("✅ Dashboard - Loading dataset for tenant:", tenantId)
   const dataset = await getDashboardDataset(tenantId)
+  console.log("✅ Dashboard - Dataset loaded successfully")
 
   return (
     <DashboardLayoutClient>
@@ -88,7 +106,7 @@ export default async function DashboardPage() {
 }
 
 async function resolveTenantId(userId: string): Promise<string | null> {
-  const tenantFromGmail = await query<{ tenant_id: string }>(
+  const tenantFromGmail = await query(
     `SELECT tenant_id FROM gmail_accounts WHERE user_id = $1 LIMIT 1`,
     [userId],
   )
@@ -96,7 +114,7 @@ async function resolveTenantId(userId: string): Promise<string | null> {
     return tenantFromGmail.rows[0].tenant_id
   }
 
-  const tenantFromUser = await query<{ tenant_id: string }>(
+  const tenantFromUser = await query(
     `SELECT tenant_id FROM users WHERE id = $1 LIMIT 1`,
     [userId],
   )

@@ -92,30 +92,37 @@ export default function CookieConsent(): React.JSX.Element | null {
 		<div
 			role="dialog"
 			aria-live="polite"
-			className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/70"
+			className="fixed bottom-4 right-4 z-50 w-full max-w-md animate-in slide-in-from-bottom-5 fade-in duration-500"
 		>
-			<div className="mx-auto flex max-w-5xl items-center justify-between gap-4 p-4">
-				<p className="text-sm text-gray-700">
-					We use essential cookies to enable core functionality and analytics to
-					improve the product. You can accept or decline non-essential cookies.
-				</p>
-				<div className="flex items-center gap-2">
-					<button
-						type="button"
-						className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm hover:bg-muted"
-						onClick={() => handleChoice("declined")}
-						aria-label="Decline non-essential cookies"
-					>
-						Decline
-					</button>
-					<button
-						type="button"
-						className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-gray-800"
-						onClick={() => handleChoice("accepted")}
-						aria-label="Accept cookies"
-					>
-						Accept
-					</button>
+			<div className="mx-4 sm:mx-0 rounded-xl border border-border bg-card/95 backdrop-blur-lg shadow-xl supports-[backdrop-filter]:bg-card/90 p-4">
+				<div className="flex flex-col gap-4">
+					<div className="space-y-1.5">
+						<h3 className="text-sm font-semibold text-foreground">
+							Cookie Preferences
+						</h3>
+						<p className="text-sm text-muted-foreground leading-relaxed">
+							We use essential cookies to enable core functionality and analytics to
+							improve the product.
+						</p>
+					</div>
+					<div className="flex items-center gap-2">
+						<button
+							type="button"
+							className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-200"
+							onClick={() => handleChoice("declined")}
+							aria-label="Decline non-essential cookies"
+						>
+							Decline
+						</button>
+						<button
+							type="button"
+							className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors duration-200"
+							onClick={() => handleChoice("accepted")}
+							aria-label="Accept cookies"
+						>
+							Accept
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

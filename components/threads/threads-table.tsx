@@ -8,7 +8,7 @@ import { decodeHtmlEntities } from "@/lib/html-decode"
 import { useMemo, useState } from "react"
 import { ConstituentProfileCard } from "@/components/constituents/profile-card"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, X } from "lucide-react"
+import { Check, X, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface ThreadsTableProps {
@@ -93,6 +93,76 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
     }
   }
 
+  const handleMarkRead = async (thread: ThreadRow, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+
+    try {
+      const response = await fetch(`/api/gmail/threads/${thread.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ unread: false }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to mark as read')
+      }
+
+      toast({
+        title: "Marked as read",
+        description: "This thread has been marked as read."
+      })
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, unread: false }
+      }))
+    } catch (error) {
+      console.error('Error marking as read:', error)
+      toast({
+        title: "Error",
+        description: "Could not mark thread as read.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleMarkUnread = async (thread: ThreadRow, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+
+    try {
+      const response = await fetch(`/api/gmail/threads/${thread.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ unread: true }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to mark as unread')
+      }
+
+      toast({
+        title: "Marked as unread",
+        description: "This thread has been marked as unread."
+      })
+
+      // Dispatch event to refresh threads list
+      window.dispatchEvent(new CustomEvent('thread-updated', {
+        detail: { threadId: thread.id, unread: true }
+      }))
+    } catch (error) {
+      console.error('Error marking as unread:', error)
+      toast({
+        title: "Error",
+        description: "Could not mark thread as unread.",
+        variant: "destructive"
+      })
+    }
+  }
+
   const sorted = useMemo(() => {
     const copy = [...threads]
     copy.sort((a, b) => {
@@ -127,7 +197,7 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto -mx-4 md:mx-0">
+    <div className="overflow-x-auto -mx-6">
       <Table className="min-w-0">
         <TableHeader>
           <TableRow hoverable={false}>
@@ -142,7 +212,7 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
             >
               Received
             </TableHead>
-            <TableHead className="w-20 text-right hidden sm:table-cell">Action</TableHead>
+            <TableHead className="w-32 text-right hidden sm:table-cell">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -161,22 +231,47 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
                 }}
                 layout
                 onClick={() => onThreadClick(thread)}
-                className="cursor-pointer group border-l-2 border-transparent transition-colors hover:border-accent"
+                className={`cursor-pointer group border-l-4 transition-all duration-100 hover:border-accent ${
+                  thread.unread
+                    ? 'border-gray-400 bg-gray-100 dark:bg-gray-800/40'
+                    : 'border-transparent'
+                }`}
               >
                 <TableCell className="hidden md:table-cell max-w-[200px]">
                   <ConstituentProfileCard email={thread.sender}>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate" title={extractSenderName(decodeHtmlEntities(thread.sender))}>{extractSenderName(decodeHtmlEntities(thread.sender))}</div>
-                      <div className="text-xs text-muted-foreground truncate" title={decodeHtmlEntities(thread.subject)}>{decodeHtmlEntities(thread.subject)}</div>
+                      <div className={`text-sm truncate transition-all duration-100 ${thread.unread ? 'font-bold text-gray-900 dark:text-gray-100' : 'font-medium text-foreground'}`} title={extractSenderName(decodeHtmlEntities(thread.sender))}>{extractSenderName(decodeHtmlEntities(thread.sender))}</div>
+                      <div className={`text-xs truncate transition-all duration-100 ${thread.unread ? 'font-semibold text-gray-700 dark:text-gray-300' : 'text-muted-foreground'}`} title={decodeHtmlEntities(thread.subject)}>{decodeHtmlEntities(thread.subject)}</div>
                     </div>
                   </ConstituentProfileCard>
                 </TableCell>
-                <TableCell className="max-w-xs truncate text-muted-foreground hidden sm:table-cell" title={decodeHtmlEntities(thread.summary)}>
+                <TableCell className={`max-w-xs truncate hidden sm:table-cell transition-all duration-100 ${thread.unread ? 'font-semibold text-gray-800 dark:text-gray-200' : 'text-muted-foreground'}`} title={decodeHtmlEntities(thread.summary)}>
                   {decodeHtmlEntities(thread.summary)}
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{formatDate(thread.receivedAt)}</TableCell>
-                <TableCell className="w-20 hidden sm:table-cell">
-                  <div className="flex justify-end">
+                <TableCell className={`text-xs hidden sm:table-cell transition-all duration-100 ${thread.unread ? 'font-semibold text-gray-800 dark:text-gray-200' : 'text-muted-foreground'}`}>{formatDate(thread.receivedAt)}</TableCell>
+                <TableCell className="w-32 hidden sm:table-cell">
+                  <div className="flex justify-end gap-1">
+                    {thread.unread ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto h-8 w-8 p-0"
+                        onClick={(e) => handleMarkRead(thread, e)}
+                        title="Mark as read"
+                      >
+                        <EyeOff className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100 group-hover:pointer-events-auto h-8 w-8 p-0"
+                        onClick={(e) => handleMarkUnread(thread, e)}
+                        title="Mark as unread"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
                     {!thread.isReplied ? (
                       <Button
                         variant="ghost"

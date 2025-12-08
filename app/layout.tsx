@@ -7,6 +7,7 @@ import { DemoBanner } from "@/components/ui/demo-banner"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SidebarProvider } from "@/contexts/sidebar-context"
+import { Analytics } from "@/components/analytics"
 
 // Primary sans-serif font (body text, UI elements)
 const figtree = Figtree({ 
@@ -127,6 +128,7 @@ export default function RootLayout({
             <DemoBanner />
             <CookieConsent />
             <Toaster />
+            <Analytics />
           </SidebarProvider>
         </ThemeProvider>
       </body>

@@ -12,15 +12,6 @@ import type { FolderId } from "@/lib/folders"
 import { getFoldersForThread, folders } from "@/lib/folders"
 import { Spinner } from "@/components/ui/spinner"
 import { Skeleton } from "@/components/ui/skeleton"
-import Link from "next/link"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 
 type ThreadListResponse = {
   items: ThreadRow[]
@@ -114,14 +105,18 @@ function ThreadsPageInner() {
   // Listen for thread updates and refresh
   useEffect(() => {
     const handleThreadUpdate = (event: CustomEvent) => {
-      const { threadId, isReplied } = event.detail;
+      const { threadId, isReplied, unread } = event.detail;
 
       // Update local state optimistically
       setThreads((currentThreads) => {
         if (!currentThreads) return currentThreads;
         return currentThreads.map((thread) =>
           thread.id === threadId
-            ? { ...thread, isReplied }
+            ? {
+                ...thread,
+                ...(isReplied !== undefined && { isReplied }),
+                ...(unread !== undefined && { unread })
+              }
             : thread
         );
       });
@@ -131,7 +126,7 @@ function ThreadsPageInner() {
     return () => {
       window.removeEventListener('thread-updated', handleThreadUpdate as EventListener);
     };
-  }, []);
+  }, [setThreads]);
 
   // Calculate thread counts for each folder (for display in folder nav)
   const threadCounts = useMemo(() => {
@@ -175,55 +170,7 @@ function ThreadsPageInner() {
             <Header onMenuClick={() => setMobileNavOpen(true)} />
           </Suspense>
           <main className="mt-16 ml-0 md:ml-12 flex-1 overflow-auto transition-[margin] duration-300">
-            <div className="px-4 sm:px-6 pt-6">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link href="/dashboard">Home</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>Inbox</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-                <button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 disabled:bg-primary/50 rounded-lg transition-colors"
-                >
-                  {syncing ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Syncing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Sync Now
-                    </>
-                  )}
-                </button>
-              </div>
-              {syncMessage && (
-                <div className={`mb-4 text-sm border rounded-lg px-3 py-2 ${
-                  syncMessage.includes('✓')
-                    ? 'text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/50'
-                    : 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50'
-                }`}>
-                  {syncMessage}
-                </div>
-              )}
-            </div>
-            <div className="px-4 sm:px-6 py-6">
+            <div className="px-4 sm:px-6 pt-0 pb-4">
               {loading ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -256,6 +203,9 @@ function ThreadsPageInner() {
             selectedFolder={selectedFolder}
             onFolderSelect={setSelectedFolder}
             threadCounts={threadCounts}
+            onSync={handleSync}
+            syncing={syncing}
+            syncMessage={syncMessage}
           />
         </aside>
       </div>
