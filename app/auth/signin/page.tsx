@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -129,7 +130,7 @@ function SignInContent() {
             }}
           />
           <CardHeader className="relative">
-            <div className="flex justify-center mb-4">
+            <Link href="/" className="flex justify-center mb-4 cursor-pointer hover:opacity-80 transition-opacity">
               <Image
                 src="/logo-icon.png"
                 alt="Legaside Logo"
@@ -146,7 +147,7 @@ function SignInContent() {
                 className="rounded-xl hidden dark:block"
                 priority
               />
-            </div>
+            </Link>
             <CardTitle className={cn("text-center text-3xl font-medium text-foreground", garamond.className)} style={{ letterSpacing: "-0.01em" }}>
               Welcome to Legaside
             </CardTitle>
