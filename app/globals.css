@@ -251,12 +251,19 @@
     @apply text-foreground;
   }
 
+  /* Override inline styles that might cause readability issues */
+  .email-content * {
+    color: inherit !important;
+  }
+
   .email-content p {
     @apply mb-4 last:mb-0;
   }
 
+  /* Allow links to have their own color */
   .email-content a {
     @apply text-primary underline hover:text-primary/80 transition-colors;
+    color: hsl(var(--primary)) !important;
   }
 
   .email-content strong,

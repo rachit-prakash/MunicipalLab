@@ -57,7 +57,42 @@ export function HtmlEmail({ content, className = "" }: HtmlEmailProps) {
           }
 
           // Sanitize the original content (with entities)
-          const sanitized = DOMPurify.sanitize(content, config)
+          let sanitized = DOMPurify.sanitize(content, config)
+
+          // Fix inline color styles that don't work well with the theme
+          // Remove or override problematic color styles
+          const tempDiv = document.createElement('div')
+          tempDiv.innerHTML = sanitized
+
+          // Find all elements with inline styles
+          const elementsWithStyle = tempDiv.querySelectorAll('[style]')
+          elementsWithStyle.forEach((el) => {
+            const style = (el as HTMLElement).style
+
+            // Remove or reset problematic color properties
+            if (style.color) {
+              // Check if it's a light color (that would be hard to read in dark mode)
+              const color = style.color
+              const isLightColor = /^#[cdef][0-9a-f]{5}$/i.test(color) ||
+                                   /rgb\(\s*(?:1[5-9]\d|2[0-4]\d|25[0-5])\s*,\s*(?:1[5-9]\d|2[0-4]\d|25[0-5])\s*,\s*(?:1[5-9]\d|2[0-4]\d|25[0-5])\s*\)/i.test(color)
+
+              if (isLightColor || color.includes('gray') || color.includes('grey')) {
+                style.removeProperty('color')
+              }
+            }
+
+            // Also check for bgcolor that might cause issues
+            if (style.backgroundColor) {
+              const bgColor = style.backgroundColor
+              // Remove if it's white or very light
+              if (bgColor.includes('white') || bgColor.includes('fff') ||
+                  /rgb\(\s*(?:2[4-5]\d|25[0-5])\s*,\s*(?:2[4-5]\d|25[0-5])\s*,\s*(?:2[4-5]\d|25[0-5])\s*\)/i.test(bgColor)) {
+                style.removeProperty('background-color')
+              }
+            }
+          })
+
+          sanitized = tempDiv.innerHTML
           setSanitizedHtml(sanitized)
         } else {
           // Plain text - decode entities and convert newlines to <br>
