@@ -1,0 +1,353 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Neutral, calm palette with deep green accent (app UI only, landing page unchanged) */
+
+  /* Surfaces & text */
+  --background: #f9fafb; /* very light neutral with slight warmth */
+  --foreground: #1a1a1a; /* rich ink text */
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
+
+  /* Primary brand (Deep Green) */
+  --primary: #034f46;
+  --primary-foreground: #ffffff;
+
+  /* Secondary & muted surfaces */
+  --secondary: #f3f4f6; /* soft neutral */
+  --secondary-foreground: var(--foreground);
+  --muted: #f3f4f6; /* soft neutral gray */
+  --muted-foreground: #6b7280; /* neutral gray */
+  --accent: #e5e7eb; /* slightly stronger neutral for pills */
+  --accent-foreground: #1a1a1a;
+
+  /* Semantic feedback */
+  --success: #059669; /* emerald-600 */
+  --success-foreground: #ffffff;
+  --warning: #d97706; /* amber-600 */
+  --warning-foreground: #111827;
+  --info: #2563eb; /* blue-600 */
+  --info-foreground: #ffffff;
+  --destructive: #d94a38; /* red */
+  --destructive-foreground: #ffffff;
+
+  /* Controls */
+  --border: #e5e7eb; /* neutral light gray */
+  --input: #ffffff;
+  --ring: #034f46; /* green focus ring for brand consistency */
+  /* Text selection */
+  --selection: #e5e7eb;
+  --selection-foreground: #1a1a1a;
+
+  /* Charts: green accent + neutral grays */
+  --chart-1: #034f46; /* primary green */
+  --chart-2: #9ca3af; /* gray-400 */
+  --chart-3: #6b7280; /* gray-500 */
+  --chart-4: #d1d5db; /* gray-300 */
+  --chart-5: #e5e7eb; /* gray-200 */
+
+  /* Sizing */
+  --radius: 0.5rem; /* 8px for a modern, softer look */
+
+  /* Sidebar */
+  --sidebar: #f9fafb; /* neutral matching background */
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e5e7eb; /* neutral accent */
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #e5e7eb; /* neutral border */
+  --sidebar-ring: var(--primary);
+
+  /* Scrollbars */
+  --scrollbar-track: #fffef0;
+  --scrollbar-thumb: rgba(3, 79, 70, 0.3);
+  --scrollbar-thumb-hover: rgba(3, 79, 70, 0.5);
+}
+
+.dark {
+  /* Dark mode: Grayish dark palette with good contrast */
+  --background: #1a1a1a;            /* dark charcoal gray */
+  --foreground: #e5e5e5;            /* soft white for easy reading */
+  --card: #242424;                  /* slightly lighter gray for cards */
+  --card-foreground: var(--foreground);
+  --popover: #242424;
+  --popover-foreground: var(--foreground);
+  --primary: #10b981;               /* vibrant emerald green that pops */
+  --primary-foreground: #000000;    /* black text on bright accent */
+  --secondary: #2a2a2a;             /* medium dark gray for secondary surfaces */
+  --secondary-foreground: var(--foreground);
+  --muted: #2a2a2a;                 /* medium dark gray for muted areas */
+  --muted-foreground: #a3a3a3;      /* lighter neutral gray for secondary text */
+  --accent: #333333;                /* medium gray for accents */
+  --accent-foreground: var(--foreground);
+  --success: #22c55e;               /* bright green */
+  --success-foreground: #000000;
+  --warning: #f59e0b;               /* bright amber */
+  --warning-foreground: #000000;
+  --info: #3b82f6;                  /* bright blue */
+  --info-foreground: #ffffff;
+  --destructive: #ef4444;           /* bright red */
+  --destructive-foreground: #ffffff;
+  --border: #333333;                /* subtle border on dark */
+  --input: #242424;                 /* dark input backgrounds */
+  --ring: #10b981;                  /* green ring for consistency */
+  /* Text selection */
+  --selection: #2a2a2a;             /* dark selection */
+  --selection-foreground: #10b981;  /* green selected text */
+  --chart-1: #10b981;               /* vibrant green */
+  --chart-2: #3b82f6;               /* blue */
+  --chart-3: #8b5cf6;               /* purple */
+  --chart-4: #ec4899;               /* pink */
+  --chart-5: #f59e0b;               /* amber */
+  --sidebar: #1a1a1a;               /* dark charcoal sidebar */
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #2a2a2a;
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: #333333;
+  --sidebar-ring: #10b981;
+
+  /* Scrollbars (dark) */
+  --scrollbar-track: #1a1a1a;       /* dark gray track */
+  --scrollbar-thumb: rgba(16, 185, 129, 0.4);
+  --scrollbar-thumb-hover: rgba(16, 185, 129, 0.6);
+}
+
+@theme inline {
+  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Custom colors for text and surfaces */
+  --color-ink-900: #1b1b1b;
+  --color-ink-600: #4b5563;
+  --color-ink-500: #6b7280;
+  --color-surface: #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground overflow-x-hidden;
+  }
+
+  /* Keep a stable gutter so layout doesn't shift when scrollbars appear */
+  html {
+    scrollbar-gutter: stable both-edges;
+  }
+
+  ::selection,
+  ::-moz-selection {
+    background-color: var(--selection);
+    color: var(--selection-foreground);
+  }
+
+  /* Minimal scrollbars (Firefox) */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* Minimal scrollbars (WebKit/Blink: Chrome, Edge, Safari) */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 999px;
+    border: 2px solid var(--scrollbar-track);
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  /* Typography ramp */
+  h1 {
+    @apply text-2xl font-semibold leading-8;
+  }
+  h2 {
+    @apply text-xl font-semibold leading-7;
+  }
+  body,
+  p {
+    @apply text-base leading-6 font-normal;
+  }
+  .caption {
+    @apply text-xs leading-4 font-normal;
+  }
+
+  /* Focus ring for accessibility */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-2 outline-offset-1 outline-ring;
+  }
+
+  /* Display heading utility for Garamond serif (applied via className in components) */
+  .font-display {
+    font-family: var(--font-garamond), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  /* HTML Email Content Styles */
+  .email-content {
+    /* Reset and base styles */
+    @apply text-foreground;
+  }
+
+  /* Override inline styles that might cause readability issues */
+  .email-content * {
+    color: inherit !important;
+  }
+
+  .email-content p {
+    @apply mb-4 last:mb-0;
+  }
+
+  /* Allow links to have their own color */
+  .email-content a {
+    @apply text-primary underline hover:text-primary/80 transition-colors;
+    color: hsl(var(--primary)) !important;
+  }
+
+  .email-content strong,
+  .email-content b {
+    @apply font-semibold;
+  }
+
+  .email-content em,
+  .email-content i {
+    @apply italic;
+  }
+
+  .email-content h1,
+  .email-content h2,
+  .email-content h3,
+  .email-content h4,
+  .email-content h5,
+  .email-content h6 {
+    @apply font-semibold mb-3 mt-4 first:mt-0;
+  }
+
+  .email-content h1 {
+    @apply text-2xl;
+  }
+
+  .email-content h2 {
+    @apply text-xl;
+  }
+
+  .email-content h3 {
+    @apply text-lg;
+  }
+
+  .email-content ul,
+  .email-content ol {
+    @apply mb-4 ml-6;
+  }
+
+  .email-content ul {
+    @apply list-disc;
+  }
+
+  .email-content ol {
+    @apply list-decimal;
+  }
+
+  .email-content li {
+    @apply mb-1;
+  }
+
+  .email-content blockquote {
+    @apply border-l-4 border-border pl-4 my-4 text-muted-foreground italic;
+  }
+
+  .email-content img {
+    @apply max-w-full h-auto my-4 rounded;
+  }
+
+  .email-content table {
+    @apply w-full border-collapse mb-4;
+  }
+
+  .email-content th,
+  .email-content td {
+    @apply border border-border px-3 py-2 text-left;
+  }
+
+  .email-content th {
+    @apply bg-muted font-semibold;
+  }
+
+  .email-content pre {
+    @apply bg-muted p-4 rounded mb-4 overflow-x-auto;
+  }
+
+  .email-content code {
+    @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .email-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .email-content hr {
+    @apply border-t border-border my-6;
+  }
+}

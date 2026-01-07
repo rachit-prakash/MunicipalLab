@@ -1,0 +1,17 @@
+{
+  "name": "gmail-seeder",
+  "version": "1.0.0",
+  "description": "Seed Gmail inbox with test constituent emails",
+  "main": "seed.js",
+  "scripts": {
+    "start": "node seed.js",
+    "seed": "node seed.js"
+  },
+  "keywords": ["gmail", "seeder", "testing"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^6.9.7",
+    "dotenv": "^16.3.1"
+  }
+}
