@@ -163,10 +163,10 @@ Thank you for taking the time to contact our office ${topicText}. We appreciate 
 Your feedback is valuable and helps us better understand the concerns and priorities of our constituents. We take your input seriously as we work to address the challenges facing our community.
 
 ${thread.stance === "SUPPORT"
-  ? "We're grateful for your support on this matter and will continue working to advance this important cause."
-  : thread.stance === "OPPOSE"
-  ? "We understand your concerns and respect your perspective. We will carefully consider all viewpoints as we move forward."
-  : "We will carefully review your comments and take them into account in our ongoing work on this issue."}
+        ? "We're grateful for your support on this matter and will continue working to advance this important cause."
+        : thread.stance === "OPPOSE"
+          ? "We understand your concerns and respect your perspective. We will carefully consider all viewpoints as we move forward."
+          : "We will carefully review your comments and take them into account in our ongoing work on this issue."}
 
 If you have any additional questions or would like to discuss this further, please don't hesitate to reach out to our office.`
     setDraftText(aiDraft)
@@ -313,7 +313,7 @@ If you have any additional questions or would like to discuss this further, plea
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-foreground">
-                      <ConstituentProfileCard email={thread.sender}>
+                      <ConstituentProfileCard email={thread.sender} currentUrgency={thread.urgencyLevel}>
                         <span className="hover:text-primary transition-colors cursor-pointer">
                           {thread.sender}
                         </span>

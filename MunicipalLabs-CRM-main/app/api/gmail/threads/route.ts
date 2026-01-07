@@ -101,6 +101,7 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get('q') || '';
     const status = searchParams.get('status') || '';
     const topicId = searchParams.get('topicId') || '';
+    const topicName = searchParams.get('topic') || ''; // Filter by topic name (e.g., 'Uncategorized')
     const assigneeId = searchParams.get('assigneeId') || '';
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100); // we cap the limit at 100.
     const cursor = searchParams.get('cursor') || '';
@@ -133,11 +134,24 @@ export async function GET(request: NextRequest) {
         paramIndex++;
       }
 
-      // we filter by topic.
+      // we filter by topic ID.
       if (topicId) {
         conditions.push(`topic_id = $${paramIndex}`);
         params.push(topicId);
         paramIndex++;
+      }
+
+      // we filter by topic name (e.g., 'Uncategorized' for NULL topics)
+      if (topicName) {
+        if (topicName.toLowerCase() === 'uncategorized') {
+          // Filter threads with no topic assigned
+          conditions.push(`topic_id IS NULL`);
+        } else {
+          // Join with topics table to filter by name
+          conditions.push(`topic_id IN (SELECT id FROM topics WHERE name ILIKE $${paramIndex})`);
+          params.push(topicName);
+          paramIndex++;
+        }
       }
 
       // we filter by assignee.

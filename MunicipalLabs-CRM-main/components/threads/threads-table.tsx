@@ -231,14 +231,13 @@ export function ThreadsTable({ threads, onThreadClick }: ThreadsTableProps) {
                 }}
                 layout
                 onClick={() => onThreadClick(thread)}
-                className={`cursor-pointer group border-l-4 transition-all duration-100 hover:border-accent ${
-                  thread.unread
+                className={`cursor-pointer group border-l-4 transition-all duration-100 hover:border-accent ${thread.unread
                     ? 'border-gray-400 bg-gray-100 dark:bg-gray-800/40'
                     : 'border-transparent'
-                }`}
+                  }`}
               >
                 <TableCell className="hidden md:table-cell max-w-[200px]">
-                  <ConstituentProfileCard email={thread.sender}>
+                  <ConstituentProfileCard email={thread.sender} currentUrgency={thread.urgencyLevel}>
                     <div className="min-w-0">
                       <div className={`text-sm truncate transition-all duration-100 ${thread.unread ? 'font-bold text-gray-900 dark:text-gray-100' : 'font-medium text-foreground'}`} title={extractSenderName(decodeHtmlEntities(thread.sender))}>{extractSenderName(decodeHtmlEntities(thread.sender))}</div>
                       <div className={`text-xs truncate transition-all duration-100 ${thread.unread ? 'font-semibold text-gray-700 dark:text-gray-300' : 'text-muted-foreground'}`} title={decodeHtmlEntities(thread.subject)}>{decodeHtmlEntities(thread.subject)}</div>

@@ -23,9 +23,10 @@ interface ConstituentProfileCardProps {
   email: string
   children: React.ReactNode
   className?: string
+  currentUrgency?: "low" | "medium" | "high" | "critical"
 }
 
-export function ConstituentProfileCard({ email, children, className }: ConstituentProfileCardProps) {
+export function ConstituentProfileCard({ email, children, className, currentUrgency }: ConstituentProfileCardProps) {
   const [profile, setProfile] = useState<ConstituentProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,7 +68,7 @@ export function ConstituentProfileCard({ email, children, className }: Constitue
         ) : error ? (
           <div className="p-4 text-sm text-destructive">{error}</div>
         ) : profile ? (
-          <ProfileCardContent profile={profile} email={email} />
+          <ProfileCardContent profile={profile} email={email} currentUrgency={currentUrgency} />
         ) : null}
       </HoverCardContent>
     </HoverCard>
@@ -90,7 +91,7 @@ function ProfileCardSkeleton() {
   )
 }
 
-function ProfileCardContent({ profile, email }: { profile: ConstituentProfile; email: string }) {
+function ProfileCardContent({ profile, email, currentUrgency }: { profile: ConstituentProfile; email: string; currentUrgency?: "low" | "medium" | "high" | "critical" }) {
   const sentimentEmoji = profile.avgSentiment
     ? profile.avgSentiment > 0.3
       ? "😊"
@@ -112,6 +113,18 @@ function ProfileCardContent({ profile, email }: { profile: ConstituentProfile; e
       : profile.urgencyProfile === "mixed"
         ? "Sometimes Urgent"
         : "Usually Calm"
+
+  // Current email urgency display
+  const currentUrgencyLabel = currentUrgency === "critical" ? "🚨 CRITICAL"
+    : currentUrgency === "high" ? "⚠️ HIGH"
+      : currentUrgency === "medium" ? "📌 Medium"
+        : currentUrgency === "low" ? "✓ Low"
+          : null
+
+  const currentUrgencyColor = currentUrgency === "critical" ? "text-red-600 dark:text-red-400 font-bold"
+    : currentUrgency === "high" ? "text-orange-600 dark:text-orange-400 font-semibold"
+      : currentUrgency === "medium" ? "text-yellow-600 dark:text-yellow-400"
+        : "text-green-600 dark:text-green-400"
 
   return (
     <div className="overflow-hidden">
@@ -190,7 +203,7 @@ function ProfileCardContent({ profile, email }: { profile: ConstituentProfile; e
             </div>
             <div className="flex flex-wrap gap-1.5">
               {profile.topTopics.slice(0, 3).map((topic, i) => (
-                <Badge key={i} variant="secondary" className="text-xs">
+                <Badge key={i} variant="neutral" className="text-xs">
                   {topic.topic} <span className="ml-1 text-muted-foreground">×{topic.count}</span>
                 </Badge>
               ))}
@@ -222,6 +235,9 @@ function ProfileCardContent({ profile, email }: { profile: ConstituentProfile; e
               <span className="text-xs font-medium text-foreground">Urgency</span>
             </div>
             <p className={cn("text-xs", urgencyColor)}>{urgencyLabel}</p>
+            {currentUrgencyLabel && (
+              <p className={cn("text-xs mt-1", currentUrgencyColor)}>This email: {currentUrgencyLabel}</p>
+            )}
           </div>
 
           {/* Last Contact */}
