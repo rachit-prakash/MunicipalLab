@@ -145,6 +145,7 @@ export async function analyzeMessage(
   if (provider !== "gemini") {
     headers["Authorization"] = `Bearer ${apiKey}`
   }
+// console.log("provider", provider)
 
 
   if (provider === "openrouter") {
