@@ -146,6 +146,7 @@ export async function analyzeMessage(
     headers["Authorization"] = `Bearer ${apiKey}`
   }
 
+
   if (provider === "openrouter") {
     headers["HTTP-Referer"] = process.env.OPENROUTER_REFERRER ?? "https://legaside.app"
     headers["X-Title"] = "Legaside Message Analyzer"
