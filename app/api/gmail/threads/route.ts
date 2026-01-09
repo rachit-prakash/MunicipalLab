@@ -73,10 +73,12 @@ export async function GET(request: NextRequest) {
     // Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user) {
+      console.log('❌ THREADS DEBUG - No session user');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const userId = (session.user as any).id || (session as any).token?.sub;
+    console.log('🔍 THREADS DEBUG - userId:', userId);
 
     // Get tenant_id and user email for this user
     const tenantResult = await query(
@@ -84,7 +86,10 @@ export async function GET(request: NextRequest) {
       [userId]
     );
 
+    console.log('🔍 THREADS DEBUG - tenant query result:', JSON.stringify(tenantResult.rows));
+
     if (!tenantResult.rows.length) {
+      console.log('❌ THREADS DEBUG - No tenant found for user:', userId);
       return NextResponse.json({ error: 'No tenant found' }, { status: 404 });
     }
 
@@ -96,6 +101,7 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get('q') || '';
     const status = searchParams.get('status') || '';
     const topicId = searchParams.get('topicId') || '';
+    const topicName = searchParams.get('topic') || ''; // Filter by topic name (e.g., 'Uncategorized')
     const assigneeId = searchParams.get('assigneeId') || '';
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100); // we cap the limit at 100.
     const cursor = searchParams.get('cursor') || '';
@@ -128,11 +134,24 @@ export async function GET(request: NextRequest) {
         paramIndex++;
       }
 
-      // we filter by topic.
+      // we filter by topic ID.
       if (topicId) {
         conditions.push(`topic_id = $${paramIndex}`);
         params.push(topicId);
         paramIndex++;
+      }
+
+      // we filter by topic name (e.g., 'Uncategorized' for NULL topics)
+      if (topicName) {
+        if (topicName.toLowerCase() === 'uncategorized') {
+          // Filter threads with no topic assigned
+          conditions.push(`topic_id IS NULL`);
+        } else {
+          // Join with topics table to filter by name
+          conditions.push(`topic_id IN (SELECT id FROM topics WHERE name ILIKE $${paramIndex})`);
+          params.push(topicName);
+          paramIndex++;
+        }
       }
 
       // we filter by assignee.
@@ -249,13 +268,17 @@ export async function GET(request: NextRequest) {
         requestId: request.headers.get('x-request-id') ?? undefined,
         payload: { q, status, topicId, assigneeId, limit, folder },
       })
-    } catch {}
+    } catch { }
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     // if we fail to fetch the threads, we return a 500 error.
     console.error('Error fetching threads:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        message: error?.message || 'Unknown error',
+        stack: process.env.NODE_ENV !== 'production' ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }

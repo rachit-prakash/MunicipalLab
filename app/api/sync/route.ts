@@ -45,6 +45,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing user ID" }, { status: 401 })
     }
 
+    // DEBUG: Log user info
+    console.log("🔍 SYNC DEBUG - Session user:", JSON.stringify({
+      id: (session.user as any)?.id,
+      email: (session.user as any)?.email,
+      sub: (session as any)?.token?.sub,
+      resolvedUserId: userId
+    }))
+
     // Check if user has any Gmail accounts
     const accountsResult = await query(
       `SELECT COUNT(*) as count FROM gmail_accounts WHERE user_id = $1`,
@@ -53,6 +61,9 @@ export async function GET(request: NextRequest) {
 
     const accountCount = parseInt(accountsResult.rows[0]?.count || "0")
 
+    // DEBUG: Log account lookup result
+    console.log("🔍 SYNC DEBUG - Gmail accounts found:", accountCount, "for user_id:", userId)
+
     if (accountCount === 0) {
       return NextResponse.json(
         { error: "No Gmail accounts found. Please sign in with Google first." },
@@ -60,8 +71,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // DEBUG: Log before sync
+    console.log("🔄 SYNC DEBUG - Starting sync for user:", userId)
+
     // Sync all accounts for this user
-    await syncAllAccountsForUser(userId)
+    try {
+      await syncAllAccountsForUser(userId)
+      console.log("✅ SYNC DEBUG - Sync completed successfully for user:", userId)
+    } catch (syncError: any) {
+      console.error("❌ SYNC DEBUG - Sync failed with error:", syncError?.message || syncError)
+      console.error("❌ SYNC DEBUG - Full error:", syncError)
+      throw syncError // Re-throw to be caught by outer catch
+    }
 
     // After sync, analyze rising issues
     let risingIssues = null
@@ -107,9 +128,12 @@ export async function GET(request: NextRequest) {
  * POST endpoint for triggering sync (same as GET, but follows REST conventions)
  */
 export async function POST(request: NextRequest) {
+  console.log("🚀 POST /api/sync called!")
+
   // Check rate limit
   const rateLimitResponse = await checkRateLimit(request, RateLimits.SYNC)
   if (rateLimitResponse) {
+    console.log("⚠️ Rate limit hit - returning early")
     return rateLimitResponse
   }
 

@@ -35,9 +35,15 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void } = {}) {
 
   // Debounced URL update when on the inbox page
   useEffect(() => {
-    if (pathname !== "/inbox") return
+    // Check for both /inbox and /threads since /inbox rewrites to /threads
+    if (pathname !== "/inbox" && pathname !== "/threads") return
     const timeout = setTimeout(() => {
       const params = new URLSearchParams(Array.from(searchParams.entries()))
+      const currentQ = params.get("q") ?? ""
+
+      // Only update URL if query actually changed
+      if (currentQ === query) return
+
       if (query) {
         params.set("q", query)
       } else {
@@ -109,7 +115,7 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void } = {}) {
           >
             <PanelLeft className="h-4 w-4" />
           </button>
-          
+
           {/* Logo - now always visible on desktop, in top-left */}
           <Link href="/dashboard" className="flex items-center">
             <Image

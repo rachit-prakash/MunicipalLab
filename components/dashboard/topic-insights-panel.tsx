@@ -39,7 +39,7 @@ export function TopicInsightsPanel({ topics }: TopicInsightsPanelProps) {
 }
 
 function InsightCard({ topic, count }: { topic: string; count: number }) {
-  const query = `/threads?q=${encodeURIComponent(topic)}`
+  const query = `/threads?topic=${encodeURIComponent(topic)}`
   return (
     <Link
       prefetch={false}

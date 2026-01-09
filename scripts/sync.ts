@@ -11,11 +11,15 @@ import { generateMessageEmbedding, generateThreadEmbedding } from "@/lib/sync-em
  * Sync all Gmail accounts for a user
  */
 export async function syncAllAccountsForUser(userId: string): Promise<void> {
+  console.log("📧 syncAllAccountsForUser called with userId:", userId)
+
   // Get all Gmail accounts for this user
   const accountsResult = await query(
     `SELECT id, tenant_id, email FROM gmail_accounts WHERE user_id = $1 ORDER BY is_primary DESC, created_at ASC`,
     [userId]
   );
+
+  console.log("📧 Gmail accounts query result:", JSON.stringify(accountsResult.rows))
 
   if (!accountsResult.rows.length) {
     throw new Error(`No Gmail accounts found for user ${userId}`);
@@ -28,6 +32,7 @@ export async function syncAllAccountsForUser(userId: string): Promise<void> {
     try {
       console.log(`Syncing account: ${account.email}`);
       await runIncrementalSync(account.tenant_id, userId, account.id);
+      console.log(`✅ Sync completed for: ${account.email}`);
     } catch (error) {
       console.error(`Failed to sync account ${account.email}:`, error);
       // Continue with other accounts even if one fails
