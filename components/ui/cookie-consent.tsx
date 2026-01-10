@@ -25,7 +25,7 @@ function getExistingConsent(): ConsentState {
 	try {
 		const ls = window.localStorage.getItem("cookie-consent") as ConsentState
 		if (ls === "accepted" || ls === "declined") return ls
-	} catch {}
+	} catch { }
 	try {
 		const match = document.cookie
 			.split(";")
@@ -34,57 +34,35 @@ function getExistingConsent(): ConsentState {
 		if (!match) return null
 		const val = match.split("=")[1]
 		if (val === "accepted" || val === "declined") return val
-	} catch {}
+	} catch { }
 	return null
 }
 
 export default function CookieConsent(): React.JSX.Element | null {
 	const [consent, setConsent] = React.useState<ConsentState>(null)
-	const [hasSession, setHasSession] = React.useState<boolean | null>(null)
+	const [mounted, setMounted] = React.useState(false)
 
 	React.useEffect(() => {
-		setConsent(getExistingConsent())
+		// Small delay to ensure proper hydration and prevent flash
+		const timer = setTimeout(() => {
+			setMounted(true)
+			setConsent(getExistingConsent())
+		}, 100)
+		return () => clearTimeout(timer)
 	}, [])
 
-	React.useEffect(() => {
-		let cancelled = false
-		async function checkSession() {
-			try {
-				const res = await fetch("/api/auth/session", { cache: "no-store" })
-				const data = await res.json().catch(() => null)
-				if (!cancelled) {
-					setHasSession(!!data?.user)
-				}
-			} catch {
-				if (!cancelled) {
-					setHasSession(false)
-				}
-			}
-		}
-		void checkSession()
-		return () => {
-			cancelled = true
-		}
-	}, [])
-
-	// Show banner if:
-	// 1. User has a session (NextAuth sets cookies after login), OR
-	// 2. User is on sign-in page (demo mode requires cookies)
-	const isSignInPage =
-		typeof window !== "undefined" && window.location.pathname === "/auth/signin"
-
-	// Only show banner if user has a session or is on sign-in page
-	// Unauthenticated users on other pages don't need consent until they log in
-	if (hasSession === null) return null // Wait for session check
-	if ((hasSession === false && !isSignInPage) || consent) return null
+	// Don't render until mounted (prevents hydration flash)
+	// Show banner for all visitors who haven't made a consent choice yet
+	if (!mounted) return null
+	if (consent) return null // Already made a choice
 
 	const handleChoice = (value: Exclude<ConsentState, null>) => {
 		try {
 			window.localStorage.setItem("cookie-consent", value)
-		} catch {}
+		} catch { }
 		try {
 			setConsentCookie(value)
-		} catch {}
+		} catch { }
 		setConsent(value)
 	}
 
