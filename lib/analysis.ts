@@ -115,7 +115,7 @@ const SYSTEM_PROMPT = [
 
 type Provider = "openai" | "openrouter" | "gemini"
 
-const OPENAI_MODEL = process.env.OPENAI_ANALYSIS_MODEL ?? "gpt-4o-mini"
+const OPENAI_MODEL = process.env.OPENAI_ANALYSIS_MODEL ?? "gpt-4.1-mini"
 const OPENROUTER_MODEL =
   process.env.OPENROUTER_ANALYSIS_MODEL ?? "google/gemini-flash-1.5"
 const GEMINI_MODEL = process.env.GEMINI_ANALYSIS_MODEL ?? "gemini-2.5-flash-lite"
@@ -145,7 +145,7 @@ export async function analyzeMessage(
   if (provider !== "gemini") {
     headers["Authorization"] = `Bearer ${apiKey}`
   }
-// console.log("provider", provider)
+  // console.log("provider", provider)
 
 
   if (provider === "openrouter") {
